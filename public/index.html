@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <title>GymFlow Pro | Member Ledger</title>
+    <style>
+        :root { --bg-canvas: #f1f5f9; --glass: rgba(255, 255, 255, 0.7); }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.08) 0px, transparent 50%),
+                        radial-gradient(at 100% 100%, rgba(29, 78, 216, 0.05) 0px, transparent 50%),
+                        var(--bg-canvas);
+            min-height: 100vh;
+        }
+
+        .glass-sidebar {
+            background: var(--glass);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-right: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .glass-card {
+            background: white;
+            border: 1px solid rgba(226, 232, 240, 0.6);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+        }
+
+        .chart-bar { width: 12px; background: #e2e8f0; border-radius: 4px; display: flex; align-items: flex-end; height: 60px; }
+        .chart-fill { width: 100%; background: #2563eb; border-radius: 4px; transition: height 1s ease-out; }
+        .rev-bar { width: 8px; border-radius: 2px; transition: height 0.5s ease; }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        /* Table Row Hover */
+        tr:hover td { background-color: #f8fafc; }
+    </style>
+</head>
+<body class="text-slate-900">
+
+    <div class="flex flex-col lg:flex-row">
+        <aside class="w-full lg:w-72 lg:glass-sidebar lg:h-screen lg:sticky lg:top-0 p-8 flex flex-col">
+            <div class="mb-12">
+                <h1 class="text-2xl font-extrabold tracking-tighter italic">GymFlow<span class="text-blue-600">.</span></h1>
+                <p id="displayGymName" class="text-[9px] font-black text-blue-500 uppercase tracking-[0.2em] mt-2"></p>
+            </div>
+
+            <nav class="space-y-1 flex-1">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 ml-2">Management</p>
+                <button onclick="setFilter('all')" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold bg-white shadow-sm text-slate-900 border border-slate-200/50">
+                    <span>👥 Members</span>
+                    <span id="countAll" class="text-[10px] opacity-50 font-black">0</span>
+                </button>
+                <button onclick="setFilter('unpaid')" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-white/50 transition">
+                    <span>⏳ Pending</span>
+                    <span id="countUnpaid" class="text-[10px] text-red-500 font-black">0</span>
+                </button>
+                
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-10 mb-4 ml-2">Insights</p>
+                <div class="p-4 rounded-2xl bg-slate-900/5 border border-slate-900/5">
+                    <p class="text-[10px] font-bold text-slate-500 mb-3 uppercase">Weekly Activity</p>
+                    <div class="flex items-end gap-2 h-16">
+                        <div class="chart-bar"><div class="chart-fill" style="height: 40%"></div></div>
+                        <div class="chart-bar"><div class="chart-fill" style="height: 60%"></div></div>
+                        <div class="chart-bar"><div class="chart-fill" style="height: 30%"></div></div>
+                        <div class="chart-bar"><div class="chart-fill" style="height: 85%"></div></div>
+                        <div class="chart-bar"><div class="chart-fill" style="height: 50%"></div></div>
+                    </div>
+                </div>
+            </nav>
+
+            <button onclick="logout()" class="mt-auto flex items-center gap-3 text-xs font-bold text-slate-400 hover:text-red-500 transition">🚪 Sign Out</button>
+        </aside>
+
+        <main class="flex-1 p-6 lg:p-10">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div class="glass-card p-8 rounded-[2rem]">
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">Total Roster</p>
+                    <div class="flex items-baseline gap-2">
+                        <h3 id="statTotal" class="text-5xl font-extrabold tracking-tighter">0</h3>
+                        <span class="text-green-500 text-xs font-bold">↑ 12%</span>
+                    </div>
+                </div>
+
+                <div class="glass-card p-8 rounded-[2rem] bg-slate-900 text-white border-none shadow-2xl relative overflow-hidden">
+                    <div class="relative z-10 flex flex-col h-full">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Revenue Status</span>
+                            <span id="statPercent" class="text-blue-400 font-black text-sm">0%</span>
+                        </div>
+                        <div class="flex items-end gap-1 h-10 mb-4 opacity-80">
+                            <div id="revPaidBar" class="bg-blue-500 rev-bar" style="height: 0%"></div>
+                            <div id="revDueBar" class="bg-red-500 rev-bar" style="height: 0%"></div>
+                            <div class="bg-slate-700 rev-bar" style="height: 25%"></div>
+                            <div class="bg-slate-700 rev-bar" style="height: 40%"></div>
+                        </div>
+                        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                            <div id="statBar" class="bg-blue-500 h-full transition-all duration-1000" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-blue-600/20 rounded-full blur-3xl"></div>
+                </div>
+
+                <div class="glass-card p-8 rounded-[2rem] bg-blue-600 text-white border-none shadow-xl cursor-pointer group" onclick="document.getElementById('regSection').classList.toggle('hidden')">
+                    <p class="text-[11px] font-bold text-blue-200 uppercase tracking-widest mb-4">Quick Action</p>
+                    <h3 class="text-2xl font-extrabold leading-tight">Add New<br>Member <span class="group-hover:translate-x-2 inline-block transition">→</span></h3>
+                </div>
+            </div>
+
+            <section id="regSection" class="hidden glass-card p-8 rounded-[2.5rem] mb-12">
+                <div class="flex flex-col lg:flex-row gap-4">
+                    <input id="regName" placeholder="Full Name" class="flex-1 bg-slate-50 p-4 rounded-xl outline-none border border-slate-200">
+                    <input id="regPhone" placeholder="Phone (91...)" class="flex-1 bg-slate-50 p-4 rounded-xl outline-none border border-slate-200">
+                    <button onclick="addNewMember()" class="bg-slate-900 text-white font-bold px-10 py-4 rounded-xl hover:bg-blue-600 transition">Save Member</button>
+                </div>
+            </section>
+
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                <div>
+                    <h2 id="listTitle" class="text-3xl font-extrabold tracking-tight">Active Roster</h2>
+                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Page <span id="currentPageNum">1</span> of <span id="totalPageNum">1</span></p>
+                </div>
+                <div class="flex gap-3 w-full md:w-auto">
+                    <button onclick="remindAllPending()" class="bg-amber-500 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-100 flex-1 md:flex-none">📢 Remind All</button>
+                    <input id="searchBar" type="text" placeholder="Search..." class="bg-white border border-slate-200 px-6 py-3 rounded-2xl text-sm outline-none w-full md:w-64 focus:ring-4 focus:ring-blue-500/5 transition">
+                </div>
+            </div>
+
+            <div class="glass-card rounded-[2.5rem] overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50/50 border-b border-slate-100">
+                                <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Member Name</th>
+                                <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact</th>
+                                <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Payment Status</th>
+                                <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="memberTableBody" class="divide-y divide-slate-50"></tbody>
+                    </table>
+                </div>
+                
+                <div class="bg-slate-50/30 p-6 flex justify-between items-center border-t border-slate-100">
+                    <button onclick="changePage(-1)" id="prevBtn" class="px-6 py-2 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 disabled:opacity-20 transition">← Prev</button>
+                    <button onclick="changePage(1)" id="nextBtn" class="px-6 py-2 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 disabled:opacity-20 transition">Next →</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="profileModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md">
+        <div class="bg-white rounded-[3rem] w-full max-w-xl p-12 shadow-2xl relative">
+            <button onclick="closeProfile()" class="absolute top-10 right-10 text-slate-300 hover:text-slate-900 text-2xl font-bold">✕</button>
+            <div id="profStatusBadge" class="inline-block text-[9px] font-black px-3 py-1 rounded-full uppercase mb-4 shadow-sm">STATUS</div>
+            <h2 id="profName" class="text-4xl font-extrabold tracking-tighter text-slate-900">Member</h2>
+            <p id="profPhone" class="text-slate-400 text-base mt-2 mb-10 font-medium"></p>
+            <div id="paymentList" class="space-y-3 max-h-80 overflow-y-auto pr-4 custom-scrollbar mb-10"></div>
+            <div class="flex flex-col lg:flex-row justify-between items-center border-t border-slate-100 pt-8 gap-4">
+                <button id="statusToggleBtn" class="text-xs font-black uppercase tracking-widest text-slate-400">Pause</button>
+                <div class="flex gap-4 w-full lg:w-auto">
+                    <button onclick="deleteMember()" class="text-xs font-black uppercase text-red-200">Delete</button>
+                    <button onclick="sendSingleReminderFromProfile()" class="bg-blue-600 text-white px-8 py-3 rounded-2xl text-xs font-extrabold shadow-lg flex-1">WhatsApp Nudge</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+    <script>
+        window.logout = () => { localStorage.clear(); location.href = "login.html"; };
+        window.closeProfile = () => document.getElementById('profileModal').classList.add('hidden');
+    </script>
+</body>
+</html>

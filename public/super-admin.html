@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <title>GymFlow | Super Admin</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; }
+        .glass-card { background: white; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); }
+    </style>
+</head>
+<body class="p-6 lg:p-12">
+
+    <div id="adminAuth" class="fixed inset-0 z-[200] bg-slate-900 flex items-center justify-center p-6">
+        <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-md shadow-2xl text-center">
+            <h1 class="text-3xl font-black tracking-tighter mb-2">Master Login</h1>
+            <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-8">System Infrastructure</p>
+            <input id="masterUser" type="text" placeholder="Username" class="w-full p-4 mb-3 bg-slate-50 rounded-2xl border border-slate-100 outline-none">
+            <input id="masterPass" type="password" placeholder="Password" class="w-full p-4 mb-6 bg-slate-50 rounded-2xl border border-slate-100 outline-none">
+            <button onclick="checkMasterAuth()" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-blue-100 uppercase tracking-widest text-xs">Verify Identity</button>
+        </div>
+    </div>
+
+    <div id="adminDashboard" class="hidden max-w-6xl mx-auto">
+        <div class="flex justify-between items-end mb-12">
+            <div>
+                <h1 class="text-4xl font-black tracking-tighter">Onboard <span class="text-blue-600">Gyms.</span></h1>
+                <p class="text-slate-400 font-bold text-xs uppercase tracking-[0.3em] mt-2">Platform Management</p>
+            </div>
+            <button onclick="location.href='index.html'" class="text-xs font-black text-slate-400 hover:text-slate-900 uppercase">Back to Dashboard</button>
+        </div>
+
+        <div class="glass-card p-10 rounded-[3rem] mb-12 border-2 border-dashed border-blue-100">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <input id="newGymName" placeholder="Gym Name" class="p-4 bg-slate-50 rounded-2xl border border-slate-100 outline-none">
+                <input id="newGymUser" placeholder="Assign Username" class="p-4 bg-slate-50 rounded-2xl border border-slate-100 outline-none">
+                <input id="newGymPass" placeholder="Assign Password" class="p-4 bg-slate-50 rounded-2xl border border-slate-100 outline-none">
+                <button onclick="onboardGym()" class="bg-slate-900 text-white font-black rounded-2xl hover:bg-blue-600 transition uppercase text-[10px] tracking-widest">Create Gym Portal</button>
+            </div>
+        </div>
+
+        <div class="glass-card rounded-[2.5rem] overflow-hidden">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 border-b border-slate-100">
+                    <tr>
+                        <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Gym Identity</th>
+                        <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Credentials</th>
+                        <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="gymTableBody" class="divide-y divide-slate-50"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module" src="admin.js"></script>
+</body>
+</html>

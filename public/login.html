@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <title>GymFlow | Partner Login</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+        .login-card { background: white; border: 1px solid #e2e8f0; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.05); }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+    <div class="login-card p-12 rounded-[2rem] w-full max-w-md text-center">
+        <h1 class="text-4xl font-black text-slate-900 italic tracking-tighter mb-10">GymFlow<span class="text-blue-600">.</span></h1>
+        <div class="space-y-4">
+            <input id="u" type="text" placeholder="Username" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-4 focus:ring-blue-500/5 transition-all">
+            <input id="p" type="password" placeholder="Password" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-4 focus:ring-blue-500/5 transition-all">
+            <button id="loginBtn" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl shadow-xl hover:bg-blue-600 transition-all">Login to Dashboard</button>
+        </div>
+    </div>
+    <script type="module" src="auth.js"></script>
+</body>
+</html>
