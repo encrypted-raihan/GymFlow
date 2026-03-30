@@ -69,3 +69,11 @@ node_modules/
 .dataconnect
 
 .vercel
+
+# Python (if used later)
+venv/
+__pycache__/
+
+# OS junk
+.DS_Store
+Thumbs.db

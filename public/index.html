@@ -15,29 +15,15 @@
                         var(--bg-canvas);
             min-height: 100vh;
         }
-
-        .glass-sidebar {
-            background: var(--glass);
-            backdrop-filter: blur(20px) saturate(180%);
-            border-right: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        
-        .glass-card {
-            background: white;
-            border: 1px solid rgba(226, 232, 240, 0.6);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
-        }
-
+        .glass-sidebar { background: var(--glass); backdrop-filter: blur(20px) saturate(180%); border-right: 1px solid rgba(255, 255, 255, 0.3); }
+        .glass-card { background: white; border: 1px solid rgba(226, 232, 240, 0.6); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); }
         .chart-bar { width: 12px; background: #e2e8f0; border-radius: 4px; display: flex; align-items: flex-end; height: 60px; }
         .chart-fill { width: 100%; background: #2563eb; border-radius: 4px; transition: height 1s ease-out; }
         .rev-bar { width: 8px; border-radius: 2px; transition: height 0.5s ease; }
-
-        /* Custom Scrollbar */
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        
-        /* Table Row Hover */
         tr:hover td { background-color: #f8fafc; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="text-slate-900">
@@ -60,16 +46,17 @@
                     <span id="countUnpaid" class="text-[10px] text-red-500 font-black">0</span>
                 </button>
                 
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-10 mb-4 ml-2">Insights</p>
-                <div class="p-4 rounded-2xl bg-slate-900/5 border border-slate-900/5">
-                    <p class="text-[10px] font-bold text-slate-500 mb-3 uppercase">Weekly Activity</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-10 mb-4 ml-2">Live Studio</p>
+                <div class="p-4 rounded-2xl bg-blue-600/5 border border-blue-600/5">
+                    <p class="text-[10px] font-bold text-blue-500 mb-3 uppercase tracking-tighter">Current Occupancy</p>
                     <div class="flex items-end gap-2 h-16">
-                        <div class="chart-bar"><div class="chart-fill" style="height: 40%"></div></div>
-                        <div class="chart-bar"><div class="chart-fill" style="height: 60%"></div></div>
-                        <div class="chart-bar"><div class="chart-fill" style="height: 30%"></div></div>
-                        <div class="chart-bar"><div class="chart-fill" style="height: 85%"></div></div>
-                        <div class="chart-bar"><div class="chart-fill" style="height: 50%"></div></div>
+                        <div class="chart-bar"><div class="chart-fill bg-slate-300" style="height: 40%"></div></div>
+                        <div class="chart-bar"><div class="chart-fill bg-slate-300" style="height: 60%"></div></div>
+                        <div class="chart-bar"><div class="chart-fill bg-slate-300" style="height: 30%"></div></div>
+                        <div class="chart-bar"><div class="chart-fill bg-slate-300" style="height: 85%"></div></div>
+                        <div class="chart-bar"><div id="livePeakBar" class="chart-fill bg-blue-600" style="height: 0%"></div></div>
                     </div>
+                    <p class="text-[8px] font-bold text-slate-400 mt-2 uppercase tracking-widest">Live Tracking</p>
                 </div>
             </nav>
 
@@ -111,6 +98,26 @@
                 </div>
             </div>
 
+            <section class="mb-12">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                    <div>
+                        <h2 class="text-2xl font-black tracking-tight text-slate-900">Live on Floor</h2>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="flex h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                            <p id="countTraining" class="text-[9px] font-black text-slate-400 uppercase tracking-widest">0 MEMBERS TRAINING NOW</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+                        <button onclick="setLiveFilter('all')" class="px-4 py-2 rounded-xl text-[8px] font-black uppercase bg-slate-900 text-white transition-soft shadow-sm">All</button>
+                        <button onclick="setLiveFilter('Chest')" class="px-4 py-2 rounded-xl text-[8px] font-black uppercase bg-white border border-slate-100 text-slate-400 transition-soft">Chest</button>
+                        <button onclick="setLiveFilter('Back')" class="px-4 py-2 rounded-xl text-[8px] font-black uppercase bg-white border border-slate-100 text-slate-400 transition-soft">Back</button>
+                        <button onclick="setLiveFilter('Legs')" class="px-4 py-2 rounded-xl text-[8px] font-black uppercase bg-white border border-slate-100 text-slate-400 transition-soft">Legs</button>
+                    </div>
+                </div>
+                <div id="liveMembersGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+            </section>
+
             <section id="regSection" class="hidden glass-card p-8 rounded-[2.5rem] mb-12">
                 <div class="flex flex-col lg:flex-row gap-4">
                     <input id="regName" placeholder="Full Name" class="flex-1 bg-slate-50 p-4 rounded-xl outline-none border border-slate-200">
@@ -144,7 +151,6 @@
                         <tbody id="memberTableBody" class="divide-y divide-slate-50"></tbody>
                     </table>
                 </div>
-                
                 <div class="bg-slate-50/30 p-6 flex justify-between items-center border-t border-slate-100">
                     <button onclick="changePage(-1)" id="prevBtn" class="px-6 py-2 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 disabled:opacity-20 transition">← Prev</button>
                     <button onclick="changePage(1)" id="nextBtn" class="px-6 py-2 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 disabled:opacity-20 transition">Next →</button>

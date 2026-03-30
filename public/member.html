@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <title>GymFlow | My Session</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #0f172a; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+        .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.3); }
+        .apple-shadow { box-shadow: 0 20px 50px rgba(0,0,0,0.05); }
+        .tap-active:active { transform: scale(0.95); }
+        .transition-soft { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .muscle-chip input:checked + div { background: #2563eb; color: white; border-color: transparent; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2); transform: translateY(-2px); }
+        @keyframes pulse-blue { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .animate-status { animation: pulse-blue 2s infinite; }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen">
+
+    <div id="loginView" class="max-w-md mx-auto mt-20 transition-soft">
+        <div class="text-center mb-10">
+            <h1 class="text-5xl font-extrabold tracking-tighter mb-2 italic">GymFlow<span class="text-blue-600">.</span></h1>
+            <p class="text-slate-400 font-medium">Enter your credentials to proceed.</p>
+        </div>
+        <div class="glass-panel p-8 rounded-[2.5rem] apple-shadow space-y-4 border-2 border-white">
+            <input id="loginName" type="text" placeholder="Full Name" class="w-full p-5 rounded-2xl bg-white border-none outline-none focus:ring-2 focus:ring-blue-500 transition-soft">
+            <input id="loginPhone" type="tel" placeholder="Phone Number" class="w-full p-5 rounded-2xl bg-white border-none outline-none focus:ring-2 focus:ring-blue-500 transition-soft">
+            <button onclick="handleLogin()" class="w-full bg-slate-900 text-white p-5 rounded-2xl font-bold text-lg tap-active transition-soft shadow-xl shadow-slate-200">Sign In</button>
+        </div>
+    </div>
+
+    <div id="dashboardView" class="hidden max-w-2xl mx-auto space-y-6 pb-10">
+        <header class="flex justify-between items-center py-4 px-2">
+            <div class="max-w-[70%]">
+                <p id="quoteBox" class="text-blue-600 font-black uppercase text-[8px] tracking-[0.2em] mb-1 italic">"HUSTLE FOR THAT MUSCLE"</p>
+                <h2 id="userName" class="text-3xl font-black tracking-tight text-slate-900 truncate">User</h2>
+            </div>
+            <div id="paymentBadge" class="px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap">STATUS</div>
+        </header>
+
+        <div class="glass-panel p-10 rounded-[3.5rem] apple-shadow text-center relative overflow-hidden border-2 border-white">
+            <div id="timerDisplay" class="hidden mb-2 text-3xl font-black tabular-nums tracking-tight text-blue-600">00:00:00</div>
+            <p id="attendanceTimer" class="text-[10px] font-black text-slate-400 mb-8 tracking-[0.4em] uppercase">READY TO TRAIN</p>
+            
+            <button id="mainToggleBtn" onclick="handleMainAction()" class="w-48 h-48 rounded-full border-[10px] border-white shadow-2xl tap-active transition-soft text-white font-black text-2xl mx-auto flex items-center justify-center relative z-50">
+                START
+            </button>
+
+            <div id="selectionOverlay" class="hidden mt-10 space-y-6">
+                <div class="h-[1px] bg-slate-100 w-full mb-6"></div>
+                <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest">Select Focus (Max 3)</h3>
+                <div class="grid grid-cols-3 gap-3">
+                    <label class="muscle-chip cursor-pointer"><input type="checkbox" value="Chest" class="hidden" onchange="validateSelection(this)"><div class="bg-white p-4 rounded-2xl text-center text-[10px] font-black border border-slate-100 transition-soft">CHEST</div></label>
+                    <label class="muscle-chip cursor-pointer"><input type="checkbox" value="Back" class="hidden" onchange="validateSelection(this)"><div class="bg-white p-4 rounded-2xl text-center text-[10px] font-black border border-slate-100 transition-soft">BACK</div></label>
+                    <label class="muscle-chip cursor-pointer"><input type="checkbox" value="Legs" class="hidden" onchange="validateSelection(this)"><div class="bg-white p-4 rounded-2xl text-center text-[10px] font-black border border-slate-100 transition-soft">LEGS</div></label>
+                    <label class="muscle-chip cursor-pointer"><input type="checkbox" value="Shoulders" class="hidden" onchange="validateSelection(this)"><div class="bg-white p-4 rounded-2xl text-center text-[10px] font-black border border-slate-100 transition-soft">SHOULDERS</div></label>
+                    <label class="muscle-chip cursor-pointer"><input type="checkbox" value="Arms" class="hidden" onchange="validateSelection(this)"><div class="bg-white p-4 rounded-2xl text-center text-[10px] font-black border border-slate-100 transition-soft">ARMS</div></label>
+                    <label class="muscle-chip cursor-pointer"><input type="checkbox" value="Cardio" class="hidden" onchange="validateSelection(this)"><div class="bg-white p-4 rounded-2xl text-center text-[10px] font-black border border-slate-100 transition-soft">CARDIO</div></label>
+                </div>
+                <button onclick="confirmAndStart()" class="w-full bg-blue-600 text-white p-5 rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-100 tap-active transition-soft">Confirm & Start</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="glass-panel p-8 rounded-[2.5rem] apple-shadow border border-white">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Recent Progress</p>
+                <div id="workoutHistory" class="space-y-4"></div>
+            </div>
+            <div class="glass-panel p-8 rounded-[2.5rem] apple-shadow border border-white">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Membership Fees</p>
+                <div id="paymentHistory" class="space-y-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBcsmX7T1NotMi0T1XZ6b03yI3r7qZYQr8",
+            authDomain: "gym-membership-tracker-60626.firebaseapp.com",
+            projectId: "gym-membership-tracker-60626",
+            storageBucket: "gym-membership-tracker-60626.firebasestorage.app",
+            messagingSenderId: "260703319955",
+            appId: "1:260703319955:web:78206334baa1fc79725a66"
+        };
+
+        const quotes = [
+            "Don't stop until you're proud.",
+            "Your only limit is you.",
+            "Work hard in silence, let success be your noise.",
+            "Excuses don't burn calories.",
+            "The body achieves what the mind believes.",
+            "Hustle for that muscle."
+        ];
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        let currentMember = null;
+        let liveTimerInterval = null;
+
+        window.handleLogin = async () => {
+            const name = document.getElementById('loginName').value.trim();
+            const phone = document.getElementById('loginPhone').value.trim();
+            if(!name || !phone) return alert("Fill fields!");
+            const q = query(collection(db, "members"), where("name", "==", name), where("phone", "==", phone));
+            const snap = await getDocs(q);
+            if(snap.empty) return alert("Member not found.");
+            currentMember = { id: snap.docs[0].id, ...snap.docs[0].data() };
+            localStorage.setItem('gymMemberId', currentMember.id);
+            showDashboard();
+        };
+
+        window.handleMainAction = () => {
+            if(currentMember.isInside) {
+                if(confirm("End session and save progress?")) finishSession();
+            } else {
+                document.getElementById('selectionOverlay').classList.remove('hidden');
+                document.getElementById('mainToggleBtn').classList.add('opacity-10', 'pointer-events-none');
+            }
+        };
+
+        window.confirmAndStart = async () => {
+            const selected = Array.from(document.querySelectorAll('.muscle-chip input:checked')).map(i => i.value);
+            const now = new Date();
+            const memberRef = doc(db, "members", currentMember.id);
+
+            try {
+                await updateDoc(memberRef, { 
+                    isInside: true, 
+                    lastIn: now.toISOString(),
+                    activeWorkoutParts: selected.length > 0 ? selected : ["General"]
+                });
+                currentMember.isInside = true;
+                currentMember.lastIn = now.toISOString();
+                currentMember.activeWorkoutParts = selected;
+                
+                document.getElementById('selectionOverlay').classList.add('hidden');
+                document.getElementById('mainToggleBtn').classList.remove('opacity-10', 'pointer-events-none');
+                setNewQuote();
+                updateUIState();
+            } catch (e) { alert("Failed to start."); }
+        };
+
+        async function finishSession() {
+            const now = new Date();
+            const memberRef = doc(db, "members", currentMember.id);
+            
+            const start = new Date(currentMember.lastIn);
+            const diffMs = now - start;
+            const diffMins = Math.round(diffMs / 60000);
+
+            try {
+                await updateDoc(memberRef, { 
+                    isInside: false, 
+                    lastOut: now.toISOString(),
+                    workoutHistory: arrayUnion({
+                        date: now.toLocaleDateString(),
+                        muscles: currentMember.activeWorkoutParts || ["General"],
+                        duration: diffMins + "m"
+                    }),
+                    activeWorkoutParts: []
+                });
+                currentMember.isInside = false;
+                clearInterval(liveTimerInterval);
+                document.querySelectorAll('.muscle-chip input').forEach(i => i.checked = false);
+                updateUIState();
+                renderHistory();
+            } catch (e) { alert("Error checking out."); }
+        }
+
+        // --- LIVE TIMER LOGIC ---
+        function startLiveTimer() {
+            clearInterval(liveTimerInterval);
+            const timerEl = document.getElementById('timerDisplay');
+            timerEl.classList.remove('hidden');
+
+            liveTimerInterval = setInterval(() => {
+                const start = new Date(currentMember.lastIn);
+                const now = new Date();
+                const diff = now - start;
+
+                const h = Math.floor(diff / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+
+                timerEl.innerText = 
+                    `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function setNewQuote() {
+            const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+            document.getElementById('quoteBox').innerText = `"${randomQuote.toUpperCase()}"`;
+        }
+
+        window.validateSelection = (el) => {
+            if(document.querySelectorAll('.muscle-chip input:checked').length > 3) {
+                el.checked = false;
+                alert("Max 3 areas.");
+            }
+        };
+
+        function showDashboard() {
+            document.getElementById('loginView').classList.add('hidden');
+            document.getElementById('dashboardView').classList.remove('hidden');
+            document.getElementById('userName').innerText = currentMember.name.split(' ')[0];
+            setNewQuote();
+            updateUIState();
+            renderHistory();
+        }
+
+        function updateUIState() {
+            const btn = document.getElementById('mainToggleBtn');
+            const statusText = document.getElementById('attendanceTimer');
+            const timerEl = document.getElementById('timerDisplay');
+            const isInside = currentMember.isInside || false;
+            const curMonth = new Date().toISOString().slice(0, 7);
+
+            const hasPaid = currentMember.payments?.includes(curMonth);
+            const pBadge = document.getElementById('paymentBadge');
+            pBadge.innerText = hasPaid ? "Access Active" : "Fees Due";
+            pBadge.className = `px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest ${hasPaid ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600 animate-status'}`;
+
+            if(isInside) {
+                btn.innerText = "FINISH";
+                btn.style.backgroundColor = "#ef4444";
+                statusText.innerText = "SESSION IN PROGRESS";
+                statusText.classList.add('text-red-500', 'animate-pulse');
+                startLiveTimer();
+            } else {
+                btn.innerText = "START";
+                btn.style.backgroundColor = "#2563eb";
+                statusText.innerText = "OFF THE FLOOR";
+                statusText.classList.remove('text-red-500', 'animate-pulse');
+                timerEl.classList.add('hidden');
+            }
+        }
+
+        async function renderHistory() {
+            const snap = await getDoc(doc(db, "members", currentMember.id));
+            const data = snap.data();
+            const histContainer = document.getElementById('workoutHistory');
+            histContainer.innerHTML = (data.workoutHistory || []).slice(-5).reverse().map(h => `
+                <div class="flex justify-between items-start bg-white/60 p-4 rounded-2xl border border-slate-50">
+                    <div>
+                        <p class="font-black text-slate-800 text-[11px] mb-1">${h.date}</p>
+                        <div class="flex flex-wrap gap-1">
+                            ${(h.muscles || []).map(m => `<span class="bg-blue-600 text-white px-2 py-0.5 rounded text-[7px] font-bold uppercase">${m}</span>`).join('')}
+                        </div>
+                    </div>
+                    <span class="text-[9px] font-black text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">${h.duration || '--'}</span>
+                </div>
+            `).join('') || '<p class="text-slate-400 text-center italic py-4">No sessions yet.</p>';
+
+            document.getElementById('paymentHistory').innerHTML = (data.payments || []).slice(-4).reverse().map(p => `
+                <div class="flex justify-between items-center bg-white/60 p-4 rounded-2xl border border-slate-50">
+                    <span class="font-black text-slate-800 text-[11px]">${p}</span>
+                    <span class="text-green-500 font-black text-[9px] tracking-widest uppercase">PAID ✓</span>
+                </div>
+            `).join('') || '<p class="text-slate-400 text-center italic py-4">No records.</p>';
+        }
+
+        const savedId = localStorage.getItem('gymMemberId');
+        if(savedId) {
+            getDoc(doc(db, "members", savedId)).then(snap => {
+                if(snap.exists()) {
+                    currentMember = { id: snap.id, ...snap.data() };
+                    showDashboard();
+                }
+            });
+        }
+    </script>
+</body>
+</html>

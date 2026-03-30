@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBcsmX7T1NotMi0T1XZ6b03yI3r7qZYQr8",
@@ -19,22 +19,32 @@ if(!gymId) window.location.href = "login.html";
 let allMembers = [];
 let selectedId = null;
 let currentFilter = 'all';
+let activeLiveFilter = 'all';
 let currentPage = 1;
 const rowsPerPage = 7; 
 
 document.getElementById('displayGymName').innerText = localStorage.getItem("activeGymName");
 
-async function loadMembers() {
+// --- UPDATED: Real-time Listener ---
+function loadMembers() {
     const q = query(collection(db, "members"), where("gymId", "==", gymId));
-    const snap = await getDocs(q);
-    allMembers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    updateStats();
-    render();
+    
+    // Using onSnapshot for real-time updates
+    onSnapshot(q, (snap) => {
+        allMembers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        updateStats();
+        render();
+        renderLiveDashboard();
+    }, (error) => {
+        console.error("Snapshot error:", error);
+    });
 }
 
 function updateStats() {
     const curMonth = new Date().toISOString().slice(0, 7);
     const active = allMembers.filter(m => m.status !== 'inactive');
+    
+    const trainingNowCount = active.filter(m => m.isInside === true).length;
     const paidCount = active.filter(m => m.payments?.includes(curMonth)).length;
     const unpaidCount = active.length - paidCount;
     const percent = active.length > 0 ? Math.round((paidCount / active.length) * 100) : 0;
@@ -44,10 +54,68 @@ function updateStats() {
     document.getElementById('statPercent').innerText = percent + "%";
     document.getElementById('statBar').style.width = percent + "%";
 
+    if(document.getElementById('countTraining')) {
+        document.getElementById('countTraining').innerText = trainingNowCount;
+    }
+
     if(document.getElementById('revPaidBar')) document.getElementById('revPaidBar').style.height = percent + "%";
     if(document.getElementById('revDueBar')) document.getElementById('revDueBar').style.height = unpaidPercent + "%";
+    
+    // Peak Hour Logic: Use trainingNowCount to influence the "Live" bar in the chart
+    if(document.getElementById('livePeakBar')) {
+        const peakHeight = Math.min(trainingNowCount * 15, 100); // Scale for visual
+        document.getElementById('livePeakBar').style.height = peakHeight + "%";
+    }
+
     if(document.getElementById('countAll')) document.getElementById('countAll').innerText = active.length;
     if(document.getElementById('countUnpaid')) document.getElementById('countUnpaid').innerText = unpaidCount;
+}
+
+// --- NEW: Live Dashboard & Peak Logic ---
+window.setLiveFilter = (f) => {
+    activeLiveFilter = f;
+    renderLiveDashboard();
+};
+
+function renderLiveDashboard() {
+    const container = document.getElementById('liveMembersGrid');
+    if(!container) return;
+
+    const liveNow = allMembers.filter(m => m.isInside === true);
+    const displayList = activeLiveFilter === 'all' 
+        ? liveNow 
+        : liveNow.filter(m => m.activeWorkoutParts?.includes(activeLiveFilter));
+
+    if (displayList.length === 0) {
+        container.innerHTML = `
+            <div class="col-span-full py-10 text-center border-2 border-dashed border-slate-100 rounded-[2.5rem]">
+                <p class="text-slate-400 font-medium text-xs italic">No one training ${activeLiveFilter === 'all' ? 'right now' : activeLiveFilter} focus.</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = displayList.map(m => {
+        const startTime = m.lastIn ? new Date(m.lastIn) : new Date();
+        const diffMins = Math.round((new Date() - startTime) / 60000);
+
+        return `
+        <div class="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+            <div class="flex justify-between items-start mb-3">
+                <div>
+                    <h4 class="font-black text-slate-900 text-xs tracking-tight">${m.name}</h4>
+                    <span class="text-[8px] font-bold text-blue-500 uppercase tracking-widest">${diffMins}m in session</span>
+                </div>
+                <div class="bg-green-500 w-1.5 h-1.5 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
+            </div>
+            <div class="flex flex-wrap gap-1">
+                ${(m.activeWorkoutParts || ['General']).map(part => `
+                    <span class="bg-blue-50 text-blue-600 text-[7px] font-black px-2 py-0.5 rounded-md uppercase tracking-tighter">
+                        ${part}
+                    </span>
+                `).join('')}
+            </div>
+        </div>`;
+    }).join('');
 }
 
 window.setFilter = (f) => { 
@@ -67,7 +135,6 @@ function render() {
     const searchVal = document.getElementById('searchBar').value.toLowerCase();
     const curMonth = new Date().toISOString().slice(0, 7);
     
-    // 1. Filter and Sort (Due members always first)
     let filtered = allMembers.filter(m => {
         const matchesSearch = m.name.toLowerCase().includes(searchVal);
         if (currentFilter === 'unpaid') {
@@ -76,7 +143,6 @@ function render() {
         return matchesSearch;
     });
 
-    // Sort: Due -> Paid -> Paused
     filtered.sort((a, b) => {
         const aPaid = a.payments?.includes(curMonth);
         const bPaid = b.payments?.includes(curMonth);
@@ -85,7 +151,6 @@ function render() {
         return aPaid - bPaid; 
     });
 
-    // 2. Pagination Logic
     const totalPages = Math.ceil(filtered.length / rowsPerPage);
     if (currentPage > totalPages) currentPage = totalPages || 1;
     const start = (currentPage - 1) * rowsPerPage;
@@ -102,11 +167,10 @@ function render() {
     paginatedItems.forEach(m => {
         const hasPaid = m.payments?.includes(curMonth);
         const isPaused = m.status === 'inactive';
+        const isTrainingNow = m.isInside === true;
         
-        // Determine current group type
         let currentType = isPaused ? 'PAUSED' : (hasPaid ? 'CLEARED' : 'ACTION REQUIRED');
         
-        // 3. Inject Group Header if type changes (Restoring the Differentiation)
         if (currentType !== lastType) {
             const bgColor = isPaused ? 'bg-slate-100 text-slate-500' : (hasPaid ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700');
             tableBody.innerHTML += `
@@ -124,7 +188,20 @@ function render() {
                 <div class="flex items-center gap-3">
                     <div class="w-2 h-2 rounded-full ${isPaused ? 'bg-slate-300' : (hasPaid ? 'bg-green-500' : 'bg-red-500 animate-pulse')}"></div>
                     <div>
-                        <p class="text-sm font-bold text-slate-900 group-hover:text-blue-600">${m.name}</p>
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm font-bold text-slate-900 group-hover:text-blue-600">${m.name}</p>
+                            ${isTrainingNow ? `
+                                <span class="flex items-center gap-1.5">
+                                    <span class="flex h-1.5 w-1.5 relative">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-500"></span>
+                                    </span>
+                                    <span class="text-[7px] font-black text-blue-500 uppercase tracking-tighter">
+                                        FOCUS: ${(m.activeWorkoutParts || []).join(', ')}
+                                    </span>
+                                </span>
+                            ` : ''}
+                        </div>
                         <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Member Since ${m.joinDate?.slice(0,7) || 'N/A'}</p>
                     </div>
                 </div>
@@ -161,11 +238,20 @@ window.addNewMember = async () => {
     const name = document.getElementById('regName').value.trim();
     const phone = document.getElementById('regPhone').value.trim();
     if(!name || !phone) return alert("Enter details");
+
     await addDoc(collection(db, "members"), {
-        name, phone, gymId, status: 'active',
+        name, 
+        phone, 
+        gymId, 
+        status: 'active',
         joinDate: new Date().toISOString().slice(0, 10),
-        payments: [new Date().toISOString().slice(0, 7)] 
+        payments: [new Date().toISOString().slice(0, 7)],
+        isInside: false,
+        lastIn: "",
+        lastOut: "",
+        workoutHistory: [] 
     });
+    
     document.getElementById('regSection').classList.add('hidden');
     loadMembers();
 };
@@ -203,14 +289,12 @@ window.togglePay = async (code) => {
     let pays = m.payments || [];
     pays = pays.includes(code) ? pays.filter(p => p !== code) : [...pays, code];
     await updateDoc(doc(db, "members", selectedId), { payments: pays });
-    await loadMembers();
     openProfile(selectedId);
 };
 
 async function toggleStatus(id, current) {
     const newStatus = current === 'inactive' ? 'active' : 'inactive';
     await updateDoc(doc(db, "members", id), { status: newStatus });
-    await loadMembers();
     openProfile(id);
 }
 
