@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// 1. Firebase Configuration (Matches your GymFlow Project)
 const firebaseConfig = {
     apiKey: "AIzaSyBcsmX7T1NotMi0T1XZ6b03yI3r7qZYQr8",
     authDomain: "gym-membership-tracker-60626.firebaseapp.com",
@@ -13,114 +12,77 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
-// 2. Identify Current Gym Session
 const gymId = localStorage.getItem("activeGymId");
-console.log("Current Gym Session ID:", gymId);
 
-if (!gymId) {
-    alert("Session expired. Redirecting to login.");
-    window.location.href = "login.html";
-}
+if (!gymId) window.location.href = "login.html";
 
-// Helper: Generates "March 2026" style keys
-const getMonthKey = () => {
-    return new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
-};
-
+const getMonthKey = () => new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
 document.getElementById('currentMonthTitle').innerText = getMonthKey();
 
-// 3. ADD EXPENSE FUNCTION
+// 1. LEDGER LOGIC
 window.addExpense = async () => {
     const category = document.getElementById('expCategory').value;
     const title = document.getElementById('expTitle').value;
     const amount = parseFloat(document.getElementById('expAmount').value);
 
-    if (!title || isNaN(amount)) {
-        alert("Please enter a valid title and amount.");
-        return;
-    }
+    if (!title || isNaN(amount)) return alert("Fill title and amount");
 
     try {
-        console.log("Saving expense for:", gymId);
         await addDoc(collection(db, "expenses"), {
-            gymId: gymId,
-            category: category,
-            title: title,
-            amount: amount,
+            gymId, category, title, amount,
             monthKey: getMonthKey(),
             timestamp: Date.now()
         });
-        
-        // Reset Inputs
         document.getElementById('expTitle').value = "";
         document.getElementById('expAmount').value = "";
-        
-        console.log("Expense saved successfully!");
-        loadFinancials(); // Refresh UI
-    } catch (error) {
-        console.error("Error saving expense:", error);
-        alert("Firebase Error: " + error.message);
-    }
+        loadFinancials();
+    } catch (e) { console.error(e); }
 };
 
-// 4. LOAD FINANCIALS (Current Month & History)
 async function loadFinancials() {
     try {
-        // Querying all expenses for this gym
         const q = query(collection(db, "expenses"), where("gymId", "==", gymId));
         const snap = await getDocs(q);
-        
         const activeList = document.getElementById('expenseList');
         const archiveList = document.getElementById('archiveList');
         const currentMonth = getMonthKey();
         
-        activeList.innerHTML = "";
-        archiveList.innerHTML = "";
-        
-        let monthlyTotal = 0;
-        let fixedTotal = 0;
-        let salaryTotal = 0;
-        let archives = {}; // For history storage
+        activeList.innerHTML = ""; archiveList.innerHTML = "";
+        let monthlyTotal = 0, fixedTotal = 0, salaryTotal = 0, archives = {};
 
         snap.forEach(d => {
             const data = d.data();
-            
             if (data.monthKey === currentMonth) {
-                // CURRENT MONTH LOGIC
                 monthlyTotal += data.amount;
                 if (data.category === 'Rent' || data.category === 'Electricity') fixedTotal += data.amount;
                 if (data.category === 'Salary') salaryTotal += data.amount;
 
                 activeList.innerHTML += `
-                <div class="glass p-5 rounded-3xl flex justify-between items-center border border-white shadow-sm expense-card mb-3">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-[10px]">
-                            ${data.category.substring(0,2).toUpperCase()}
+                <div class="glass p-4 rounded-2xl flex justify-between items-center border border-white shadow-sm mb-2 expense-card">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-[8px] uppercase">
+                            ${data.category.substring(0,2)}
                         </div>
                         <div>
-                            <p class="font-bold text-slate-800 text-sm">${data.title}</p>
-                            <p class="text-[9px] text-slate-400 font-black uppercase tracking-widest">${data.category}</p>
+                            <p class="font-bold text-slate-800 text-[12px] leading-tight">${data.title}</p>
+                            <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest">${data.category}</p>
                         </div>
                     </div>
-                    <div class="text-right flex items-center gap-6">
-                        <p class="font-black text-slate-900 text-sm">₹${data.amount}</p>
-                        <button onclick="deleteEntry('${d.id}')" class="text-slate-300 hover:text-red-500 transition px-2">✕</button>
+                    <div class="text-right flex items-center gap-4">
+                        <p class="font-black text-slate-900 text-xs">₹${data.amount}</p>
+                        <button onclick="deleteEntry('${d.id}')" class="text-slate-300 hover:text-red-500 transition px-1">✕</button>
                     </div>
                 </div>`;
             } else {
-                // ARCHIVE/HISTORY LOGIC
                 if (!archives[data.monthKey]) archives[data.monthKey] = 0;
                 archives[data.monthKey] += data.amount;
             }
         });
 
-        // Update Totals on Top Card
         document.getElementById('totalSpend').innerText = `₹${monthlyTotal}`;
         document.getElementById('fixedTotal').innerText = `₹${fixedTotal}`;
         document.getElementById('staffTotal').innerText = `₹${salaryTotal}`;
 
-        // Render Archive Cards
         Object.keys(archives).forEach(month => {
             archiveList.innerHTML += `
             <div class="bg-white p-6 rounded-[2rem] border border-slate-200">
@@ -128,20 +90,36 @@ async function loadFinancials() {
                 <p class="text-xl font-black text-slate-800">₹${archives[month]}</p>
             </div>`;
         });
-
-    } catch (error) {
-        console.error("Error loading financials:", error);
-    }
+    } catch (e) { console.error(e); }
 }
 
-// 5. STAFF MANAGEMENT
+// 2. STAFF & VARIABLE PAYROLL
 window.addStaff = async () => {
     const name = document.getElementById('staffName').value;
-    if (!name) return;
+    const salary = parseFloat(document.getElementById('staffBaseSalary').value);
+    if (!name || isNaN(salary)) return alert("Enter valid staff name and salary");
+
     try {
-        await addDoc(collection(db, "staff"), { gymId, name });
+        await addDoc(collection(db, "staff"), { gymId, name, baseSalary: salary });
         document.getElementById('staffName').value = "";
+        document.getElementById('staffBaseSalary').value = "";
         loadStaff();
+    } catch (e) { console.error(e); }
+};
+
+window.payStaff = async (staffId, name) => {
+    const amountInput = document.getElementById(`pay-amt-${staffId}`);
+    const amount = parseFloat(amountInput.value);
+
+    if (isNaN(amount) || amount <= 0) return alert("Invalid amount");
+    if (!confirm(`Log ₹${amount} salary for ${name}?`)) return;
+
+    try {
+        await addDoc(collection(db, "expenses"), {
+            gymId, category: "Salary", title: `Salary: ${name}`,
+            amount: amount, monthKey: getMonthKey(), timestamp: Date.now()
+        });
+        loadFinancials();
     } catch (e) { console.error(e); }
 };
 
@@ -151,31 +129,32 @@ async function loadStaff() {
         const snap = await getDocs(q);
         const list = document.getElementById('staffList');
         list.innerHTML = "";
+
         snap.forEach(d => {
+            const s = d.data();
             list.innerHTML += `
-            <div class="flex justify-between items-center bg-slate-50/50 p-3 rounded-xl">
-                <span class="text-xs font-bold text-slate-700">${d.data().name}</span>
-                <button onclick="deleteStaff('${d.id}')" class="text-slate-300 hover:text-red-400 text-[10px] font-bold">REMOVE</button>
+            <div class="bg-white/50 p-4 rounded-2xl border border-white shadow-sm mb-3">
+                <div class="flex justify-between items-center mb-3">
+                    <div>
+                        <p class="text-xs font-black text-slate-800">${s.name}</p>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Base: ₹${s.baseSalary}</p>
+                    </div>
+                    <button onclick="deleteStaff('${d.id}')" class="text-slate-300 hover:text-red-400 text-xs font-bold px-2">✕</button>
+                </div>
+                <div class="flex gap-2">
+                    <input id="pay-amt-${d.id}" type="number" value="${s.baseSalary}" 
+                        class="w-24 bg-white border border-slate-100 rounded-lg p-2 text-xs font-black text-blue-600 outline-none">
+                    <button onclick="payStaff('${d.id}', '${s.name}')" 
+                        class="flex-1 bg-white border border-slate-100 py-2 rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition shadow-sm">
+                        Pay
+                    </button>
+                </div>
             </div>`;
         });
     } catch (e) { console.error(e); }
 }
 
-// 6. DELETE OPERATIONS
-window.deleteEntry = async (id) => {
-    if (confirm("Delete this expense?")) {
-        await deleteDoc(doc(db, "expenses", id));
-        loadFinancials();
-    }
-};
+window.deleteEntry = async (id) => { if (confirm("Delete expense?")) { await deleteDoc(doc(db, "expenses", id)); loadFinancials(); } };
+window.deleteStaff = async (id) => { if (confirm("Remove staff?")) { await deleteDoc(doc(db, "staff", id)); loadStaff(); } };
 
-window.deleteStaff = async (id) => {
-    if (confirm("Remove this staff member?")) {
-        await deleteDoc(doc(db, "staff", id));
-        loadStaff();
-    }
-};
-
-// INITIAL LOAD
-loadFinancials();
-loadStaff();
+loadFinancials(); loadStaff();
