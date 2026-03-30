@@ -14,18 +14,35 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 document.getElementById('loginBtn').addEventListener('click', async () => {
-    const user = document.getElementById('u').value;
-    const pass = document.getElementById('p').value;
+    const inputUser = document.getElementById('u').value.trim();
+    const inputPass = document.getElementById('p').value.trim();
 
-    const q = query(collection(db, "gyms"), where("user", "==", user), where("pass", "==", pass));
-    const snap = await getDocs(q);
+    if(!inputUser || !inputPass) return alert("Please enter credentials");
 
-    if(!snap.empty) {
-        const gymData = snap.docs[0].data();
-        localStorage.setItem("activeGymId", snap.docs[0].id);
-        localStorage.setItem("activeGymName", gymData.name);
-        window.location.href = "index.html";
-    } else {
-        alert("Invalid Credentials");
+    // FIXED: Changed 'user' to 'username' and 'pass' to 'password' to match admin.js
+    const q = query(
+        collection(db, "gyms"), 
+        where("username", "==", inputUser), 
+        where("password", "==", inputPass)
+    );
+
+    try {
+        const snap = await getDocs(q);
+
+        if(!snap.empty) {
+            const gymDoc = snap.docs[0];
+            const gymData = gymDoc.data();
+            
+            // Set session data
+            localStorage.setItem("activeGymId", gymDoc.id);
+            localStorage.setItem("activeGymName", gymData.name);
+            
+            window.location.href = "index.html";
+        } else {
+            alert("Invalid Credentials. Please check your username or password.");
+        }
+    } catch (error) {
+        console.error("Login error:", error);
+        alert("System error during login.");
     }
 });

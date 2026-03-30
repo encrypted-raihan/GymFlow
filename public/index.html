@@ -37,14 +37,25 @@
 
             <nav class="space-y-1 flex-1">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 ml-2">Management</p>
-                <button onclick="setFilter('all')" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold bg-white shadow-sm text-slate-900 border border-slate-200/50">
+                
+                <button onclick="setFilter('all')" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold bg-white shadow-sm text-slate-900 border border-slate-200/50 mb-2">
                     <span>👥 Members</span>
                     <span id="countAll" class="text-[10px] opacity-50 font-black">0</span>
                 </button>
-                <button onclick="setFilter('unpaid')" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-white/50 transition">
+                
+                <button onclick="setFilter('unpaid')" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-white/50 transition mb-2">
                     <span>⏳ Pending</span>
                     <span id="countUnpaid" class="text-[10px] text-red-500 font-black">0</span>
                 </button>
+
+                <a href="expense.html" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition group">
+                    <div class="flex items-center gap-2">
+                        <span>📊 Expenses</span>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 opacity-0 group-hover:opacity-100 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
                 
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-10 mb-4 ml-2">Live Studio</p>
                 <div class="p-4 rounded-2xl bg-blue-600/5 border border-blue-600/5">
