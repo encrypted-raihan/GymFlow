@@ -10,6 +10,15 @@ const firebaseConfig = {
     appId: "1:260703319955:web:78206334baa1fc79725a66"
 };
 
+// --- SYNC GYM NAME ---
+document.addEventListener('DOMContentLoaded', () => {
+    const gymName = localStorage.getItem("activeGymName") || "GymFlow Pro";
+    const displayElement = document.getElementById('displayGymName');
+    if (displayElement) {
+        displayElement.innerText = gymName;
+    }
+});
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const gymId = localStorage.getItem("activeGymId");
@@ -54,7 +63,7 @@ function updateStats() {
     document.getElementById('countUnpaid').innerText = active.length - paidCount;
 }
 
-// 2. MEMBER TABLE (With Visual Hierarchy)
+// 2. MEMBER TABLE
 window.render = () => {
     const tbody = document.getElementById('memberTableBody');
     const cur = new Date().toISOString().slice(0, 7);
@@ -116,7 +125,7 @@ window.render = () => {
     tbody.innerHTML = html || `<tr><td colspan="3" class="p-10 text-center text-slate-400 text-xs italic">No matching members</td></tr>`;
 };
 
-// 3. LIVE FEED (Fixed Timer Logic)
+// 3. LIVE FEED
 window.setLiveFilter = (part) => {
     activeLiveFilter = part;
     document.querySelectorAll('.live-f-btn').forEach(btn => {
@@ -145,26 +154,11 @@ window.renderLive = () => {
 
     grid.innerHTML = filtered.map(m => {
         const parts = m.activeWorkoutParts && m.activeWorkoutParts.length > 0 ? m.activeWorkoutParts : ['General'];
-        
-        // --- SMART AUTO-DETECT TIMER ---
         let timeDisplay = "Just Joined";
-        
-        // Try to find ANY field that might be the timestamp
-        // We check sessionStart, startTime, checkIn, or lastUpdated
         const rawTime = m.sessionStart || m.startTime || m.checkIn || m.lastIn;
 
         if (rawTime) {
-            let startDate;
-            
-            // Handle Firestore Timestamp Object
-            if (rawTime.seconds) {
-                startDate = new Date(rawTime.seconds * 1000);
-            } 
-            // Handle ISO String or Date Object
-            else {
-                startDate = new Date(rawTime);
-            }
-
+            let startDate = rawTime.seconds ? new Date(rawTime.seconds * 1000) : new Date(rawTime);
             const now = new Date();
             const diffInMs = now.getTime() - startDate.getTime();
             const diffInMins = Math.floor(diffInMs / 60000);
@@ -258,19 +252,30 @@ window.togglePay = async (code) => {
 };
 
 window.addNewMember = async () => {
-    const name = document.getElementById('regName').value.trim();
-    const phone = document.getElementById('regPhone').value.trim();
+    const nameInput = document.getElementById('regName');
+    const phoneInput = document.getElementById('regPhone');
+    const planInput = document.getElementById('regPlan');
+    const monthlyInput = document.getElementById('regMonthlyFee');
+    const joiningInput = document.getElementById('regJoiningFee');
+
+    const name = nameInput.value.trim();
+    const phone = phoneInput.value.trim();
+
     if(!name || !phone) return alert("Required: Name & Phone");
-    await addDoc(collection(db, "members"), {
-        name, phone, gymId, 
-        monthlyFee: parseFloat(document.getElementById('regMonthlyFee').value) || 0,
-        joiningFee: parseFloat(document.getElementById('regJoiningFee').value) || 0,
-        plan: document.getElementById('regPlan').value || "Normal",
-        status: 'active', isInside: false, activeWorkoutParts: [],
-        joinDate: new Date().toISOString().slice(0, 10),
-        payments: [new Date().toISOString().slice(0, 7)]
-    });
-    document.getElementById('regSection').classList.add('hidden');
+
+    try {
+        await addDoc(collection(db, "members"), {
+            name, phone, gymId, 
+            monthlyFee: parseFloat(monthlyInput.value) || 0,
+            joiningFee: parseFloat(joiningInput.value) || 0,
+            plan: planInput.value || "Normal",
+            status: 'active', isInside: false, activeWorkoutParts: [],
+            joinDate: new Date().toISOString().slice(0, 10),
+            payments: [new Date().toISOString().slice(0, 7)]
+        });
+        nameInput.value = ""; phoneInput.value = ""; planInput.value = ""; monthlyInput.value = ""; joiningInput.value = "";
+        document.getElementById('regSection').classList.add('hidden');
+    } catch (error) { console.error(error); alert("Failed to save member."); }
 };
 
 window.deleteMember = async () => { if(confirm("Delete?")) { await deleteDoc(doc(db, "members", selectedId)); window.closeProfile(); } };
@@ -295,6 +300,12 @@ window.setFilter = (f) => {
         btnAll.className = inactiveClass;
         btnUnpaid.className = activeClass;
     }
+
+    // Auto-close sidebar on mobile after clicking
+    if (window.innerWidth < 1024 && typeof window.toggleMobileMenu === 'function') {
+        window.toggleMobileMenu();
+    }
+    
     render();
 };
 
@@ -306,13 +317,7 @@ window.changePage = (dir) => {
     }
 };
 
-document.getElementById('searchBar').addEventListener('input', () => { 
-    currentPage = 1; 
-    render(); 
-});
+document.getElementById('searchBar').addEventListener('input', () => { currentPage = 1; render(); });
 
-// Update Live timers every 60 seconds
 setInterval(renderLive, 60000);
-
-// Initialize
 loadMembers();

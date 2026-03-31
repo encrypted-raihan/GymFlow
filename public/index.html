@@ -27,26 +27,162 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* =========================================
+           MOBILE-FIRST REIMAGINATION (UNDER 1024px)
+           ========================================= */
+        @media (max-width: 1023px) {
+            /* 1. Global Padding & Buffers */
+            main.flex-1 {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+                padding-top: 1.5rem !important;
+                padding-bottom: 100px !important; /* Bottom nav buffer */
+            }
+
+            /* 2. Hide Desktop Elements not needed on Mobile */
+            .lg\:hidden.flex.items-center.justify-between button.p-2\.5 { display: none !important; } /* Hide Hamburger */
+            #sidebarBackdrop { display: none !important; } /* Disable backdrop interaction */
+            #mainSidebar > div.mb-12, #mainSidebar > button.mt-auto { display: none !important; } /* Hide Sidebar Branding & Desktop Logout */
+            #sidebarContainer > p { display: none !important; } /* Hide 'Management' text */
+
+            /* 3. Transform Sidebar into Glass Bottom Navigation */
+            #mainSidebar {
+                transform: none !important;
+                position: fixed !important;
+                top: auto !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 75px !important;
+                flex-direction: row !important;
+                padding: 0 10px !important;
+                z-index: 1000 !important;
+                border-radius: 24px 24px 0 0 !important;
+                border-top: 1px solid rgba(255,255,255,0.6) !important;
+                border-right: none !important;
+                box-shadow: 0 -10px 40px rgba(0,0,0,0.06) !important;
+                background: rgba(255, 255, 255, 0.85) !important;
+                backdrop-filter: blur(25px) saturate(200%) !important;
+                transition: none !important;
+            }
+
+            /* 4. Format Bottom Nav Items */
+            #sidebarContainer {
+                display: flex !important;
+                flex-direction: row !important;
+                width: 100% !important;
+                height: 100% !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                gap: 5px !important;
+            }
+
+            #sidebarContainer > button, #sidebarContainer > a {
+                flex: 1 !important;
+                height: 85% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                padding: 5px !important;
+                margin: 0 !important;
+                border-radius: 16px !important;
+                text-align: center !important;
+            }
+
+            /* Isolate Emoji & Text, hide extraneous icons */
+            #sidebarContainer > button span:first-child,
+            #sidebarContainer > a span:first-child {
+                font-size: 10px !important;
+                font-weight: 800 !important;
+                white-space: normal !important;
+                line-height: 1.2 !important;
+            }
+            #sidebarContainer > button span:last-child,
+            #sidebarContainer > a svg {
+                display: none !important; /* Hide unread counts/arrows */
+            }
+
+            /* 5. Transform Rigid Tables into Mobile Cards */
+            table, thead, tbody, th, td, tr {
+                display: block !important;
+                width: 100% !important;
+            }
+            thead tr {
+                display: none !important; /* Hide standard headers */
+            }
+            tbody tr {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                border: 1px solid #f1f5f9 !important;
+                border-radius: 1.5rem !important;
+                margin-bottom: 1rem !important;
+                background: #ffffff !important;
+                padding: 12px !important;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.02) !important;
+            }
+            tbody tr.section-divider {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 0 10px 0 !important;
+                margin: 0 !important;
+            }
+            tbody td {
+                padding: 8px !important;
+                border: none !important;
+            }
+            /* Map TD to distinct card zones */
+            tbody td:nth-child(1) { width: 100% !important; border-bottom: 1px solid #f8fafc !important; }
+            tbody td:nth-child(2) { width: 50% !important; text-align: left !important; display: flex !important; align-items: center !important; padding-top: 15px !important; }
+            tbody td:nth-child(3) { width: 50% !important; text-align: right !important; display: flex !important; align-items: center !important; justify-content: flex-end !important; padding-top: 15px !important; }
+            tbody tr.section-divider td { width: 100% !important; border: none !important; padding: 0 !important; }
+
+            /* 6. Spacing Tweaks for Cards & Profile Modal */
+            .glass-card { padding: 1.5rem !important; }
+            #profileModal > div {
+                padding: 1.5rem !important;
+                border-radius: 2rem !important;
+                max-height: 85vh !important;
+                overflow-y: auto !important;
+            }
+            #liveFilterContainer { padding-bottom: 10px !important; }
+            #searchBar { width: 100% !important; max-width: none !important; margin-top: 10px !important; }
+            .flex.justify-between.items-center.mb-6 { flex-direction: column !important; align-items: flex-start !important; }
+        }
     </style>
 </head>
 <body class="text-slate-900">
 
+    <div class="lg:hidden flex items-center justify-between p-5 bg-white/80 backdrop-blur-lg sticky top-0 z-50 border-b border-slate-100">
+        <h1 class="text-xl font-extrabold tracking-tighter italic">GymFlow<span class="text-blue-600">.</span></h1>
+        <button onclick="logout()" class="px-4 py-2 bg-red-50 text-red-600 rounded-xl font-bold text-xs shadow-sm active:scale-95 transition-transform">Sign Out</button>
+    </div>
+
+    <div id="sidebarBackdrop" onclick="toggleMobileMenu()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] hidden lg:hidden"></div>
+
     <div class="flex flex-col lg:flex-row">
-        <aside class="w-full lg:w-72 lg:glass-sidebar lg:h-screen lg:sticky lg:top-0 p-8 flex flex-col">
-            <div class="mb-12">
-                <h1 class="text-2xl font-extrabold tracking-tighter italic">GymFlow<span class="text-blue-600">.</span></h1>
-                <p id="displayGymName" class="text-[9px] font-black text-blue-500 uppercase tracking-[0.2em] mt-2"></p>
+        <aside id="mainSidebar" class="fixed inset-y-0 left-0 w-72 bg-white lg:glass-sidebar z-[70] p-8 flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out lg:translate-x-0 lg:sticky lg:h-screen lg:top-0">
+            <div class="mb-12 flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-extrabold tracking-tighter italic">GymFlow<span class="text-blue-600">.</span></h1>
+                    <p id="displayGymName" class="text-[9px] font-black text-blue-500 uppercase tracking-[0.2em] mt-2"></p>
+                </div>
+                <button onclick="toggleMobileMenu()" class="lg:hidden text-slate-300 hover:text-slate-900">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
             </div>
 
             <nav id="sidebarContainer" class="space-y-1 flex-1">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 ml-2">Management</p>
                 
-                <button onclick="setFilter('all')" id="btnFilterAll" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold bg-slate-900 text-white shadow-sm mb-2 transition-all">
+                <button onclick="setFilter('all'); toggleMobileMenu()" id="btnFilterAll" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold bg-slate-900 text-white shadow-sm mb-2 transition-all">
                     <span>👥 Members</span>
                     <span id="countAll" class="text-[10px] opacity-50 font-black">0</span>
                 </button>
                 
-                <button onclick="setFilter('unpaid')" id="btnFilterUnpaid" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 bg-transparent hover:bg-white/50 transition mb-2">
+                <button onclick="setFilter('unpaid'); toggleMobileMenu()" id="btnFilterUnpaid" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 bg-transparent hover:bg-white/50 transition mb-2">
                     <span>⏳ Pending Dues</span>
                     <span id="countUnpaid" class="text-[10px] text-red-500 font-black">0</span>
                 </button>
@@ -174,6 +310,21 @@
     <script>
         window.logout = () => { localStorage.clear(); location.href = "login.html"; };
         window.closeProfile = () => { document.getElementById('profileModal').classList.add('hidden'); window.dispatchEvent(new CustomEvent('profileClosed')); };
+        
+        // Retained intact, visually deactivated on mobile by CSS
+        window.toggleMobileMenu = () => {
+            const sidebar = document.getElementById('mainSidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            const isHidden = sidebar.classList.contains('-translate-x-full');
+
+            if (isHidden) {
+                sidebar.classList.remove('-translate-x-full');
+                backdrop.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.add('hidden');
+            }
+        };
     </script>
 </body>
 </html>

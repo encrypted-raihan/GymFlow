@@ -19,7 +19,7 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
 
     if(!inputUser || !inputPass) return alert("Please enter credentials");
 
-    // FIXED: Changed 'user' to 'username' and 'pass' to 'password' to match admin.js
+    // Querying the gyms collection
     const q = query(
         collection(db, "gyms"), 
         where("username", "==", inputUser), 
@@ -33,10 +33,18 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
             const gymDoc = snap.docs[0];
             const gymData = gymDoc.data();
             
-            // Set session data
+            // 1. CLEAR OLD DATA first to prevent session mixing
+            localStorage.clear();
+
+            // 2. SET SESSION DATA
             localStorage.setItem("activeGymId", gymDoc.id);
-            localStorage.setItem("activeGymName", gymData.name);
             
+            // IMPORTANT: Check if your Firestore field is "name" or "gymName"
+            // Using the logical OR operator ensures it works either way
+            const displayName = gymData.gymName || gymData.name || "My Gym";
+            localStorage.setItem("activeGymName", displayName);
+            
+            // 3. REDIRECT
             window.location.href = "index.html";
         } else {
             alert("Invalid Credentials. Please check your username or password.");
