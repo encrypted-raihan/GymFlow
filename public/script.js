@@ -19,10 +19,11 @@ if(!gymId) window.location.href = "login.html";
 let allMembers = [];
 let selectedId = null;
 let currentFilter = 'all';
-let activeLiveFilter = 'all'; // Initialized
+let activeLiveFilter = 'all'; 
 let currentPage = 1;
 const rowsPerPage = 7; 
 
+// 1. DATA INITIALIZATION
 function loadMembers() {
     const q = query(collection(db, "members"), where("gymId", "==", gymId));
     onSnapshot(q, (snap) => {
@@ -53,7 +54,7 @@ function updateStats() {
     document.getElementById('countUnpaid').innerText = active.length - paidCount;
 }
 
-// MEMBER TABLE WITH HARD SEPARATION
+// 2. MEMBER TABLE (With Visual Hierarchy)
 window.render = () => {
     const tbody = document.getElementById('memberTableBody');
     const cur = new Date().toISOString().slice(0, 7);
@@ -65,7 +66,6 @@ window.render = () => {
         filtered = filtered.filter(m => m.status !== 'inactive' && !m.payments?.includes(cur));
     }
 
-    // Split for visual weight
     const unpaidList = filtered.filter(m => m.status !== 'inactive' && !m.payments?.includes(cur));
     const settledList = filtered.filter(m => m.status === 'inactive' || m.payments?.includes(cur));
     const sorted = [...unpaidList, ...settledList];
@@ -82,12 +82,10 @@ window.render = () => {
         const isPaused = m.status === 'inactive';
         const isDue = !isPaid && !isPaused;
 
-        // Group Header for Dues
         if(idx === 0 && isDue) {
             html += `<tr class="section-divider"><td colspan="3" class="px-6 py-4 text-[10px] font-black text-red-500 uppercase tracking-[0.2em]">⚠️ Immediate Dues Pending</td></tr>`;
         }
         
-        // Group Header for Settled (with spacing)
         const prev = items[idx-1];
         if(prev && (!prev.payments?.includes(cur) && prev.status !== 'inactive') && (isPaid || isPaused)) {
             html += `<tr class="h-8"></tr><tr class="section-divider"><td colspan="3" class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">✅ Settled & Paused Members</td></tr>`;
@@ -118,7 +116,7 @@ window.render = () => {
     tbody.innerHTML = html || `<tr><td colspan="3" class="p-10 text-center text-slate-400 text-xs italic">No matching members</td></tr>`;
 };
 
-// LIVE FEED WITH FILTERS AND TIMER
+// 3. LIVE FEED (Fixed Timer Logic)
 window.setLiveFilter = (part) => {
     activeLiveFilter = part;
     document.querySelectorAll('.live-f-btn').forEach(btn => {
@@ -148,11 +146,40 @@ window.renderLive = () => {
     grid.innerHTML = filtered.map(m => {
         const parts = m.activeWorkoutParts && m.activeWorkoutParts.length > 0 ? m.activeWorkoutParts : ['General'];
         
-        // TIME ELAPSED LOGIC
-        let timeLabel = "Just Joined";
-        if(m.sessionStart) {
-            const diff = Math.floor((new Date() - new Date(m.sessionStart)) / 60000);
-            timeLabel = diff > 0 ? `${diff}m elapsed` : "Just Joined";
+        // --- SMART AUTO-DETECT TIMER ---
+        let timeDisplay = "Just Joined";
+        
+        // Try to find ANY field that might be the timestamp
+        // We check sessionStart, startTime, checkIn, or lastUpdated
+        const rawTime = m.sessionStart || m.startTime || m.checkIn || m.lastIn;
+
+        if (rawTime) {
+            let startDate;
+            
+            // Handle Firestore Timestamp Object
+            if (rawTime.seconds) {
+                startDate = new Date(rawTime.seconds * 1000);
+            } 
+            // Handle ISO String or Date Object
+            else {
+                startDate = new Date(rawTime);
+            }
+
+            const now = new Date();
+            const diffInMs = now.getTime() - startDate.getTime();
+            const diffInMins = Math.floor(diffInMs / 60000);
+
+            if (!isNaN(startDate.getTime()) && diffInMins >= 0) {
+                if (diffInMins >= 60) {
+                    const hrs = Math.floor(diffInMins / 60);
+                    const mins = diffInMins % 60;
+                    timeDisplay = `${hrs}h ${mins}m ago`;
+                } else if (diffInMins === 0) {
+                    timeDisplay = "Joined seconds ago";
+                } else {
+                    timeDisplay = `${diffInMins}m ago`;
+                }
+            }
         }
 
         return `
@@ -160,7 +187,7 @@ window.renderLive = () => {
             <div class="flex justify-between items-start mb-4">
                 <div>
                     <h4 class="font-black text-slate-900 text-sm tracking-tight">${m.name}</h4>
-                    <p class="text-[8px] font-bold text-blue-500 uppercase tracking-tighter mt-1">${timeLabel}</p>
+                    <p class="text-[8px] font-bold text-blue-600 uppercase tracking-tighter mt-1">${timeDisplay}</p>
                 </div>
                 <div class="bg-green-500 w-2 h-2 rounded-full animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
             </div>
@@ -171,7 +198,7 @@ window.renderLive = () => {
     }).join('');
 };
 
-// PROFILE UI
+// 4. PROFILE MODAL
 window.openProfile = (id) => { selectedId = id; refreshProfileUI(); document.getElementById('profileModal').classList.remove('hidden'); };
 
 function refreshProfileUI() {
@@ -222,6 +249,7 @@ function refreshProfileUI() {
     }
 }
 
+// 5. ACTIONS
 window.togglePay = async (code) => {
     const m = allMembers.find(x => x.id === selectedId);
     let p = m.payments || [];
@@ -246,15 +274,14 @@ window.addNewMember = async () => {
 };
 
 window.deleteMember = async () => { if(confirm("Delete?")) { await deleteDoc(doc(db, "members", selectedId)); window.closeProfile(); } };
-// FIXED NAVIGATION & SIDEBAR HIGHLIGHTING
+
+// 6. NAVIGATION & SIDEBAR HIGHLIGHTING
 window.setFilter = (f) => {
     currentFilter = f;
     currentPage = 1;
 
-    // 1. Update the Main Title
     document.getElementById('listTitle').innerText = f === 'all' ? 'Active Roster' : 'Pending Dues';
 
-    // 2. Sidebar Button Highlighting Logic
     const btnAll = document.getElementById('btnFilterAll');
     const btnUnpaid = document.getElementById('btnFilterUnpaid');
 
@@ -268,12 +295,9 @@ window.setFilter = (f) => {
         btnAll.className = inactiveClass;
         btnUnpaid.className = activeClass;
     }
-
-    // 3. Re-render the table
     render();
 };
 
-// 4. Initialization & Listeners
 window.changePage = (dir) => { 
     const total = Math.ceil(allMembers.length / rowsPerPage);
     if (currentPage + dir > 0 && currentPage + dir <= total) {
@@ -287,8 +311,8 @@ document.getElementById('searchBar').addEventListener('input', () => {
     render(); 
 });
 
-// Sync timer for the Live Feed every 60 seconds
+// Update Live timers every 60 seconds
 setInterval(renderLive, 60000);
 
-// Initial Load
+// Initialize
 loadMembers();
