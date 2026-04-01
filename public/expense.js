@@ -47,8 +47,11 @@ async function loadFinancials() {
         const archiveList = document.getElementById('archiveList');
         const currentMonth = getMonthKey();
         
-        activeList.innerHTML = ""; archiveList.innerHTML = "";
-        let monthlyTotal = 0, fixedTotal = 0, salaryTotal = 0, archives = {};
+        activeList.innerHTML = ""; 
+        archiveList.innerHTML = "";
+        
+        let monthlyTotal = 0, fixedTotal = 0, salaryTotal = 0;
+        let archives = {}; // Structure: { "Month Year": { total: 0, categories: { "Category": 0 } } }
 
         snap.forEach(d => {
             const data = d.data();
@@ -74,8 +77,16 @@ async function loadFinancials() {
                     </div>
                 </div>`;
             } else {
-                if (!archives[data.monthKey]) archives[data.monthKey] = 0;
-                archives[data.monthKey] += data.amount;
+                // Logic for Detailed History
+                if (!archives[data.monthKey]) {
+                    archives[data.monthKey] = { total: 0, categories: {} };
+                }
+                archives[data.monthKey].total += data.amount;
+                
+                if (!archives[data.monthKey].categories[data.category]) {
+                    archives[data.monthKey].categories[data.category] = 0;
+                }
+                archives[data.monthKey].categories[data.category] += data.amount;
             }
         });
 
@@ -83,11 +94,30 @@ async function loadFinancials() {
         document.getElementById('fixedTotal').innerText = `₹${fixedTotal}`;
         document.getElementById('staffTotal').innerText = `₹${salaryTotal}`;
 
+        // Render Detailed History Cards
         Object.keys(archives).forEach(month => {
+            const monthData = archives[month];
+            
+            // Generate category breakdown UI
+            let categoryHtml = Object.keys(monthData.categories).map(cat => `
+                <div class="flex justify-between items-center mt-2 pt-2 border-t border-slate-50">
+                    <span class="text-[8px] font-black text-slate-400 uppercase tracking-tighter">${cat}</span>
+                    <span class="text-[10px] font-bold text-slate-600">₹${monthData.categories[cat]}</span>
+                </div>
+            `).join('');
+
             archiveList.innerHTML += `
-            <div class="bg-white p-6 rounded-[2rem] border border-slate-200">
-                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">${month}</p>
-                <p class="text-xl font-black text-slate-800">₹${archives[month]}</p>
+            <div class="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <p class="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-1">${month}</p>
+                        <p class="text-xl font-black text-slate-800">₹${monthData.total}</p>
+                    </div>
+                    <div class="bg-slate-50 px-2 py-1 rounded-lg text-[7px] font-black text-slate-400 uppercase">Archive</div>
+                </div>
+                <div class="mt-4">
+                    ${categoryHtml}
+                </div>
             </div>`;
         });
     } catch (e) { console.error(e); }

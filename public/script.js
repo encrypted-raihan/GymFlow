@@ -32,6 +32,12 @@ let activeLiveFilter = 'all';
 let currentPage = 1;
 const rowsPerPage = 7; 
 
+// --- UTILITY: GET CURRENT MONTH CODE (YYYY-MM) ---
+function getCurrentMonthCode() {
+    const now = new Date();
+    return `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+}
+
 // 1. DATA INITIALIZATION
 function loadMembers() {
     const q = query(collection(db, "members"), where("gymId", "==", gymId));
@@ -45,28 +51,39 @@ function loadMembers() {
 }
 
 function updateStats() {
-    const cur = new Date().toISOString().slice(0, 7);
-    const active = allMembers.filter(m => m.status !== 'inactive');
-    const paidCount = active.filter(m => m.payments?.includes(cur)).length;
-    const percent = active.length > 0 ? Math.round((paidCount / active.length) * 100) : 0;
+    const cur = getCurrentMonthCode();
+    const activeMembers = allMembers.filter(m => m.status !== 'inactive');
+    const paidMembersThisMonth = activeMembers.filter(m => m.payments?.includes(cur));
     
-    let rev = 0;
-    allMembers.forEach(m => {
-        rev += ((m.payments?.length || 0) * (parseFloat(m.monthlyFee) || 0)) + (parseFloat(m.joiningFee) || 0);
+    const paidCount = paidMembersThisMonth.length;
+    const percent = activeMembers.length > 0 ? Math.round((paidCount / activeMembers.length) * 100) : 0;
+    
+    // Calculate ONLY Current Month Revenue
+    let currentMonthRevenue = 0;
+    paidMembersThisMonth.forEach(m => {
+        currentMonthRevenue += parseFloat(m.monthlyFee) || 0;
     });
 
-    document.getElementById('statTotal').innerText = active.length;
-    document.getElementById('statRevenue').innerText = rev.toLocaleString('en-IN');
+    // Also include Joining Fees if the member joined THIS month
+    allMembers.forEach(m => {
+        if (m.joinDate && m.joinDate.startsWith(cur)) {
+            currentMonthRevenue += parseFloat(m.joiningFee) || 0;
+        }
+    });
+
+    document.getElementById('statTotal').innerText = activeMembers.length;
+    document.getElementById('statRevenue').innerText = currentMonthRevenue.toLocaleString('en-IN');
     document.getElementById('statPercent').innerText = percent + "%";
     document.getElementById('statBar').style.width = percent + "%";
-    document.getElementById('countAll').innerText = active.length;
-    document.getElementById('countUnpaid').innerText = active.length - paidCount;
+    
+    document.getElementById('countAll').innerText = activeMembers.length;
+    document.getElementById('countUnpaid').innerText = activeMembers.length - paidCount;
 }
 
 // 2. MEMBER TABLE
 window.render = () => {
     const tbody = document.getElementById('memberTableBody');
-    const cur = new Date().toISOString().slice(0, 7);
+    const cur = getCurrentMonthCode();
     const search = document.getElementById('searchBar').value.toLowerCase();
     
     let filtered = allMembers.filter(m => m.name.toLowerCase().includes(search));
@@ -79,11 +96,11 @@ window.render = () => {
     const settledList = filtered.filter(m => m.status === 'inactive' || m.payments?.includes(cur));
     const sorted = [...unpaidList, ...settledList];
 
-    const total = Math.ceil(sorted.length / rowsPerPage) || 1;
+    const totalPages = Math.ceil(sorted.length / rowsPerPage) || 1;
     const items = sorted.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
     document.getElementById('currentPageNum').innerText = currentPage;
-    document.getElementById('totalPageNum').innerText = total;
+    document.getElementById('totalPageNum').innerText = totalPages;
 
     let html = "";
     items.forEach((m, idx) => {
@@ -193,11 +210,21 @@ window.renderLive = () => {
 };
 
 // 4. PROFILE MODAL
-window.openProfile = (id) => { selectedId = id; refreshProfileUI(); document.getElementById('profileModal').classList.remove('hidden'); };
+window.openProfile = (id) => { 
+    selectedId = id; 
+    refreshProfileUI(); 
+    document.getElementById('profileModal').classList.remove('hidden'); 
+};
+
+window.closeProfile = () => {
+    selectedId = null;
+    document.getElementById('profileModal').classList.add('hidden');
+};
 
 function refreshProfileUI() {
     const m = allMembers.find(x => x.id === selectedId);
     if(!m) return;
+    
     document.getElementById('profName').innerText = m.name;
     document.getElementById('profPhone').innerText = m.phone;
     
@@ -210,8 +237,14 @@ function refreshProfileUI() {
     toggleBtn.onclick = () => updateDoc(doc(db, "members", m.id), { status: m.status === 'inactive' ? 'active' : 'inactive' });
 
     const now = new Date();
-    const curCode = now.toISOString().slice(0, 7);
+    const curCode = getCurrentMonthCode();
     const isPaid = m.payments?.includes(curCode);
+
+    const whatsappBtnHtml = !isPaid && m.status !== 'inactive' 
+        ? `<button onclick="sendWhatsAppReminder('${m.phone}', '${m.name}')" class="mt-4 w-full bg-green-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-md hover:bg-green-700 transition-colors">
+            📲 Send WhatsApp Reminder
+           </button>` 
+        : '';
 
     document.getElementById('currentMonthContainer').innerHTML = `
         <div class="p-6 rounded-[2rem] border-2 ${isPaid ? 'border-green-100 bg-green-50/30' : 'border-blue-100 bg-blue-50/30'}">
@@ -224,16 +257,20 @@ function refreshProfileUI() {
                     ${isPaid ? 'Paid ✓' : 'Mark Paid'}
                 </button>
             </div>
+            ${whatsappBtnHtml}
         </div>`;
 
     const hist = document.getElementById('historyList');
     hist.innerHTML = "";
-    let ptr = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const limit = new Date(m.joinDate || "2025-01-01");
+    
+    let ptr = new Date(now.getFullYear(), now.getMonth() - 1, 1); 
+    const joinDateObj = new Date(m.joinDate || "2025-01-01");
+    const limit = new Date(joinDateObj.getFullYear(), joinDateObj.getMonth(), 1);
 
     while (ptr >= limit) {
         const code = ptr.toISOString().slice(0, 7);
         const paid = m.payments?.includes(code);
+        
         hist.innerHTML += `
             <div class="flex justify-between items-center p-3 hover:bg-slate-50 rounded-2xl">
                 <span class="text-xs font-bold text-slate-600">${ptr.toLocaleString('default', { month: 'short', year: 'numeric' })}</span>
@@ -244,11 +281,30 @@ function refreshProfileUI() {
 }
 
 // 5. ACTIONS
+window.sendWhatsAppReminder = (phone, name) => {
+    const monthName = new Date().toLocaleString('default', { month: 'long' });
+    const msg = `ഹലോ ${name}, GymFlow-ൽ നിങ്ങളുടെ ഈ മാസത്തെ (${monthName}) ഫീസ്‌ അടക്കാൻ സമയമായി. ദയവായി ശ്രദ്ധിക്കുമല്ലോ.`;
+    window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+};
+
 window.togglePay = async (code) => {
     const m = allMembers.find(x => x.id === selectedId);
+    if (!m) return;
+
     let p = m.payments || [];
-    p = p.includes(code) ? p.filter(x => x !== code) : [...p, code];
-    await updateDoc(doc(db, "members", selectedId), { payments: p });
+    const isCurrentlyPaid = p.includes(code);
+    
+    const [year, month] = code.split('-');
+    const dateLabel = new Date(year, parseInt(month) - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+
+    const message = isCurrentlyPaid 
+        ? `Are you sure you want to undo the payment for ${dateLabel}?` 
+        : `Mark ${dateLabel} as Paid for ${m.name}?`;
+
+    if (confirm(message)) {
+        p = isCurrentlyPaid ? p.filter(x => x !== code) : [...p, code];
+        await updateDoc(doc(db, "members", selectedId), { payments: p });
+    }
 };
 
 window.addNewMember = async () => {
@@ -264,15 +320,18 @@ window.addNewMember = async () => {
     if(!name || !phone) return alert("Required: Name & Phone");
 
     try {
+        const curDay = new Date().toISOString().slice(0, 10);
+        
         await addDoc(collection(db, "members"), {
             name, phone, gymId, 
             monthlyFee: parseFloat(monthlyInput.value) || 0,
             joiningFee: parseFloat(joiningInput.value) || 0,
             plan: planInput.value || "Normal",
             status: 'active', isInside: false, activeWorkoutParts: [],
-            joinDate: new Date().toISOString().slice(0, 10),
-            payments: [new Date().toISOString().slice(0, 7)]
+            joinDate: curDay,
+            payments: [] 
         });
+        
         nameInput.value = ""; phoneInput.value = ""; planInput.value = ""; monthlyInput.value = ""; joiningInput.value = "";
         document.getElementById('regSection').classList.add('hidden');
     } catch (error) { console.error(error); alert("Failed to save member."); }
@@ -301,7 +360,6 @@ window.setFilter = (f) => {
         btnUnpaid.className = activeClass;
     }
 
-    // Auto-close sidebar on mobile after clicking
     if (window.innerWidth < 1024 && typeof window.toggleMobileMenu === 'function') {
         window.toggleMobileMenu();
     }
@@ -310,7 +368,12 @@ window.setFilter = (f) => {
 };
 
 window.changePage = (dir) => { 
-    const total = Math.ceil(allMembers.length / rowsPerPage);
+    const cur = getCurrentMonthCode();
+    let filtered = allMembers;
+    if(currentFilter === 'unpaid') {
+        filtered = allMembers.filter(m => m.status !== 'inactive' && !m.payments?.includes(cur));
+    }
+    const total = Math.ceil(filtered.length / rowsPerPage);
     if (currentPage + dir > 0 && currentPage + dir <= total) {
         currentPage += dir; 
         render(); 
