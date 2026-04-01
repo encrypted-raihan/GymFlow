@@ -142,11 +142,15 @@ window.render = () => {
     tbody.innerHTML = html || `<tr><td colspan="3" class="p-10 text-center text-slate-400 text-xs italic">No matching members</td></tr>`;
 };
 
-// 3. LIVE FEED
+// 3. LIVE FEED (CORRECTED FILTER LOGIC)
 window.setLiveFilter = (part) => {
     activeLiveFilter = part;
     document.querySelectorAll('.live-f-btn').forEach(btn => {
-        const match = btn.innerText.toLowerCase() === part.toLowerCase();
+        // Corrected comparison to handle case sensitivity in UI buttons
+        const btnText = btn.innerText.toLowerCase();
+        const partText = part.toLowerCase();
+        const match = btnText === partText;
+        
         btn.className = match 
             ? "live-f-btn px-4 py-2 rounded-xl text-[8px] font-black uppercase bg-slate-900 text-white shadow-sm whitespace-nowrap"
             : "live-f-btn px-4 py-2 rounded-xl text-[8px] font-black uppercase bg-white border border-slate-100 text-slate-400 whitespace-nowrap";
@@ -158,9 +162,21 @@ window.renderLive = () => {
     const grid = document.getElementById('liveMembersGrid');
     const liveNow = allMembers.filter(m => m.isInside === true);
     
+    // --- IMPROVED FILTERING LOGIC ---
     const filtered = activeLiveFilter === 'all' 
         ? liveNow 
-        : liveNow.filter(m => m.activeWorkoutParts?.includes(activeLiveFilter));
+        : liveNow.filter(m => {
+            if (!m.activeWorkoutParts || m.activeWorkoutParts.length === 0) return false;
+            
+            const filterLower = activeLiveFilter.toLowerCase();
+            
+            // Checks if member's parts contain the filter OR filter contains member's part
+            // This fixes "Leg" vs "Legs" and "Abs" matching errors.
+            return m.activeWorkoutParts.some(p => {
+                const pLower = p.toLowerCase();
+                return pLower.includes(filterLower) || filterLower.includes(pLower);
+            });
+        });
 
     document.getElementById('countTraining').innerText = `${liveNow.length} MEMBERS TRAINING NOW`;
 
@@ -339,8 +355,11 @@ window.addNewMember = async () => {
 
 window.deleteMember = async () => { if(confirm("Delete?")) { await deleteDoc(doc(db, "members", selectedId)); window.closeProfile(); } };
 
-// 6. NAVIGATION & SIDEBAR HIGHLIGHTING
+// 6. NAVIGATION & SIDEBAR HIGHLIGHTING (ADDED SCROLL TO TOP)
 window.setFilter = (f) => {
+    // Force scroll to top when changing tab filters
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     currentFilter = f;
     currentPage = 1;
 
@@ -368,6 +387,9 @@ window.setFilter = (f) => {
 };
 
 window.changePage = (dir) => { 
+    // Force scroll to top of the table when changing pages
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     const cur = getCurrentMonthCode();
     let filtered = allMembers;
     if(currentFilter === 'unpaid') {
