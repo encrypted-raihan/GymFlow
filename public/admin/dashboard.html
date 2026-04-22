@@ -192,8 +192,16 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 opacity-0 group-hover:opacity-100 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" /></svg>
                 </a>
                 <a href="revenue.html" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition group">
-                      <span>📈 Revenue Insights</span>
+                      <span>📈 Revenue</span>
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 opacity-0 group-hover:opacity-100 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" /></svg>
+                </a>
+                <a href="insights.html" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition group">
+                    <div class="flex items-center gap-2">
+                        <span>🎯 Insights</span> 
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 opacity-0 group-hover:opacity-100 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" />
+                    </svg>
                 </a>
             </nav>
 
@@ -306,9 +314,9 @@
         </div>
     </div>
 
-    <script type="module" src="script.js"></script>
+    <script type="module" src="../script.js"></script>
     <script>
-        window.logout = () => { localStorage.clear(); location.href = "login.html"; };
+        window.logout = () => { localStorage.clear(); location.href = "../login.html"; };
         window.closeProfile = () => { document.getElementById('profileModal').classList.add('hidden'); window.dispatchEvent(new CustomEvent('profileClosed')); };
         
         // Retained intact, visually deactivated on mobile by CSS
