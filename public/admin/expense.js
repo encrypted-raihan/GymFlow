@@ -47,11 +47,11 @@ async function loadFinancials() {
         const archiveList = document.getElementById('archiveList');
         const currentMonth = getMonthKey();
         
-        activeList.innerHTML = ""; 
+        activeList.innerHTML = "";
         archiveList.innerHTML = "";
         
         let monthlyTotal = 0, fixedTotal = 0, salaryTotal = 0;
-        let archives = {}; // Structure: { "Month Year": { total: 0, categories: { "Category": 0 } } }
+        let archives = {}; 
 
         snap.forEach(d => {
             const data = d.data();
@@ -77,7 +77,6 @@ async function loadFinancials() {
                     </div>
                 </div>`;
             } else {
-                // Logic for Detailed History
                 if (!archives[data.monthKey]) {
                     archives[data.monthKey] = { total: 0, categories: {} };
                 }
@@ -94,11 +93,10 @@ async function loadFinancials() {
         document.getElementById('fixedTotal').innerText = `₹${fixedTotal}`;
         document.getElementById('staffTotal').innerText = `₹${salaryTotal}`;
 
-        // Render Detailed History Cards
+        // FIX: Render Detailed History Cards AFTER processing all data
         Object.keys(archives).forEach(month => {
             const monthData = archives[month];
             
-            // Generate category breakdown UI
             let categoryHtml = Object.keys(monthData.categories).map(cat => `
                 <div class="flex justify-between items-center mt-2 pt-2 border-t border-slate-50">
                     <span class="text-[8px] font-black text-slate-400 uppercase tracking-tighter">${cat}</span>
