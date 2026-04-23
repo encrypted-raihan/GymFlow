@@ -9,18 +9,97 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>GymFlow | Member Portal</title>
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fcfdfe; color: #1e293b; letter-spacing: -0.02em; }
-        .premium-card { background: white; border-radius: 28px; border: 1px solid #f1f5f9; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.04); }
-        .nav-blur { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px); border-top: 1px solid #f1f5f9; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: #fcfdfe; 
+            color: #1e293b; 
+            letter-spacing: -0.02em; 
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        .premium-card { 
+            background: white; 
+            border-radius: 28px; 
+            border: 1px solid #f1f5f9; 
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.04); 
+        }
+        
+        /* PINNED BOTTOM NAVBAR - NO GAP */
+        .nav-fixed-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 85px;
+            background: #ffffff; /* Solid background to prevent see-through */
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 20px pb-4; /* Extra padding for home indicators on mobile */
+            z-index: 1000;
+            box-shadow: 0 -10px 25px rgba(0,0,0,0.03);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 18px;
+            border-radius: 24px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #94a3b8;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            gap: 0px;
+        }
+
+        .nav-item.active {
+            background: #2563eb;
+            color: #ffffff;
+            gap: 10px;
+        }
+
+        .nav-item span {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            max-width: 0;
+            overflow: hidden;
+            transition: max-width 0.4s ease, opacity 0.3s ease;
+            opacity: 0;
+            white-space: nowrap;
+        }
+
+        .nav-item.active span {
+            max-width: 90px;
+            opacity: 1;
+        }
+
+        .nav-item svg {
+            width: 24px;
+            height: 24px;
+        }
+
         .page { transition: all 0.3s ease; }
         .page-hidden { display: none; opacity: 0; }
+        
         .day-pill { width: 40px; height: 50px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; transition: all 0.3s; border: 1px solid #f1f5f9; }
         .day-hit { background: #2563eb; color: white; border-color: #2563eb; font-weight: 800; }
         .day-miss { background: #fff; color: #cbd5e1; }
         ::-webkit-scrollbar { width: 0px; }
+        
+        /* Ensure content doesn't get hidden behind the nav */
+        #appContainer {
+            padding-bottom: 120px;
+        }
     </style>
 </head>
-<body class="pb-32">
+<body>
 
     <div id="appContainer" class="hidden max-w-md mx-auto p-6 space-y-6">
         
@@ -38,7 +117,6 @@
         </header>
 
         <div id="dashboardPage" class="page space-y-6">
-            
             <div class="premium-card p-6 space-y-5">
                 <div class="flex justify-between items-center">
                     <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Weekly Pulse</span>
@@ -98,7 +176,6 @@
 
         <div id="analyticsPage" class="page page-hidden space-y-6">
             <h3 class="text-2xl font-black text-slate-900 px-1">Performance</h3>
-            
             <div class="grid grid-cols-2 gap-4">
                 <div class="premium-card p-5">
                     <p class="text-[9px] font-black text-slate-400 uppercase">Avg Session XP</p>
@@ -109,43 +186,40 @@
                     <h4 id="totalHours" class="text-xl font-black text-slate-900">0m</h4>
                 </div>
             </div>
-
             <div class="premium-card p-6">
                 <p class="text-[10px] font-black text-slate-400 uppercase mb-6 tracking-widest text-center">Daily XP Intensity</p>
-                <div class="h-48">
-                    <canvas id="xpBarChart"></canvas>
-                </div>
+                <div class="h-48"><canvas id="xpBarChart"></canvas></div>
             </div>
-
             <div class="premium-card p-6">
                 <p class="text-[10px] font-black text-slate-400 uppercase mb-6 tracking-widest text-center">Focus Area Distribution</p>
-                <div class="h-64">
-                    <canvas id="radarChart"></canvas>
-                </div>
-            </div>
-
-            <div class="flex justify-between items-center px-1">
-                <h4 class="text-sm font-black text-slate-900 text-slate-400 uppercase text-[10px] tracking-widest">History Log</h4>
-                <button onclick="renderHistory(true)" class="text-[10px] font-bold text-blue-600 uppercase">Expand All</button>
+                <div class="h-64"><canvas id="radarChart"></canvas></div>
             </div>
             <div id="historyList" class="space-y-3 pb-4"></div>
         </div>
 
         <div id="armoryPage" class="page page-hidden space-y-6">
             <h3 class="text-2xl font-black text-slate-900 px-1">Member Vault</h3>
-            <div class="premium-card p-6 bg-slate-900 text-white relative overflow-hidden">
-                <div class="relative z-10">
-                    <h4 class="font-black text-lg text-blue-400">Exclusive Rewards</h4>
-                    <p class="text-xs text-slate-400 mt-1">Vouchers, guest passes, and gear discounts are awarded as you unlock higher prestige tiers.</p>
-                </div>
-                <div class="absolute -right-2 -bottom-2 text-6xl opacity-20">🎁</div>
-            </div>
             <div id="levelRoadmap" class="space-y-3 pb-8"></div>
         </div>
 
     </div>
 
-    <div id="focusOverlay" class="hidden fixed inset-0 z-[1000] bg-white p-8 flex flex-col justify-center">
+    <nav class="nav-fixed-bottom">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item active">
+            <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            <span>Core</span>
+        </button>
+        <button onclick="switchTab('analytics')" id="nav-analytics" class="nav-item">
+            <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+            <span>Insights</span>
+        </button>
+        <button onclick="switchTab('armory')" id="nav-armory" class="nav-item">
+            <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            <span>Vault</span>
+        </button>
+    </nav>
+
+    <div id="focusOverlay" class="hidden fixed inset-0 z-[2000] bg-white p-8 flex flex-col justify-center">
         <h2 class="text-3xl font-black mb-1 text-slate-900">Training Focus</h2>
         <p class="text-slate-400 font-bold text-xs mb-10 uppercase">Target up to 3 areas</p>
         <div class="grid grid-cols-2 gap-3 mb-10">
@@ -159,21 +233,6 @@
         <button onclick="startSession()" class="w-full py-5 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl">Confirm & Start</button>
         <button onclick="toggleOverlay('focusOverlay', false)" class="w-full mt-6 text-slate-400 font-bold text-[10px] uppercase">Back</button>
     </div>
-
-    <nav class="fixed bottom-0 left-0 right-0 h-24 nav-blur flex justify-around items-center px-10 z-[500]">
-        <button onclick="switchTab('dashboard')" id="btn-dashboard" class="text-blue-600 flex flex-col items-center gap-1">
-            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-            <span class="text-[8px] font-black uppercase">Core</span>
-        </button>
-        <button onclick="switchTab('analytics')" id="btn-analytics" class="text-slate-300 flex flex-col items-center gap-1">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2M17 11V3L4 14h7v7l9-11h-7z"/></svg>
-            <span class="text-[8px] font-black uppercase">Insights</span>
-        </button>
-        <button onclick="switchTab('armory')" id="btn-armory" class="text-slate-300 flex flex-col items-center gap-1">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-            <span class="text-[8px] font-black uppercase">Vault</span>
-        </button>
-    </nav>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -190,48 +249,30 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        
         let currentMember = null;
         let timerInterval = null;
         let radarChart = null;
         let xpBarChart = null;
 
-        const LevelSys = {
-            base: 500, fact: 1.25,
-            calc: (xp) => {
-                let lvl = 1, cur = xp || 0;
-                while (true) {
-                    let r = Math.floor(LevelSys.base * Math.pow(LevelSys.fact, lvl - 1));
-                    if (cur >= r) { cur -= r; lvl++; }
-                    else return { lvl, cur, r, p: (cur / r) * 100 };
-                }
-            }
-        };
-
         async function sync() {
             const id = localStorage.getItem('memberId');
             if(!id) return window.location.href = window.location.origin + "/player/member-login.html";
-            
             const snap = await getDoc(doc(db, "members", id));
             if(snap.exists()) {
                 currentMember = { id: snap.id, ...snap.data() };
                 document.getElementById('appContainer').classList.remove('hidden');
                 updateUI();
                 renderStreak();
-            } else {
-                window.location.href = window.location.origin + "/player/member-login.html";
             }
         }
 
         function updateUI() {
-            const stats = LevelSys.calc(currentMember.totalXP || 0);
-            
-            // Name & Gym Logic
+            const stats = calcLevel(currentMember.totalXP || 0);
             document.getElementById('userName').innerText = currentMember.name || "Athlete";
             
-            // Smart Gym Name Finder
-            const gymName = currentMember.gymName || currentMember.gym || currentMember.gym_name || "Elite Athlete";
-            document.getElementById('gymNameDisplay').innerText = gymName;
+            // Comprehensive Gym Name Check
+            const gName = currentMember.gymName || currentMember.gym || currentMember.gym_name || "Elite Athlete";
+            document.getElementById('gymNameDisplay').innerText = gName;
             
             document.getElementById('hudLevel').innerText = stats.lvl;
             document.getElementById('totalXPDisplay').innerText = `${(currentMember.totalXP || 0).toLocaleString()} XP`;
@@ -241,18 +282,8 @@
             document.getElementById('streakCount').innerText = `${currentMember.streak || 0} DAY STREAK`;
 
             const today = new Date().toLocaleDateString();
-            const attContainer = document.getElementById('attContainer');
             if(currentMember.lastAttendance === today) {
-                attContainer.innerHTML = `
-                    <div class="premium-card p-5 w-full flex items-center justify-between border-l-4 border-l-emerald-500 bg-emerald-50/30">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white text-lg">✓</div>
-                            <div class="text-left">
-                                <h4 class="font-black text-slate-800 text-sm">Attendance Locked</h4>
-                                <p class="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Verified for today</p>
-                            </div>
-                        </div>
-                    </div>`;
+                document.getElementById('attContainer').innerHTML = `<div class="premium-card p-5 w-full flex items-center justify-between border-l-4 border-l-emerald-500 bg-emerald-50/30"><div class="flex items-center gap-4"><div class="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white text-lg">✓</div><div><h4 class="font-black text-slate-800 text-sm">Attendance Locked</h4><p class="text-[10px] text-emerald-600 font-bold uppercase">Verified for today</p></div></div></div>`;
             }
 
             const wBtn = document.getElementById('workoutBtn');
@@ -271,28 +302,17 @@
             }
         }
 
-        function renderStreak() {
-            const hist = currentMember.workoutHistory || [];
-            const pills = document.querySelectorAll('.day-pill');
-            const now = new Date();
-            const start = new Date(now);
-            start.setDate(now.getDate() - now.getDay());
-
-            pills.forEach((pill, i) => {
-                const dDate = new Date(start);
-                dDate.setDate(start.getDate() + i);
-                const ds = dDate.toLocaleDateString();
-                const wasHere = hist.some(h => h.date === ds);
-                pill.className = wasHere ? 'day-pill day-hit' : 'day-pill day-miss';
-                pill.querySelector('b').innerText = dDate.getDate();
-            });
+        function calcLevel(xp) {
+            let lvl = 1, cur = xp, r = 500;
+            while (cur >= r) { cur -= r; lvl++; r = Math.floor(500 * Math.pow(1.25, lvl-1)); }
+            return { lvl, cur, r, p: (cur/r)*100 };
         }
 
         window.switchTab = (t) => {
             document.querySelectorAll('.page').forEach(p => p.classList.add('page-hidden'));
             document.getElementById(t + 'Page').classList.remove('page-hidden');
-            document.querySelectorAll('nav button').forEach(b => b.classList.replace('text-blue-600', 'text-slate-300'));
-            document.getElementById('btn-' + t).classList.replace('text-slate-300', 'text-blue-600');
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('nav-' + t).classList.add('active');
             if(t === 'analytics') setTimeout(() => { renderCharts(); renderHistory(false); }, 100);
             if(t === 'armory') renderArmory();
         };
@@ -348,21 +368,13 @@
 
         function renderCharts() {
             const hist = currentMember.workoutHistory || [];
+            const cleanHist = hist.map(h => ({ ...h, xp: Number(h.xp) || 0, duration: Number(h.duration) || 0 }));
             
-            // Clean Numerical Data
-            const cleanHist = hist.map(h => ({
-                ...h,
-                xp: Number(h.xp) || 0,
-                duration: Number(h.duration) || 0
-            }));
-
-            // Stats
             const totalXp = cleanHist.reduce((a,b)=>a+b.xp, 0);
             const totalMins = cleanHist.reduce((a,b)=>a+b.duration, 0);
             document.getElementById('avgXp').innerText = cleanHist.length ? Math.round(totalXp/cleanHist.length) : 0;
             document.getElementById('totalHours').innerText = totalMins + 'm';
 
-            // Weekly Intensity (Bar Chart)
             const last7 = cleanHist.slice(-7);
             const ctxB = document.getElementById('xpBarChart').getContext('2d');
             if(xpBarChart) xpBarChart.destroy();
@@ -370,17 +382,11 @@
                 type: 'bar',
                 data: {
                     labels: last7.map(h => h.date.split('/')[1] + '/' + h.date.split('/')[0]),
-                    datasets: [{
-                        label: 'XP',
-                        data: last7.map(h => h.xp),
-                        backgroundColor: '#2563eb',
-                        borderRadius: 6
-                    }]
+                    datasets: [{ data: last7.map(h => h.xp), backgroundColor: '#2563eb', borderRadius: 6 }]
                 },
                 options: { scales: { y: { display: false }, x: { grid: { display: false } } }, plugins: { legend: { display: false } } }
             });
 
-            // Muscle Radar
             const m = { Chest:0, Back:0, Legs:0, Arms:0, Shoulders:0, Abs:0 };
             cleanHist.forEach(h => h.muscles.forEach(x => m[x] = (m[x] || 0) + 1));
             const ctxR = document.getElementById('radarChart').getContext('2d');
@@ -389,10 +395,7 @@
                 type: 'radar',
                 data: {
                     labels: Object.keys(m),
-                    datasets: [{
-                        data: Object.values(m),
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)', borderColor: '#2563eb', borderWidth: 2
-                    }]
+                    datasets: [{ data: Object.values(m), backgroundColor: 'rgba(37, 99, 235, 0.1)', borderColor: '#2563eb', borderWidth: 2 }]
                 },
                 options: { scales: { r: { ticks: { display: false }, grid: { color: '#f1f5f9' } } }, plugins: { legend: { display: false } } }
             });
@@ -404,34 +407,38 @@
             const logs = all ? h : h.slice(0, 5);
             l.innerHTML = logs.map(x => `
                 <div class="premium-card p-4 flex justify-between items-center">
-                    <div>
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">${x.date}</p>
-                        <h4 class="font-bold text-xs text-slate-800">${x.muscles.join(' • ')}</h4>
-                    </div>
-                    <div class="text-right">
-                        <p class="font-black text-blue-600 text-sm">+${x.xp} XP</p>
-                        <p class="text-[9px] text-slate-400 font-bold uppercase">${x.duration} MIN</p>
-                    </div>
-                </div>
-            `).join('');
+                    <div><p class="text-[9px] font-black text-slate-400 uppercase">${x.date}</p><h4 class="font-bold text-xs text-slate-800">${x.muscles.join(' • ')}</h4></div>
+                    <div class="text-right"><p class="font-black text-blue-600 text-sm">+${x.xp} XP</p><p class="text-[9px] text-slate-400 font-bold uppercase">${x.duration} MIN</p></div>
+                </div>`).join('');
         };
 
         function renderArmory() {
             const r = document.getElementById('levelRoadmap');
-            const s = LevelSys.calc(currentMember.totalXP || 0);
+            const s = calcLevel(currentMember.totalXP || 0);
             let h = '';
             for(let i=1; i<=15; i++) {
                 const u = i <= s.lvl;
                 h += `
                     <div class="premium-card p-5 flex items-center gap-4 ${u ? '' : 'opacity-40'}">
                         <div class="w-12 h-12 rounded-xl ${u ? 'bg-slate-900' : 'bg-slate-100'} text-white flex items-center justify-center font-black text-lg">${u ? i : '🔒'}</div>
-                        <div>
-                            <p class="text-sm font-black text-slate-800">Tier ${i}</p>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Prestige Rank</p>
-                        </div>
+                        <div><p class="text-sm font-black text-slate-800">Tier ${i}</p><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Prestige Rank</p></div>
                     </div>`;
             }
             r.innerHTML = h;
+        }
+
+        function renderStreak() {
+            const hist = currentMember.workoutHistory || [];
+            const pills = document.querySelectorAll('.day-pill');
+            const now = new Date();
+            const start = new Date(now);
+            start.setDate(now.getDate() - now.getDay());
+            pills.forEach((pill, i) => {
+                const d = new Date(start); d.setDate(start.getDate() + i);
+                const wasHere = hist.some(h => h.date === d.toLocaleDateString());
+                pill.className = wasHere ? 'day-pill day-hit' : 'day-pill day-miss';
+                pill.querySelector('b').innerText = d.getDate();
+            });
         }
 
         sync();
