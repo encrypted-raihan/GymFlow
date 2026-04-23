@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <title>GymFlow | Manage Trainers</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; color: #1e293b; }
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.4); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="p-4 lg:p-10">
+
+    <div class="max-w-6xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-black tracking-tight text-slate-900 italic">Gym Trainers</h1>
+                
+            </div>
+            <button onclick="location.href='dashboard.html'" class="bg-white border border-slate-200 p-3 rounded-2xl hover:bg-slate-50 transition shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1">
+                <div class="glass p-8 rounded-[2.5rem] shadow-sm sticky top-10">
+                    <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-6">Onboard New Trainer</h3>
+                    
+                    <div class="space-y-4">
+                        <input id="trainerName" type="text" placeholder="Full Name" class="w-full bg-slate-50 p-4 rounded-2xl border-none text-sm outline-none font-medium mt-1">
+                        <input id="trainerSpecialty" type="text" placeholder="Specialty (e.g. Yoga)" class="w-full bg-slate-50 p-4 rounded-2xl border-none text-sm outline-none font-medium mt-1">
+                        <input id="trainerUser" type="text" placeholder="Login Username" class="w-full bg-blue-50/50 p-4 rounded-2xl border-none text-sm outline-none font-bold mt-1">
+                        <input id="trainerPass" type="text" placeholder="Assign Password" class="w-full bg-blue-50/50 p-4 rounded-2xl border-none text-sm outline-none font-bold mt-1">
+
+                        <button id="regBtn" onclick="addTrainer()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-blue-600 transition mt-4">
+                            Register Trainer
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2">
+                <div class="flex items-center justify-between mb-6 px-2">
+                    <h3 class="text-xs font-black uppercase tracking-widest text-slate-400">Active Directory</h3>
+                    <span id="trainerCount" class="bg-blue-100 text-blue-600 text-[10px] font-black px-3 py-1 rounded-full">0 TOTAL</span>
+                </div>
+                <div id="trainerList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                <div id="emptyState" class="hidden text-center py-20">
+                    <p class="text-slate-400 text-sm font-medium">No trainers registered yet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBcsmX7T1NotMi0T1XZ6b03yI3r7qZYQr8",
+            authDomain: "gym-membership-tracker-60626.firebaseapp.com",
+            projectId: "gym-membership-tracker-60626",
+            storageBucket: "gym-membership-tracker-60626.firebasestorage.app",
+            messagingSenderId: "260703319955",
+            appId: "1:260703319955:web:78206334baa1fc79725a66"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Use activeGymId or the older gymId key for safety
+        const activeGymId = localStorage.getItem("activeGymId") || localStorage.getItem("gymId");
+
+        if (!activeGymId) {
+            console.error("No Gym ID found in storage");
+            window.location.href = "../login.html";
+        }
+
+        // ATTACH TO WINDOW SO ONCLICK WORKS
+        window.addTrainer = async () => {
+            const btn = document.getElementById('regBtn');
+            const name = document.getElementById('trainerName').value;
+            const specialty = document.getElementById('trainerSpecialty').value;
+            const user = document.getElementById('trainerUser').value;
+            const pass = document.getElementById('trainerPass').value;
+
+            if (!name || !user || !pass) return alert("Fill all required fields");
+
+            btn.innerText = "REGISTERING...";
+            btn.disabled = true;
+
+            try {
+                await addDoc(collection(db, "trainers"), {
+                    gymId: activeGymId,
+                    name,
+                    specialty,
+                    username: user.toLowerCase().trim(),
+                    password: pass,
+                    createdAt: Date.now()
+                });
+                
+                // Clear fields
+                ["trainerName", "trainerSpecialty", "trainerUser", "trainerPass"].forEach(id => document.getElementById(id).value = "");
+                
+                alert("Trainer added successfully!");
+                loadTrainers();
+            } catch (e) { 
+                console.error(e); 
+                alert("Error: " + e.message);
+            } finally {
+                btn.innerText = "REGISTER TRAINER";
+                btn.disabled = false;
+            }
+        };
+
+        window.deleteTrainer = async (id) => {
+            if (confirm("Permanently remove this trainer?")) {
+                await deleteDoc(doc(db, "trainers", id));
+                loadTrainers();
+            }
+        };
+
+        async function loadTrainers() {
+            try {
+                const q = query(collection(db, "trainers"), where("gymId", "==", activeGymId));
+                const snap = await getDocs(q);
+                const list = document.getElementById('trainerList');
+                const empty = document.getElementById('emptyState');
+                
+                list.innerHTML = "";
+                document.getElementById('trainerCount').innerText = `${snap.size} TOTAL`;
+
+                if (snap.empty) {
+                    empty.classList.remove('hidden');
+                    return;
+                }
+                empty.classList.add('hidden');
+
+                snap.forEach(d => {
+                    const t = d.data();
+                    list.innerHTML += `
+                        <div class="glass p-6 rounded-[2rem] border border-white shadow-sm flex justify-between items-center">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center text-white font-black italic">
+                                    ${t.name.charAt(0)}
+                                </div>
+                                <div>
+                                    <h4 class="font-black text-slate-900 text-sm leading-tight">${t.name}</h4>
+                                    <p class="text-[10px] text-blue-600 font-bold uppercase tracking-widest">${t.specialty || 'General'}</p>
+                                    <p class="text-[9px] text-slate-400 font-bold mt-1">ID: ${t.username}</p>
+                                </div>
+                            </div>
+                            <button onclick="deleteTrainer('${d.id}')" class="text-slate-300 hover:text-red-500 transition p-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>`;
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        loadTrainers();
+    </script>
+</body>
+</html>

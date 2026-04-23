@@ -4,138 +4,180 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <title>GymFlow | Elite</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>GymFlow | Member Portal</title>
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; color: #0f172a; overflow-x: hidden; }
-        .ios-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 1.5rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .tap-active:active { transform: scale(0.94); transition: 0.1s; }
-        
-        /* Smooth Page Transitions */
-        .page { position: absolute; width: 100%; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s; }
-        .page-hidden { transform: translateX(100%); opacity: 0; pointer-events: none; }
-        
-        .xp-bar-fill { transition: width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1); background: linear-gradient(90deg, #3b82f6, #60a5fa); }
-        
-        .achievement-claimed {
-            background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%) !important;
-            border: 2px solid #fbbf24 !important;
-            color: #b45309 !important;
-            box-shadow: 0 10px 20px -5px rgba(251, 191, 36, 0.3);
-        }
-
-        /* Muscle Group Selection Styles */
-        .muscle-chip input:checked + div { 
-            background: #3b82f6; 
-            color: white; 
-            border-color: #3b82f6; 
-            transform: translateY(-2px); 
-            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.25); 
-        }
-        
-        .unlock-glow { animation: levelGlow 2s infinite; border: 2px solid #3b82f6 !important; }
-        @keyframes levelGlow { 0%, 100% { opacity: 1; box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); } 50% { opacity: 0.8; box-shadow: 0 0 20px rgba(59, 130, 246, 0.8); } }
-
-        .hidden { display: none !important; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fcfdfe; color: #1e293b; letter-spacing: -0.02em; }
+        .premium-card { background: white; border-radius: 28px; border: 1px solid #f1f5f9; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.04); }
+        .nav-blur { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px); border-top: 1px solid #f1f5f9; }
+        .page { transition: all 0.3s ease; }
+        .page-hidden { display: none; opacity: 0; }
+        .day-pill { width: 40px; height: 50px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; transition: all 0.3s; border: 1px solid #f1f5f9; }
+        .day-hit { background: #2563eb; color: white; border-color: #2563eb; font-weight: 800; }
+        .day-miss { background: #fff; color: #cbd5e1; }
+        ::-webkit-scrollbar { width: 0px; }
     </style>
 </head>
-<body class="min-h-screen">
+<body class="pb-32">
 
-    <div id="levelUpOverlay" class="hidden fixed inset-0 z-[1000] bg-white flex flex-col items-center justify-center p-8 text-center">
-        <div class="w-32 h-32 bg-blue-600 rounded-[2.5rem] flex items-center justify-center text-white text-5xl font-black mb-6 shadow-2xl animate-bounce">
-            <span id="popupNewLevel">2</span>
-        </div>
-        <h1 class="text-4xl font-black mb-2 tracking-tighter text-slate-900">NEW LEVEL</h1>
-        <p class="text-slate-500 font-bold mb-10">Your power has increased. Claim your rank.</p>
-        <button onclick="confirmUnlock()" class="w-full bg-blue-600 text-white py-5 rounded-3xl font-black text-lg shadow-xl tap-active">ASCEND NOW</button>
-    </div>
-
-    <div id="appContainer" class="hidden max-w-lg mx-auto p-4 pb-28 relative">
+    <div id="appContainer" class="hidden max-w-md mx-auto p-6 space-y-6">
         
-        <div id="dashboardPage" class="page space-y-6">
-            <header class="flex justify-between items-center py-4">
-                <div class="flex items-center gap-3">
-                    <div id="hudLevelIcon" class="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black text-xl">1</div>
-                    <div>
-                        <h2 id="userName" class="text-xl font-extrabold tracking-tight">Athlete</h2>
-                        <p id="rankName" class="text-[9px] font-black text-blue-600 uppercase tracking-widest tracking-tighter">RECRUIT</p>
-                    </div>
+        <header class="flex justify-between items-center py-2">
+            <div class="flex items-center gap-4">
+                <div id="hudLevel" class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black text-2xl shadow-xl">1</div>
+                <div>
+                    <h2 id="userName" class="font-extrabold text-xl text-slate-900">Athlete</h2>
+                    <p id="gymNameDisplay" class="text-[11px] font-bold text-blue-600 uppercase tracking-widest">Identifying Gym...</p>
                 </div>
-                <div id="unlockAlert" class="hidden bg-blue-600 text-white px-4 py-2 rounded-full text-[10px] font-black animate-pulse cursor-pointer" onclick="switchTab('armory')">
-                    LEVEL READY ⚡
-                </div>
-            </header>
+            </div>
+            <div class="text-right">
+                <p id="totalXPDisplay" class="text-[10px] font-black text-slate-400 uppercase">0 Total XP</p>
+            </div>
+        </header>
 
-            <div class="ios-card p-5 border-l-4 border-l-emerald-500">
-                <div class="flex justify-between items-center mb-4">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Daily Discipline</p>
-                    <span class="text-orange-500 font-black text-xs" id="streakFlame">🔥 0 STREAK</span>
+        <div id="dashboardPage" class="page space-y-6">
+            
+            <div class="premium-card p-6 space-y-5">
+                <div class="flex justify-between items-center">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Weekly Pulse</span>
+                    <span id="streakCount" class="text-[10px] font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-full uppercase">0 Day Streak</span>
                 </div>
-                <button id="attBtn" onclick="markAttendance()" class="w-full py-4 bg-slate-50 rounded-2xl font-bold text-sm tap-active border border-slate-200">
-                    Mark Attendance (+50 XP)
+                <div id="streakPills" class="flex justify-between">
+                    <div class="day-pill day-miss"><span>S</span><b class="mt-1"></b></div>
+                    <div class="day-pill day-miss"><span>M</span><b class="mt-1"></b></div>
+                    <div class="day-pill day-miss"><span>T</span><b class="mt-1"></b></div>
+                    <div class="day-pill day-miss"><span>W</span><b class="mt-1"></b></div>
+                    <div class="day-pill day-miss"><span>T</span><b class="mt-1"></b></div>
+                    <div class="day-pill day-miss"><span>F</span><b class="mt-1"></b></div>
+                    <div class="day-pill day-miss"><span>S</span><b class="mt-1"></b></div>
+                </div>
+            </div>
+
+            <div class="premium-card p-6 bg-slate-900 text-white overflow-hidden relative">
+                <div class="flex justify-between items-end mb-4">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Tier Progress</p>
+                        <h3 id="xpRatio" class="text-2xl font-black italic">0 / 500</h3>
+                    </div>
+                    <span id="pctLabel" class="text-blue-400 font-black text-sm">0%</span>
+                </div>
+                <div class="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                    <div id="xpBar" class="h-full bg-blue-500 transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+
+            <div id="attContainer">
+                <button id="attBtn" onclick="markAttendance()" class="premium-card p-5 w-full flex items-center justify-between border-l-4 border-l-blue-600 active:scale-95 transition-all">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 text-xl">📍</div>
+                        <div class="text-left">
+                            <h4 class="font-black text-slate-800 text-sm">Gym Check-In</h4>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase">Verify session today</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-black text-blue-600">+50 XP</span>
                 </button>
             </div>
 
-            <div class="ios-card p-6 text-center">
-                <div id="timerBox" class="hidden mb-2">
-                    <p id="timer" class="text-5xl font-black tabular-nums tracking-tighter text-slate-900">00:00:00</p>
+            <div class="premium-card p-8 text-center space-y-6">
+                <div id="timerContainer" class="hidden">
+                    <h1 id="timer" class="text-6xl font-black text-slate-900 tabular-nums tracking-tighter">00:00</h1>
+                    <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest animate-pulse">Session Active</p>
                 </div>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Battle Engine</p>
-                <button id="workoutBtn" onclick="handleWorkoutToggle()" class="w-full bg-blue-600 text-white py-5 rounded-3xl font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-100 tap-active">Start Workout</button>
-                
-                <div class="mt-8 text-left">
-                    <div class="flex justify-between text-[10px] font-black text-slate-400 uppercase mb-2">
-                        <span>Level Progress</span>
-                        <span id="xpLabel">0 / 500 XP</span>
-                    </div>
-                    <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                        <div id="xpBar" class="xp-bar-fill h-full rounded-full" style="width: 0%"></div>
-                    </div>
-                    <p class="text-[9px] text-slate-400 mt-2 font-bold uppercase">Total Points: <span id="hudTotalXP">0</span></p>
+                <div id="idleState">
+                    <h3 class="font-black text-slate-800">Training Session</h3>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase mt-1">Start tracking to earn XP</p>
                 </div>
+                <button id="workoutBtn" onclick="handleWorkoutToggle()" class="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-100 active:scale-95 transition-all">
+                    Start Workout
+                </button>
             </div>
         </div>
 
+        <div id="analyticsPage" class="page page-hidden space-y-6">
+            <h3 class="text-2xl font-black text-slate-900 px-1">Performance</h3>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="premium-card p-5">
+                    <p class="text-[9px] font-black text-slate-400 uppercase">Avg Session XP</p>
+                    <h4 id="avgXp" class="text-xl font-black text-slate-900">0</h4>
+                </div>
+                <div class="premium-card p-5">
+                    <p class="text-[9px] font-black text-slate-400 uppercase">Total Training</p>
+                    <h4 id="totalHours" class="text-xl font-black text-slate-900">0m</h4>
+                </div>
+            </div>
+
+            <div class="premium-card p-6">
+                <p class="text-[10px] font-black text-slate-400 uppercase mb-6 tracking-widest text-center">Daily XP Intensity</p>
+                <div class="h-48">
+                    <canvas id="xpBarChart"></canvas>
+                </div>
+            </div>
+
+            <div class="premium-card p-6">
+                <p class="text-[10px] font-black text-slate-400 uppercase mb-6 tracking-widest text-center">Focus Area Distribution</p>
+                <div class="h-64">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center px-1">
+                <h4 class="text-sm font-black text-slate-900 text-slate-400 uppercase text-[10px] tracking-widest">History Log</h4>
+                <button onclick="renderHistory(true)" class="text-[10px] font-bold text-blue-600 uppercase">Expand All</button>
+            </div>
+            <div id="historyList" class="space-y-3 pb-4"></div>
+        </div>
+
         <div id="armoryPage" class="page page-hidden space-y-6">
-            <h3 class="text-2xl font-black px-2 mt-4">The Armory</h3>
-            <div id="levelList" class="space-y-3 pb-10"></div>
+            <h3 class="text-2xl font-black text-slate-900 px-1">Member Vault</h3>
+            <div class="premium-card p-6 bg-slate-900 text-white relative overflow-hidden">
+                <div class="relative z-10">
+                    <h4 class="font-black text-lg text-blue-400">Exclusive Rewards</h4>
+                    <p class="text-xs text-slate-400 mt-1">Vouchers, guest passes, and gear discounts are awarded as you unlock higher prestige tiers.</p>
+                </div>
+                <div class="absolute -right-2 -bottom-2 text-6xl opacity-20">🎁</div>
+            </div>
+            <div id="levelRoadmap" class="space-y-3 pb-8"></div>
         </div>
 
-        <div id="historyPage" class="page page-hidden space-y-6">
-            <h3 class="text-2xl font-black px-2 mt-4">Battle Logs</h3>
-            <div id="logList" class="space-y-3"></div>
-        </div>
     </div>
 
-    <div id="focusOverlay" class="hidden fixed inset-0 z-[600] bg-white p-8 overflow-y-auto">
-        <h2 class="text-3xl font-black mb-1">Target Areas</h2>
-        <p class="text-slate-400 font-bold text-sm mb-8">Select up to 3 focus groups for today.</p>
-        
-        <div class="grid grid-cols-2 gap-4 mb-10">
-            <label class="muscle-chip tap-active"><input type="checkbox" value="Chest" class="hidden" onchange="checkLimit(this)"><div class="p-6 ios-card text-[11px] font-black text-center border-2 uppercase tracking-widest">Chest</div></label>
-            <label class="muscle-chip tap-active"><input type="checkbox" value="Back" class="hidden" onchange="checkLimit(this)"><div class="p-6 ios-card text-[11px] font-black text-center border-2 uppercase tracking-widest">Back</div></label>
-            <label class="muscle-chip tap-active"><input type="checkbox" value="Leg" class="hidden" onchange="checkLimit(this)"><div class="p-6 ios-card text-[11px] font-black text-center border-2 uppercase tracking-widest">Leg</div></label>
-            <label class="muscle-chip tap-active"><input type="checkbox" value="Arms" class="hidden" onchange="checkLimit(this)"><div class="p-6 ios-card text-[11px] font-black text-center border-2 uppercase tracking-widest">Arms</div></label>
-            <label class="muscle-chip tap-active"><input type="checkbox" value="Shoulder" class="hidden" onchange="checkLimit(this)"><div class="p-6 ios-card text-[11px] font-black text-center border-2 uppercase tracking-widest">Shoulder</div></label>
-            <label class="muscle-chip tap-active"><input type="checkbox" value="Abs" class="hidden" onchange="checkLimit(this)"><div class="p-6 ios-card text-[11px] font-black text-center border-2 uppercase tracking-widest">Abs</div></label>
-            <label class="muscle-chip tap-active"><input type="checkbox" value="Cardio" class="hidden" onchange="checkLimit(this)"><div class="p-6 ios-card text-[11px] font-black text-center border-2 uppercase tracking-widest">Cardio</div></label>
-            <label class="muscle-chip tap-active"><input type="checkbox" value="General" class="hidden" onchange="checkLimit(this)"><div class="p-6 ios-card text-[11px] font-black text-center border-2 uppercase tracking-widest">General</div></label>
+    <div id="focusOverlay" class="hidden fixed inset-0 z-[1000] bg-white p-8 flex flex-col justify-center">
+        <h2 class="text-3xl font-black mb-1 text-slate-900">Training Focus</h2>
+        <p class="text-slate-400 font-bold text-xs mb-10 uppercase">Target up to 3 areas</p>
+        <div class="grid grid-cols-2 gap-3 mb-10">
+            <label><input type="checkbox" value="Chest" class="hidden peer" onchange="checkLimit(this)"><div class="p-6 premium-card text-center font-black text-xs uppercase peer-checked:bg-slate-900 peer-checked:text-white transition-all">Chest</div></label>
+            <label><input type="checkbox" value="Back" class="hidden peer" onchange="checkLimit(this)"><div class="p-6 premium-card text-center font-black text-xs uppercase peer-checked:bg-slate-900 peer-checked:text-white transition-all">Back</div></label>
+            <label><input type="checkbox" value="Legs" class="hidden peer" onchange="checkLimit(this)"><div class="p-6 premium-card text-center font-black text-xs uppercase peer-checked:bg-slate-900 peer-checked:text-white transition-all">Legs</div></label>
+            <label><input type="checkbox" value="Arms" class="hidden peer" onchange="checkLimit(this)"><div class="p-6 premium-card text-center font-black text-xs uppercase peer-checked:bg-slate-900 peer-checked:text-white transition-all">Arms</div></label>
+            <label><input type="checkbox" value="Shoulders" class="hidden peer" onchange="checkLimit(this)"><div class="p-6 premium-card text-center font-black text-xs uppercase peer-checked:bg-slate-900 peer-checked:text-white transition-all">Shoulders</div></label>
+            <label><input type="checkbox" value="Abs" class="hidden peer" onchange="checkLimit(this)"><div class="p-6 premium-card text-center font-black text-xs uppercase peer-checked:bg-slate-900 peer-checked:text-white transition-all">Abs</div></label>
         </div>
-
-        <button onclick="confirmWorkoutStart()" class="w-full bg-blue-600 text-white py-5 rounded-3xl font-black shadow-xl tap-active">ENGAGE</button>
-        <button onclick="document.getElementById('focusOverlay').classList.add('hidden')" class="w-full mt-4 text-slate-400 font-bold text-sm">Cancel</button>
+        <button onclick="startSession()" class="w-full py-5 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl">Confirm & Start</button>
+        <button onclick="toggleOverlay('focusOverlay', false)" class="w-full mt-6 text-slate-400 font-bold text-[10px] uppercase">Back</button>
     </div>
 
-    <nav class="fixed bottom-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-xl border-t border-slate-100 flex justify-around items-center px-8 z-[100]">
-        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center gap-1 text-blue-600"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span class="text-[8px] font-black uppercase">Home</span></button>
-        <button onclick="switchTab('armory')" id="nav-armory" class="flex flex-col items-center gap-1 text-slate-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg><span class="text-[8px] font-black uppercase">Armory</span></button>
-        <button onclick="switchTab('history')" id="nav-history" class="flex flex-col items-center gap-1 text-slate-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2"/></svg><span class="text-[8px] font-black uppercase">Logs</span></button>
+    <nav class="fixed bottom-0 left-0 right-0 h-24 nav-blur flex justify-around items-center px-10 z-[500]">
+        <button onclick="switchTab('dashboard')" id="btn-dashboard" class="text-blue-600 flex flex-col items-center gap-1">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            <span class="text-[8px] font-black uppercase">Core</span>
+        </button>
+        <button onclick="switchTab('analytics')" id="btn-analytics" class="text-slate-300 flex flex-col items-center gap-1">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2M17 11V3L4 14h7v7l9-11h-7z"/></svg>
+            <span class="text-[8px] font-black uppercase">Insights</span>
+        </button>
+        <button onclick="switchTab('armory')" id="btn-armory" class="text-slate-300 flex flex-col items-center gap-1">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            <span class="text-[8px] font-black uppercase">Vault</span>
+        </button>
     </nav>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, setDoc, doc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBcsmX7T1NotMi0T1XZ6b03yI3r7qZYQr8",
@@ -148,223 +190,251 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        
         let currentMember = null;
-        let timerInt = null;
+        let timerInterval = null;
+        let radarChart = null;
+        let xpBarChart = null;
 
-        const getXPForLevel = (lvl) => Math.floor(500 * Math.pow(1.1, lvl - 1));
-        const RANKS = ["Recruit", "Soldier", "Warrior", "Knight", "Paladin", "Slayer", "Titan", "Mythic", "Immortal", "God"];
+        const LevelSys = {
+            base: 500, fact: 1.25,
+            calc: (xp) => {
+                let lvl = 1, cur = xp || 0;
+                while (true) {
+                    let r = Math.floor(LevelSys.base * Math.pow(LevelSys.fact, lvl - 1));
+                    if (cur >= r) { cur -= r; lvl++; }
+                    else return { lvl, cur, r, p: (cur / r) * 100 };
+                }
+            }
+        };
 
-        async function syncData() {
-            if(!currentMember?.id) return;
-            const snap = await getDoc(doc(db, "members", currentMember.id));
+        async function sync() {
+            const id = localStorage.getItem('memberId');
+            if(!id) return window.location.href = window.location.origin + "/player/member-login.html";
+            
+            const snap = await getDoc(doc(db, "members", id));
             if(snap.exists()) {
                 currentMember = { id: snap.id, ...snap.data() };
+                document.getElementById('appContainer').classList.remove('hidden');
                 updateUI();
+                renderStreak();
+            } else {
+                window.location.href = window.location.origin + "/player/member-login.html";
             }
         }
-
-        window.switchTab = (tab) => {
-            window.scrollTo({ top: 0, behavior: 'instant' });
-            ['dashboard', 'armory', 'history'].forEach(p => {
-                const pageEl = document.getElementById(p + 'Page');
-                const navEl = document.getElementById('nav-' + p);
-                if(p === tab) {
-                    pageEl.classList.remove('page-hidden');
-                    navEl.classList.replace('text-slate-400', 'text-blue-600');
-                } else {
-                    pageEl.classList.add('page-hidden');
-                    navEl.classList.replace('text-blue-600', 'text-slate-400');
-                }
-            });
-            if(tab === 'armory') renderArmory();
-            if(tab === 'history') renderHistory();
-        };
 
         function updateUI() {
-            const xp = currentMember.totalXP || 0;
-            const lvl = currentMember.unlockedLevel || 1;
-            const nextXP = getXPForLevel(lvl);
+            const stats = LevelSys.calc(currentMember.totalXP || 0);
             
-            document.getElementById('userName').innerText = currentMember.name;
-            document.getElementById('hudLevelIcon').innerText = lvl;
-            document.getElementById('hudTotalXP').innerText = xp.toLocaleString();
-            document.getElementById('xpLabel').innerText = `${xp % nextXP} / ${nextXP} XP`;
-            document.getElementById('xpBar').style.width = `${(xp % nextXP) / nextXP * 100}%`;
-            document.getElementById('rankName').innerText = RANKS[Math.min(Math.floor(lvl/5), RANKS.length-1)];
-            document.getElementById('streakFlame').innerText = `🔥 ${currentMember.streak || 0} STREAK`;
+            // Name & Gym Logic
+            document.getElementById('userName').innerText = currentMember.name || "Athlete";
+            
+            // Smart Gym Name Finder
+            const gymName = currentMember.gymName || currentMember.gym || currentMember.gym_name || "Elite Athlete";
+            document.getElementById('gymNameDisplay').innerText = gymName;
+            
+            document.getElementById('hudLevel').innerText = stats.lvl;
+            document.getElementById('totalXPDisplay').innerText = `${(currentMember.totalXP || 0).toLocaleString()} XP`;
+            document.getElementById('xpRatio').innerText = `${Math.floor(stats.cur)} / ${stats.r}`;
+            document.getElementById('xpBar').style.width = stats.p + '%';
+            document.getElementById('pctLabel').innerText = Math.round(stats.p) + '%';
+            document.getElementById('streakCount').innerText = `${currentMember.streak || 0} DAY STREAK`;
 
-            const attBtn = document.getElementById('attBtn');
-            const todayStr = new Date().toLocaleDateString();
-            if(currentMember.lastAttendance === todayStr) {
-                attBtn.innerText = "MISSION COMPLETE ✓";
-                attBtn.classList.add('achievement-claimed');
-                attBtn.onclick = null;
-            } else {
-                attBtn.innerText = "Mark Attendance (+50 XP)";
-                attBtn.classList.remove('achievement-claimed');
-                attBtn.onclick = markAttendance;
+            const today = new Date().toLocaleDateString();
+            const attContainer = document.getElementById('attContainer');
+            if(currentMember.lastAttendance === today) {
+                attContainer.innerHTML = `
+                    <div class="premium-card p-5 w-full flex items-center justify-between border-l-4 border-l-emerald-500 bg-emerald-50/30">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white text-lg">✓</div>
+                            <div class="text-left">
+                                <h4 class="font-black text-slate-800 text-sm">Attendance Locked</h4>
+                                <p class="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Verified for today</p>
+                            </div>
+                        </div>
+                    </div>`;
             }
 
-            if(xp >= nextXP) document.getElementById('unlockAlert').classList.remove('hidden');
-            else document.getElementById('unlockAlert').classList.add('hidden');
-
-            const workBtn = document.getElementById('workoutBtn');
+            const wBtn = document.getElementById('workoutBtn');
             if(currentMember.isInside) {
-                workBtn.innerText = "END SESSION";
-                workBtn.className = "w-full bg-red-500 text-white py-5 rounded-3xl font-black shadow-lg shadow-red-200 tap-active";
-                document.getElementById('timerBox').classList.remove('hidden');
-                startLiveTimer();
+                wBtn.innerText = "FINISH TRAINING";
+                wBtn.classList.replace('bg-blue-600', 'bg-red-500');
+                document.getElementById('timerContainer').classList.remove('hidden');
+                document.getElementById('idleState').classList.add('hidden');
+                startTimer();
             } else {
-                workBtn.innerText = "START WORKOUT";
-                workBtn.className = "w-full bg-blue-600 text-white py-5 rounded-3xl font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-100 tap-active";
-                document.getElementById('timerBox').classList.add('hidden');
-                clearInterval(timerInt);
-                timerInt = null;
+                wBtn.innerText = "START WORKOUT";
+                wBtn.classList.replace('bg-red-500', 'bg-blue-600');
+                document.getElementById('timerContainer').classList.add('hidden');
+                document.getElementById('idleState').classList.remove('hidden');
+                if(timerInterval) clearInterval(timerInterval);
             }
         }
+
+        function renderStreak() {
+            const hist = currentMember.workoutHistory || [];
+            const pills = document.querySelectorAll('.day-pill');
+            const now = new Date();
+            const start = new Date(now);
+            start.setDate(now.getDate() - now.getDay());
+
+            pills.forEach((pill, i) => {
+                const dDate = new Date(start);
+                dDate.setDate(start.getDate() + i);
+                const ds = dDate.toLocaleDateString();
+                const wasHere = hist.some(h => h.date === ds);
+                pill.className = wasHere ? 'day-pill day-hit' : 'day-pill day-miss';
+                pill.querySelector('b').innerText = dDate.getDate();
+            });
+        }
+
+        window.switchTab = (t) => {
+            document.querySelectorAll('.page').forEach(p => p.classList.add('page-hidden'));
+            document.getElementById(t + 'Page').classList.remove('page-hidden');
+            document.querySelectorAll('nav button').forEach(b => b.classList.replace('text-blue-600', 'text-slate-300'));
+            document.getElementById('btn-' + t).classList.replace('text-slate-300', 'text-blue-600');
+            if(t === 'analytics') setTimeout(() => { renderCharts(); renderHistory(false); }, 100);
+            if(t === 'armory') renderArmory();
+        };
 
         window.markAttendance = async () => {
-            const todayISO = new Date().toISOString().split('T')[0];
-            const displayDate = new Date().toLocaleDateString();
-            const newXP = (currentMember.totalXP || 0) + 50;
-            const newStreak = (currentMember.streak || 0) + 1;
-
-            try {
-                // Update User Record
-                await updateDoc(doc(db, "members", currentMember.id), { 
-                    totalXP: newXP, 
-                    streak: newStreak,
-                    lastAttendance: displayDate 
-                });
-
-                // Sync Global Attendance for Admin (Attendance Dashboard)
-                const attRef = doc(db, "attendance", todayISO);
-                await setDoc(attRef, { 
-                    presentIds: arrayUnion(currentMember.id),
-                    gymId: currentMember.gymId || "default",
-                    lastUpdated: new Date()
-                }, { merge: true });
-
-                confetti({ particleCount: 60, colors: ['#fbbf24', '#ffffff'] });
-                await syncData();
-            } catch (error) {
-                console.error("Attendance Sync Error:", error);
-                alert("Connection error. Please try again.");
-            }
+            const today = new Date().toLocaleDateString();
+            await updateDoc(doc(db, "members", currentMember.id), {
+                totalXP: (currentMember.totalXP || 0) + 50,
+                streak: (currentMember.streak || 0) + 1,
+                lastAttendance: today
+            });
+            confetti({ particleCount: 100, spread: 50, origin: { y: 0.8 } });
+            sync();
         };
 
-        window.handleWorkoutToggle = () => {
-            if(currentMember.isInside) { if(confirm("Submit Battle Log?")) endWorkout(); }
-            else {
-                document.querySelectorAll('#focusOverlay input').forEach(i => i.checked = false);
-                document.getElementById('focusOverlay').classList.remove('hidden');
-            }
+        window.handleWorkoutToggle = () => currentMember.isInside ? endSession() : toggleOverlay('focusOverlay', true);
+        window.toggleOverlay = (id, s) => document.getElementById(id).classList.toggle('hidden', !s);
+        window.checkLimit = (i) => { if(document.querySelectorAll('#focusOverlay input:checked').length > 3) i.checked = false; };
+
+        window.startSession = async () => {
+            const s = Array.from(document.querySelectorAll('#focusOverlay input:checked')).map(x => x.value);
+            if(!s.length) return alert("Select Focus");
+            await updateDoc(doc(db, "members", currentMember.id), {
+                isInside: true, lastIn: new Date().toISOString(), activeWorkoutParts: s
+            });
+            toggleOverlay('focusOverlay', false);
+            sync();
         };
 
-        window.checkLimit = (input) => {
-            if(document.querySelectorAll('#focusOverlay input:checked').length > 3) {
-                input.checked = false;
-                alert("Choose max 3 groups.");
-            }
-        };
-
-        window.confirmWorkoutStart = async () => {
-            const parts = Array.from(document.querySelectorAll('#focusOverlay input:checked')).map(i => i.value);
-            if(parts.length === 0) return alert("Select at least one group.");
-            const now = new Date().toISOString();
-            await updateDoc(doc(db, "members", currentMember.id), { isInside: true, lastIn: now, activeWorkoutParts: parts });
-            document.getElementById('focusOverlay').classList.add('hidden');
-            syncData();
-        };
-
-        async function endWorkout() {
-            clearInterval(timerInt);
-            timerInt = null;
-            const diff = Math.round((new Date() - new Date(currentMember.lastIn)) / 60000);
-            const earned = Math.max(10, diff * 10);
-            await updateDoc(doc(db, "members", currentMember.id), { 
-                isInside: false, 
-                totalXP: (currentMember.totalXP || 0) + earned,
-                workoutHistory: arrayUnion({ 
-                    date: new Date().toLocaleDateString(), 
-                    duration: diff+'m', 
-                    xp: earned, 
-                    muscles: currentMember.activeWorkoutParts || ["Gym"] 
+        async function endSession() {
+            const d = new Date() - new Date(currentMember.lastIn);
+            const m = Math.max(1, Math.round(d / 60000));
+            const x = m * 10;
+            await updateDoc(doc(db, "members", currentMember.id), {
+                isInside: false,
+                totalXP: (currentMember.totalXP || 0) + x,
+                workoutHistory: arrayUnion({
+                    date: new Date().toLocaleDateString(), duration: m, xp: x, muscles: currentMember.activeWorkoutParts || ["Gym"]
                 })
             });
-            confetti({ particleCount: 200, spread: 80 });
-            syncData();
+            sync();
         }
 
-        function startLiveTimer() {
-            if(timerInt) return;
-            timerInt = setInterval(() => {
-                const diff = new Date() - new Date(currentMember.lastIn);
-                const h = Math.floor(diff/3600000).toString().padStart(2,'0');
-                const m = Math.floor((diff%3600000)/60000).toString().padStart(2,'0');
-                const s = Math.floor((diff%60000)/1000).toString().padStart(2,'0');
-                document.getElementById('timer').innerText = `${h}:${m}:${s}`;
+        function startTimer() {
+            if(timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                const d = new Date() - new Date(currentMember.lastIn);
+                const m = Math.floor(d/60000).toString().padStart(2,'0');
+                const s = Math.floor((d%60000)/1000).toString().padStart(2,'0');
+                document.getElementById('timer').innerText = `${m}:${s}`;
             }, 1000);
         }
 
-        window.renderArmory = () => {
-            const list = document.getElementById('levelList');
-            const userLvl = currentMember.unlockedLevel || 1;
-            const userXP = currentMember.totalXP || 0;
-            let html = '';
-            for(let i=1; i<=20; i++) {
-                const req = getXPForLevel(i);
-                const unlocked = i <= userLvl;
-                const canUnlock = !unlocked && i === userLvl + 1 && userXP >= req;
-                html += `
-                    <div class="ios-card p-5 flex items-center gap-4 ${unlocked ? 'border-blue-100' : 'grayscale opacity-50'} ${canUnlock ? 'unlock-glow grayscale-0 opacity-100' : ''}">
-                        <div class="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black">${unlocked ? i : '🔒'}</div>
-                        <div class="flex-1">
-                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Req: ${req} XP</p>
-                            <p class="text-sm font-extrabold">Level ${i}</p>
-                        </div>
-                        ${canUnlock ? `<button onclick="openUnlockPopup(${i})" class="bg-blue-600 text-white px-5 py-2 rounded-xl text-[10px] font-black">ASCEND</button>` : ''}
-                    </div>
-                `;
-            }
-            list.innerHTML = html;
-        };
+        function renderCharts() {
+            const hist = currentMember.workoutHistory || [];
+            
+            // Clean Numerical Data
+            const cleanHist = hist.map(h => ({
+                ...h,
+                xp: Number(h.xp) || 0,
+                duration: Number(h.duration) || 0
+            }));
 
-        window.openUnlockPopup = (lvl) => {
-            document.getElementById('popupNewLevel').innerText = lvl;
-            document.getElementById('levelUpOverlay').classList.remove('hidden');
-        };
+            // Stats
+            const totalXp = cleanHist.reduce((a,b)=>a+b.xp, 0);
+            const totalMins = cleanHist.reduce((a,b)=>a+b.duration, 0);
+            document.getElementById('avgXp').innerText = cleanHist.length ? Math.round(totalXp/cleanHist.length) : 0;
+            document.getElementById('totalHours').innerText = totalMins + 'm';
 
-        window.confirmUnlock = async () => {
-            const next = (currentMember.unlockedLevel || 1) + 1;
-            await updateDoc(doc(db, "members", currentMember.id), { unlockedLevel: next });
-            document.getElementById('levelUpOverlay').classList.add('hidden');
-            confetti({ particleCount: 300, spread: 100 });
-            await syncData();
-            switchTab('dashboard');
-        };
-
-        window.renderHistory = () => {
-            const list = document.getElementById('logList');
-            list.innerHTML = (currentMember.workoutHistory || []).reverse().map(l => `
-                <div class="ios-card p-4 flex justify-between items-center mb-3">
-                    <div><p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">${l.date}</p><p class="text-xs font-bold text-blue-600">${l.muscles.join(' • ')}</p></div>
-                    <div class="text-right"><p class="font-black text-xs text-slate-900">+${l.xp} XP</p><p class="text-[10px] text-slate-400 font-bold">${l.duration}</p></div>
-                </div>
-            `).join('') || '<p class="text-center py-20 text-slate-300 font-black uppercase tracking-widest">No Logs Found</p>';
-        };
-
-        // Initialize App - Key Fix: Use 'memberId' to match the login page
-        const authId = localStorage.getItem('memberId'); 
-        if(authId) {
-            getDoc(doc(db, "members", authId)).then(s => {
-                if(s.exists()) {
-                    currentMember = { id: s.id, ...s.data() };
-                    document.getElementById('appContainer').classList.remove('hidden');
-                    updateUI();
-                } else { window.location.href = "player/member-login.html"; }
+            // Weekly Intensity (Bar Chart)
+            const last7 = cleanHist.slice(-7);
+            const ctxB = document.getElementById('xpBarChart').getContext('2d');
+            if(xpBarChart) xpBarChart.destroy();
+            xpBarChart = new Chart(ctxB, {
+                type: 'bar',
+                data: {
+                    labels: last7.map(h => h.date.split('/')[1] + '/' + h.date.split('/')[0]),
+                    datasets: [{
+                        label: 'XP',
+                        data: last7.map(h => h.xp),
+                        backgroundColor: '#2563eb',
+                        borderRadius: 6
+                    }]
+                },
+                options: { scales: { y: { display: false }, x: { grid: { display: false } } }, plugins: { legend: { display: false } } }
             });
-        } else { window.location.href = "player/member-login.html"; }
+
+            // Muscle Radar
+            const m = { Chest:0, Back:0, Legs:0, Arms:0, Shoulders:0, Abs:0 };
+            cleanHist.forEach(h => h.muscles.forEach(x => m[x] = (m[x] || 0) + 1));
+            const ctxR = document.getElementById('radarChart').getContext('2d');
+            if(radarChart) radarChart.destroy();
+            radarChart = new Chart(ctxR, {
+                type: 'radar',
+                data: {
+                    labels: Object.keys(m),
+                    datasets: [{
+                        data: Object.values(m),
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)', borderColor: '#2563eb', borderWidth: 2
+                    }]
+                },
+                options: { scales: { r: { ticks: { display: false }, grid: { color: '#f1f5f9' } } }, plugins: { legend: { display: false } } }
+            });
+        }
+
+        window.renderHistory = (all) => {
+            const l = document.getElementById('historyList');
+            const h = [...(currentMember.workoutHistory || [])].reverse();
+            const logs = all ? h : h.slice(0, 5);
+            l.innerHTML = logs.map(x => `
+                <div class="premium-card p-4 flex justify-between items-center">
+                    <div>
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">${x.date}</p>
+                        <h4 class="font-bold text-xs text-slate-800">${x.muscles.join(' • ')}</h4>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-black text-blue-600 text-sm">+${x.xp} XP</p>
+                        <p class="text-[9px] text-slate-400 font-bold uppercase">${x.duration} MIN</p>
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        function renderArmory() {
+            const r = document.getElementById('levelRoadmap');
+            const s = LevelSys.calc(currentMember.totalXP || 0);
+            let h = '';
+            for(let i=1; i<=15; i++) {
+                const u = i <= s.lvl;
+                h += `
+                    <div class="premium-card p-5 flex items-center gap-4 ${u ? '' : 'opacity-40'}">
+                        <div class="w-12 h-12 rounded-xl ${u ? 'bg-slate-900' : 'bg-slate-100'} text-white flex items-center justify-center font-black text-lg">${u ? i : '🔒'}</div>
+                        <div>
+                            <p class="text-sm font-black text-slate-800">Tier ${i}</p>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Prestige Rank</p>
+                        </div>
+                    </div>`;
+            }
+            r.innerHTML = h;
+        }
+
+        sync();
     </script>
 </body>
 </html>

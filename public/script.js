@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, query, where, doc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBcsmX7T1NotMi0T1XZ6b03yI3r7qZYQr8",
@@ -17,6 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (displayElement) {
         displayElement.innerText = gymName;
     }
+    // Load trainers for the dropdown on page load
+    loadTrainerDropdown();
 });
 
 const app = initializeApp(firebaseConfig);
@@ -28,9 +30,9 @@ if(!gymId) window.location.href = "login.html";
 let allMembers = [];
 let selectedId = null;
 let currentFilter = 'all';
-let activeLiveFilter = 'all'; 
+let activeLiveFilter = 'all';
 let currentPage = 1;
-const rowsPerPage = 7; 
+const rowsPerPage = 7;
 
 // --- UTILITY: GET CURRENT MONTH CODE (YYYY-MM) ---
 function getCurrentMonthCode() {
@@ -50,21 +52,43 @@ function loadMembers() {
     });
 }
 
+// Function to load trainers into the dropdown
+async function loadTrainerDropdown() {
+    const trainerSelect = document.getElementById('regTrainer');
+    if (!trainerSelect) return;
+
+    const activeGymId = localStorage.getItem("activeGymId") || localStorage.getItem("gymId");
+
+    try {
+        const q = query(collection(db, "trainers"), where("gymId", "==", activeGymId));
+        const snap = await getDocs(q);
+        
+        trainerSelect.innerHTML = '<option value="None">No Trainer Assigned</option>';
+        
+        snap.forEach(doc => {
+            const trainer = doc.data();
+            const option = document.createElement('option');
+            option.value = doc.id; 
+            option.textContent = trainer.name; 
+            trainerSelect.appendChild(option);
+        });
+    } catch (e) {
+        console.error("Error loading trainers:", e);
+    }
+}
+
 function updateStats() {
     const cur = getCurrentMonthCode();
     const activeMembers = allMembers.filter(m => m.status !== 'inactive');
     const paidMembersThisMonth = activeMembers.filter(m => m.payments?.includes(cur));
-    
     const paidCount = paidMembersThisMonth.length;
     const percent = activeMembers.length > 0 ? Math.round((paidCount / activeMembers.length) * 100) : 0;
-    
-    // Calculate ONLY Current Month Revenue
+
     let currentMonthRevenue = 0;
     paidMembersThisMonth.forEach(m => {
         currentMonthRevenue += parseFloat(m.monthlyFee) || 0;
     });
 
-    // Also include Joining Fees if the member joined THIS month
     allMembers.forEach(m => {
         if (m.joinDate && m.joinDate.startsWith(cur)) {
             currentMonthRevenue += parseFloat(m.joiningFee) || 0;
@@ -75,7 +99,6 @@ function updateStats() {
     document.getElementById('statRevenue').innerText = currentMonthRevenue.toLocaleString('en-IN');
     document.getElementById('statPercent').innerText = percent + "%";
     document.getElementById('statBar').style.width = percent + "%";
-    
     document.getElementById('countAll').innerText = activeMembers.length;
     document.getElementById('countUnpaid').innerText = activeMembers.length - paidCount;
 }
@@ -142,18 +165,14 @@ window.render = () => {
     tbody.innerHTML = html || `<tr><td colspan="3" class="p-10 text-center text-slate-400 text-xs italic">No matching members</td></tr>`;
 };
 
-// 3. LIVE FEED (CORRECTED FILTER LOGIC)
+// 3. LIVE FEED
 window.setLiveFilter = (part) => {
     activeLiveFilter = part;
     document.querySelectorAll('.live-f-btn').forEach(btn => {
-        // Corrected comparison to handle case sensitivity in UI buttons
         const btnText = btn.innerText.toLowerCase();
         const partText = part.toLowerCase();
         const match = btnText === partText;
-        
-        btn.className = match 
-            ? "live-f-btn px-4 py-2 rounded-xl text-[8px] font-black uppercase bg-slate-900 text-white shadow-sm whitespace-nowrap"
-            : "live-f-btn px-4 py-2 rounded-xl text-[8px] font-black uppercase bg-white border border-slate-100 text-slate-400 whitespace-nowrap";
+        btn.className = match ? "live-f-btn px-4 py-2 rounded-xl text-[8px] font-black uppercase bg-slate-900 text-white shadow-sm whitespace-nowrap" : "live-f-btn px-4 py-2 rounded-xl text-[8px] font-black uppercase bg-white border border-slate-100 text-slate-400 whitespace-nowrap";
     });
     renderLive();
 };
@@ -161,22 +180,15 @@ window.setLiveFilter = (part) => {
 window.renderLive = () => {
     const grid = document.getElementById('liveMembersGrid');
     const liveNow = allMembers.filter(m => m.isInside === true);
-    
-    // --- IMPROVED FILTERING LOGIC ---
-    const filtered = activeLiveFilter === 'all' 
-        ? liveNow 
-        : liveNow.filter(m => {
-            if (!m.activeWorkoutParts || m.activeWorkoutParts.length === 0) return false;
-            
-            const filterLower = activeLiveFilter.toLowerCase();
-            
-            // Checks if member's parts contain the filter OR filter contains member's part
-            // This fixes "Leg" vs "Legs" and "Abs" matching errors.
-            return m.activeWorkoutParts.some(p => {
-                const pLower = p.toLowerCase();
-                return pLower.includes(filterLower) || filterLower.includes(pLower);
-            });
+
+    const filtered = activeLiveFilter === 'all' ? liveNow : liveNow.filter(m => {
+        if (!m.activeWorkoutParts || m.activeWorkoutParts.length === 0) return false;
+        const filterLower = activeLiveFilter.toLowerCase();
+        return m.activeWorkoutParts.some(p => {
+            const pLower = p.toLowerCase();
+            return pLower.includes(filterLower) || filterLower.includes(pLower);
         });
+    });
 
     document.getElementById('countTraining').innerText = `${liveNow.length} MEMBERS TRAINING NOW`;
 
@@ -195,7 +207,6 @@ window.renderLive = () => {
             const now = new Date();
             const diffInMs = now.getTime() - startDate.getTime();
             const diffInMins = Math.floor(diffInMs / 60000);
-
             if (!isNaN(startDate.getTime()) && diffInMins >= 0) {
                 if (diffInMins >= 60) {
                     const hrs = Math.floor(diffInMins / 60);
@@ -226,10 +237,10 @@ window.renderLive = () => {
 };
 
 // 4. PROFILE MODAL
-window.openProfile = (id) => { 
-    selectedId = id; 
-    refreshProfileUI(); 
-    document.getElementById('profileModal').classList.remove('hidden'); 
+window.openProfile = (id) => {
+    selectedId = id;
+    refreshProfileUI();
+    document.getElementById('profileModal').classList.remove('hidden');
 };
 
 window.closeProfile = () => {
@@ -240,10 +251,10 @@ window.closeProfile = () => {
 function refreshProfileUI() {
     const m = allMembers.find(x => x.id === selectedId);
     if(!m) return;
-    
+
     document.getElementById('profName').innerText = m.name;
     document.getElementById('profPhone').innerText = m.phone;
-    
+
     const badge = document.getElementById('profStatusBadge');
     badge.innerText = m.status === 'inactive' ? "Paused" : "Active";
     badge.className = `inline-block text-[9px] font-black px-3 py-1 rounded-full uppercase mb-4 ${m.status === 'inactive' ? 'bg-slate-100 text-slate-400' : 'bg-green-50 text-green-600'}`;
@@ -256,42 +267,39 @@ function refreshProfileUI() {
     const curCode = getCurrentMonthCode();
     const isPaid = m.payments?.includes(curCode);
 
-    const whatsappBtnHtml = !isPaid && m.status !== 'inactive' 
-        ? `<button onclick="sendWhatsAppReminder('${m.phone}', '${m.name}')" class="mt-4 w-full bg-green-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-md hover:bg-green-700 transition-colors">
+    const whatsappBtnHtml = !isPaid && m.status !== 'inactive' ? `
+        <button onclick="sendWhatsAppReminder('${m.phone}', '${m.name}')" class="mt-4 w-full bg-green-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-md hover:bg-green-700 transition-colors">
             📲 Send WhatsApp Reminder
-           </button>` 
-        : '';
+        </button>` : '';
 
     document.getElementById('currentMonthContainer').innerHTML = `
-        <div class="p-6 rounded-[2rem] border-2 ${isPaid ? 'border-green-100 bg-green-50/30' : 'border-blue-100 bg-blue-50/30'}">
-            <div class="flex justify-between items-center">
-                <div>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Month Status</p>
-                    <h4 class="text-lg font-black text-slate-900">${now.toLocaleString('default', { month: 'long', year: 'numeric' })}</h4>
-                </div>
-                <button onclick="togglePay('${curCode}')" class="px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm ${isPaid ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'}">
-                    ${isPaid ? 'Paid ✓' : 'Mark Paid'}
-                </button>
+    <div class="p-6 rounded-[2rem] border-2 ${isPaid ? 'border-green-100 bg-green-50/30' : 'border-blue-100 bg-blue-50/30'}">
+        <div class="flex justify-between items-center">
+            <div>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Month Status</p>
+                <h4 class="text-lg font-black text-slate-900">${now.toLocaleString('default', { month: 'long', year: 'numeric' })}</h4>
             </div>
-            ${whatsappBtnHtml}
-        </div>`;
+            <button onclick="togglePay('${curCode}')" class="px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm ${isPaid ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'}">
+                ${isPaid ? 'Paid ✓' : 'Mark Paid'}
+            </button>
+        </div>
+        ${whatsappBtnHtml}
+    </div>`;
 
     const hist = document.getElementById('historyList');
     hist.innerHTML = "";
-    
-    let ptr = new Date(now.getFullYear(), now.getMonth() - 1, 1); 
+    let ptr = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const joinDateObj = new Date(m.joinDate || "2025-01-01");
     const limit = new Date(joinDateObj.getFullYear(), joinDateObj.getMonth(), 1);
 
     while (ptr >= limit) {
         const code = ptr.toISOString().slice(0, 7);
         const paid = m.payments?.includes(code);
-        
         hist.innerHTML += `
-            <div class="flex justify-between items-center p-3 hover:bg-slate-50 rounded-2xl">
-                <span class="text-xs font-bold text-slate-600">${ptr.toLocaleString('default', { month: 'short', year: 'numeric' })}</span>
-                <button onclick="togglePay('${code}')" class="text-[9px] font-black uppercase px-4 py-1.5 rounded-xl border ${paid ? 'border-green-200 text-green-600 bg-green-50' : 'border-slate-200 text-slate-400'}">${paid ? 'Paid' : 'Unpaid'}</button>
-            </div>`;
+        <div class="flex justify-between items-center p-3 hover:bg-slate-50 rounded-2xl">
+            <span class="text-xs font-bold text-slate-600">${ptr.toLocaleString('default', { month: 'short', year: 'numeric' })}</span>
+            <button onclick="togglePay('${code}')" class="text-[9px] font-black uppercase px-4 py-1.5 rounded-xl border ${paid ? 'border-green-200 text-green-600 bg-green-50' : 'border-slate-200 text-slate-400'}">${paid ? 'Paid' : 'Unpaid'}</button>
+        </div>`;
         ptr.setMonth(ptr.getMonth() - 1);
     }
 }
@@ -306,17 +314,13 @@ window.sendWhatsAppReminder = (phone, name) => {
 window.togglePay = async (code) => {
     const m = allMembers.find(x => x.id === selectedId);
     if (!m) return;
-
     let p = m.payments || [];
     const isCurrentlyPaid = p.includes(code);
-    
     const [year, month] = code.split('-');
     const dateLabel = new Date(year, parseInt(month) - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
-
-    const message = isCurrentlyPaid 
-        ? `Are you sure you want to undo the payment for ${dateLabel}?` 
-        : `Mark ${dateLabel} as Paid for ${m.name}?`;
-
+    
+    const message = isCurrentlyPaid ? `Are you sure you want to undo the payment for ${dateLabel}?` : `Mark ${dateLabel} as Paid for ${m.name}?`;
+    
     if (confirm(message)) {
         p = isCurrentlyPaid ? p.filter(x => x !== code) : [...p, code];
         await updateDoc(doc(db, "members", selectedId), { payments: p });
@@ -324,50 +328,54 @@ window.togglePay = async (code) => {
 };
 
 window.addNewMember = async () => {
-    const nameInput = document.getElementById('regName');
-    const phoneInput = document.getElementById('regPhone');
-    const planInput = document.getElementById('regPlan');
-    const monthlyInput = document.getElementById('regMonthlyFee');
-    const joiningInput = document.getElementById('regJoiningFee');
+    const name = document.getElementById('regName').value;
+    const phone = document.getElementById('regPhone').value;
+    const plan = document.getElementById('regPlan').value;
+    const trainerId = document.getElementById('regTrainer').value;
+    const monthlyFee = parseFloat(document.getElementById('regMonthlyFee').value);
+    const joiningFee = parseFloat(document.getElementById('regJoiningFee').value);
+    const activeGymId = localStorage.getItem("activeGymId") || localStorage.getItem("gymId");
 
-    const name = nameInput.value.trim();
-    const phone = phoneInput.value.trim();
-
-    if(!name || !phone) return alert("Required: Name & Phone");
+    if (!name || !phone) return alert("Name and Phone are required");
 
     try {
-        const curDay = new Date().toISOString().slice(0, 10);
-        
         await addDoc(collection(db, "members"), {
-            name, phone, gymId, 
-            monthlyFee: parseFloat(monthlyInput.value) || 0,
-            joiningFee: parseFloat(joiningInput.value) || 0,
-            plan: planInput.value || "Normal",
-            status: 'active', isInside: false, activeWorkoutParts: [],
-            joinDate: curDay,
-            payments: [] 
+            gymId: activeGymId,
+            name,
+            phone,
+            plan,
+            trainerId, 
+            monthlyFee,
+            joiningFee,
+            status: 'active',
+            joinedDate: Date.now(),
+            lastPaymentDate: Date.now()
         });
-        
-        nameInput.value = ""; phoneInput.value = ""; planInput.value = ""; monthlyInput.value = ""; joiningInput.value = "";
-        document.getElementById('regSection').classList.add('hidden');
-    } catch (error) { console.error(error); alert("Failed to save member."); }
+
+        alert("Member registered with trainer!");
+        location.reload();
+    } catch (e) {
+        console.error(e);
+    }
 };
 
-window.deleteMember = async () => { if(confirm("Delete?")) { await deleteDoc(doc(db, "members", selectedId)); window.closeProfile(); } };
+window.deleteMember = async () => {
+    if(confirm("Delete?")) {
+        await deleteDoc(doc(db, "members", selectedId));
+        window.closeProfile();
+    }
+};
 
-// 6. NAVIGATION & SIDEBAR HIGHLIGHTING (ADDED SCROLL TO TOP)
+// 6. NAVIGATION & SIDEBAR HIGHLIGHTING
 window.setFilter = (f) => {
-    // Force scroll to top when changing tab filters
     window.scrollTo({ top: 0, behavior: 'smooth' });
-
     currentFilter = f;
     currentPage = 1;
-
     document.getElementById('listTitle').innerText = f === 'all' ? 'Active Roster' : 'Pending Dues';
-
+    
     const btnAll = document.getElementById('btnFilterAll');
     const btnUnpaid = document.getElementById('btnFilterUnpaid');
-
+    
     const activeClass = "w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold bg-slate-900 text-white shadow-sm mb-2 transition-all";
     const inactiveClass = "w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 bg-transparent hover:bg-white/50 transition mb-2";
 
@@ -382,14 +390,11 @@ window.setFilter = (f) => {
     if (window.innerWidth < 1024 && typeof window.toggleMobileMenu === 'function') {
         window.toggleMobileMenu();
     }
-    
     render();
 };
 
-window.changePage = (dir) => { 
-    // Force scroll to top of the table when changing pages
+window.changePage = (dir) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-
     const cur = getCurrentMonthCode();
     let filtered = allMembers;
     if(currentFilter === 'unpaid') {
@@ -397,12 +402,15 @@ window.changePage = (dir) => {
     }
     const total = Math.ceil(filtered.length / rowsPerPage);
     if (currentPage + dir > 0 && currentPage + dir <= total) {
-        currentPage += dir; 
-        render(); 
+        currentPage += dir;
+        render();
     }
 };
 
-document.getElementById('searchBar').addEventListener('input', () => { currentPage = 1; render(); });
+document.getElementById('searchBar').addEventListener('input', () => {
+    currentPage = 1;
+    render();
+});
 
 setInterval(renderLive, 60000);
 loadMembers();
