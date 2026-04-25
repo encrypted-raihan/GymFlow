@@ -17,7 +17,6 @@
             border: 1px solid #f1f5f9;
             box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.05);
         }
-        /* Strict UI Consistency: borderRadius 10px */
         .custom-input { 
             border-radius: 10px !important; 
             transition: all 0.2s ease;
@@ -88,7 +87,6 @@
             err.classList.add('hidden');
 
             try {
-                // Querying root 'trainers' collection
                 const q = query(collection(db, "trainers"), 
                                 where("username", "==", user), 
                                 where("password", "==", pass));
@@ -96,10 +94,14 @@
                 const snap = await getDocs(q);
 
                 if (!snap.empty) {
-                    const trainer = snap.docs[0];
+                    const trainer = snap.docs[0]; // ✅ FIX ADDED
+
                     localStorage.setItem('trainerId', trainer.id);
                     localStorage.setItem('trainerName', trainer.data().name);
-                    window.location.href = 'index.html';
+
+                    localStorage.setItem('activeGymId', 'trainer-session');
+
+                    window.location.href = '/trainer/index.html';
                 } else {
                     err.classList.remove('hidden');
                     btn.innerText = "Access Dashboard";
