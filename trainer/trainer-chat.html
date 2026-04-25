@@ -24,7 +24,7 @@
 
   .main { flex:1; display:flex; height:100vh; overflow:hidden; width:100vw; position: relative; }
 
-  /* ── CHAT LIST PANEL (PLAYER STYLE) ── */
+  /* ── CHAT LIST PANEL ── */
   .chat-list-panel {
     width:300px; min-width:300px; background:var(--surface);
     border-right:1px solid var(--border); display:flex; flex-direction:column;
@@ -110,9 +110,7 @@
     border-bottom:1px solid var(--border);
     display:flex; align-items:center; gap:12px;
   }
-  .mobile-back-btn {
-    display: none; background: none; border: none; padding: 8px; cursor: pointer; margin-left: -10px;
-  }
+  .mobile-back-btn { display: none; background: none; border: none; padding: 8px; cursor: pointer; margin-left: -10px; }
   .header-avatar {
     width:42px; height:42px; border-radius:50%; display:flex;
     align-items:center; justify-content:center; font-size:16px; font-weight:700; color:#fff;
@@ -132,6 +130,13 @@
   }
   .msg-row { display:flex; gap:8px; max-width:76%; }
   .msg-row.sent { align-self:flex-end; flex-direction:row-reverse; }
+  .msg-avatar {
+    width:28px; height:28px; border-radius:50%; display:flex;
+    align-items:center; justify-content:center; font-size:11px;
+    font-weight:700; color:#fff; flex-shrink:0; align-self:flex-end;
+  }
+  .msg-content { display:flex; flex-direction:column; gap:2px; }
+  .msg-sender-name { font-size:10px; font-weight:700; color:var(--primary); padding:0 4px; margin-bottom: 1px; }
   .msg-bubble {
     padding:10px 14px; border-radius:16px; font-size:13.5px; line-height:1.5;
   }
@@ -139,6 +144,8 @@
   .msg-row.received .msg-bubble {
     background:var(--surface); color:var(--text); border-bottom-left-radius:4px; box-shadow:var(--shadow);
   }
+  .msg-time { font-size:10px; color:var(--muted); padding:0 4px; margin-top: 2px; }
+  .msg-row.sent .msg-time { text-align:right; }
 
   .input-area {
     padding:14px 22px; background:var(--surface);
@@ -155,7 +162,6 @@
   }
   .send-btn svg { width:18px; height:18px; fill:#fff; }
 
-  /* ── MODAL ── */
   .modal-overlay {
     position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:2000;
     display:none; align-items:center; justify-content:center;
@@ -163,7 +169,6 @@
   .modal-overlay.open { display:flex; }
   .modal { background:#fff; border-radius:16px; padding:26px; width:460px; max-width:95vw; }
 
-  /* ── MOBILE ── */
   @media (max-width: 768px) {
     .chat-list-panel { position: absolute; width: 100%; height: 100%; left: 0; top: 0; }
     .chat-list-panel.side-hidden { transform: translateX(-100%); }
@@ -183,7 +188,7 @@
           <div class="logo">GymFlow<span>.</span></div>
           <div class="panel-subtitle">Trainer Messages</div>
         </div>
-        <a href="/public/trainer/index.html" class="back-home-btn">← Home</a>
+        <a href="trainer/index.html" class="back-home-btn">← Home</a>
       </div>
       <div class="search-row">
         <div class="search-box">
@@ -262,7 +267,10 @@ let TID = localStorage.getItem('trainerId'), GID = localStorage.getItem('gymId')
 async function init() {
   if (!TID) return;
   const tSnap = await getDoc(doc(db, 'trainers', TID));
-  if (tSnap.exists()) TNAME = tSnap.data().name;
+  if (tSnap.exists()) {
+    TNAME = tSnap.data().name;
+    if(!GID) { GID = tSnap.data().gymId; localStorage.setItem('gymId', GID); }
+  }
   const mSnap = await getDocs(query(collection(db, 'members'), where('trainerId', '==', TID)));
   members = mSnap.docs.map(d => ({ id: d.id, ...d.data() }));
   renderList();
@@ -276,7 +284,6 @@ window.toggleSidebar = (show) => {
 function renderList(filter = '') {
   const list = document.getElementById('chatList'); list.innerHTML = '';
 
-  // 1. GLOBAL SECTION
   const labelComm = document.createElement('div'); labelComm.className = 'section-label'; labelComm.textContent = 'Global';
   list.appendChild(labelComm);
 
@@ -286,7 +293,6 @@ function renderList(filter = '') {
   commItem.onclick = openCommunityChat;
   list.appendChild(commItem);
 
-  // 2. PLAYERS SECTION
   const labelPlayers = document.createElement('div'); labelPlayers.className = 'section-label'; labelPlayers.textContent = 'Players';
   list.appendChild(labelPlayers);
 
@@ -313,6 +319,7 @@ function openPlayerChat(m) {
 }
 
 function openCommunityChat() {
+  if (!GID) { alert("Gym ID missing. Please refresh."); return; }
   activeChatType = 'community'; activeRoomId = GID;
   setHeader('🌐', 'linear-gradient(135deg,#0ea5e9,#6366f1)', 'Gym Community', 'Public Channel');
   toggleSidebar(false); listenMessages('community'); renderList();
@@ -328,6 +335,7 @@ function setHeader(avatarText, avatarBg, name, status) {
 
 function listenMessages(coll) {
   if (unsub) unsub();
+  if (!activeRoomId) return;
   const area = document.getElementById('messagesArea'); area.innerHTML = '';
   unsub = onSnapshot(query(collection(db, coll, activeRoomId, 'messages'), orderBy('timestamp', 'asc')), snap => {
     snap.docChanges().forEach(ch => { if (ch.type === 'added') appendMsg(ch.doc.data()); });
@@ -337,9 +345,28 @@ function listenMessages(coll) {
 
 function appendMsg(data) {
   const isSelf = data.sid === TID;
-  const row = document.createElement('div'); row.className = `msg-row ${isSelf ? 'sent' : 'received'}`;
-  row.innerHTML = `<div class="msg-bubble">${esc(data.msg)}</div>`;
-  document.getElementById('messagesArea').appendChild(row);
+  const area = document.getElementById('messagesArea');
+  const ts = data.timestamp?.toDate ? data.timestamp.toDate() : new Date();
+  const time = ts.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+  const initial = (data.sname || '?')[0].toUpperCase();
+  const avatarBg = isSelf ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : 'linear-gradient(135deg,#2563eb,#1d4ed8)';
+
+  const row = document.createElement('div');
+  row.className = `msg-row ${isSelf ? 'sent' : 'received'}`;
+  
+  // LOGIC: Show sender name in Community if not self
+  const showSenderName = (activeChatType === 'community' && !isSelf);
+
+  row.innerHTML = `
+    ${!isSelf ? `<div class="msg-avatar" style="background:${avatarBg}">${initial}</div>` : ''}
+    <div class="msg-content">
+      ${showSenderName ? `<div class="msg-sender-name">${esc(data.sname || 'Unknown')}</div>` : ''}
+      <div class="msg-bubble">${esc(data.msg)}</div>
+      <div class="msg-time">${time}${isSelf ? ' ✓✓' : ''}</div>
+    </div>
+    ${isSelf ? `<div class="msg-avatar" style="background:${avatarBg}">${initial}</div>` : ''}
+  `;
+  area.appendChild(row);
 }
 
 window.sendMessage = async () => {

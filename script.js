@@ -25,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const gymId = localStorage.getItem("activeGymId");
 
-if(!gymId) window.location.href = "login.html";
+if(!gymId) window.location.href = "../login.html";
 
 let allMembers = [];
 let selectedId = null;
