@@ -23,9 +23,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const gymId = localStorage.getItem("activeGymId");
-
-if(!gymId) window.location.href = "../login.html";
+function getGymId() {
+    const id = localStorage.getItem("activeGymId");
+    if(!id) window.location.href = "../login.html";
+    return id;
+}
 
 let allMembers = [];
 let selectedId = null;
@@ -42,7 +44,7 @@ function getCurrentMonthCode() {
 
 // 1. DATA INITIALIZATION
 function loadMembers() {
-    const q = query(collection(db, "members"), where("gymId", "==", gymId));
+    const q = query(collection(db, "members"), where("gymId", "==", getGymId()));
     onSnapshot(q, (snap) => {
         allMembers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         updateStats();
