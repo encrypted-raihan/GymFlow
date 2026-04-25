@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>GymFlow | Trainer Login</title>
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #f8fafc; 
+        }
+        .login-card { 
+            background: white; 
+            border-radius: 32px; 
+            border: 1px solid #f1f5f9;
+            box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.05);
+        }
+        /* Strict UI Consistency: borderRadius 10px */
+        .custom-input { 
+            border-radius: 10px !important; 
+            transition: all 0.2s ease;
+        }
+        .custom-input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+
+    <div class="w-full max-w-sm space-y-8">
+        <div class="text-center">
+            <div class="w-20 h-20 bg-blue-600 rounded-[22px] flex items-center justify-center text-white font-black text-3xl mx-auto shadow-xl shadow-blue-200 italic">GF</div>
+            <h1 class="text-3xl font-black text-slate-900 mt-8 tracking-tight">Trainer Login</h1>
+            <p class="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-2">Professional Access</p>
+        </div>
+
+        <div class="login-card p-10 space-y-6">
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Username</label>
+                    <input type="text" id="tUser" placeholder="Enter username" 
+                           class="custom-input w-full mt-2 bg-slate-50 border border-slate-200 px-5 py-4 font-bold text-slate-900 outline-none placeholder:text-slate-300">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
+                    <input type="password" id="tPass" placeholder="••••••••" 
+                           class="custom-input w-full mt-2 bg-slate-50 border border-slate-200 px-5 py-4 font-bold text-slate-900 outline-none placeholder:text-slate-300">
+                </div>
+            </div>
+
+            <button onclick="handleLogin()" id="loginBtn" 
+                    class="w-full py-4 bg-slate-900 text-white rounded-xl font-black uppercase tracking-widest shadow-lg shadow-slate-200 hover:bg-blue-600 active:scale-95 transition-all">
+                Access Dashboard
+            </button>
+            
+            <p id="errMsg" class="text-center text-rose-500 text-xs font-bold uppercase hidden">Invalid Credentials</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBcsmX7T1NotMi0T1XZ6b03yI3r7qZYQr8",
+            authDomain: "gym-membership-tracker-60626.firebaseapp.com",
+            projectId: "gym-membership-tracker-60626",
+            storageBucket: "gym-membership-tracker-60626.firebasestorage.app",
+            messagingSenderId: "260703319955",
+            appId: "1:260703319955:web:78206334baa1fc79725a66"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.handleLogin = async () => {
+            const user = document.getElementById('tUser').value.trim();
+            const pass = document.getElementById('tPass').value.trim();
+            const btn = document.getElementById('loginBtn');
+            const err = document.getElementById('errMsg');
+
+            if(!user || !pass) return;
+            btn.innerText = "AUTHENTICATING...";
+            btn.disabled = true;
+            err.classList.add('hidden');
+
+            try {
+                // Querying root 'trainers' collection
+                const q = query(collection(db, "trainers"), 
+                                where("username", "==", user), 
+                                where("password", "==", pass));
+                
+                const snap = await getDocs(q);
+
+                if (!snap.empty) {
+                    const trainer = snap.docs[0];
+                    localStorage.setItem('trainerId', trainer.id);
+                    localStorage.setItem('trainerName', trainer.data().name);
+                    window.location.href = 'index.html';
+                } else {
+                    err.classList.remove('hidden');
+                    btn.innerText = "Access Dashboard";
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Connection Error. Verify Firebase Rules.");
+                btn.disabled = false;
+                btn.innerText = "Access Dashboard";
+            }
+        };
+    </script>
+</body>
+</html>

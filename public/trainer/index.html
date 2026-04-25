@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>GymFlow | Trainer Dashboard</title>
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: #f8fafc; 
+            color: #0f172a; 
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .card { 
+            background: white; 
+            border-radius: 24px; 
+            border: 1px solid #f1f5f9; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        @media (min-width: 1024px) {
+            .card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05); }
+        }
+        .badge { padding: 4px 12px; border-radius: 99px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+        .modal { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(15, 23, 42, 0.6); 
+            backdrop-filter: blur(8px); 
+            z-index: 100; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 16px; 
+        }
+        .modal.active { display: flex; }
+        input { border-radius: 10px !important; }
+
+        /* Floating Message Button */
+        .chat-fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 60px;
+            height: 60px;
+            background: #2563eb;
+            color: white;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
+            z-index: 90;
+            transition: all 0.3s;
+        }
+        .chat-fab:active { transform: scale(0.9); }
+    </style>
+</head>
+<body class="pb-24">
+
+    <nav class="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 px-4 md:px-8 h-20 flex justify-between items-center">
+        <div class="flex items-center gap-3 md:gap-4">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black italic shadow-lg shadow-blue-200">GF</div>
+            <div>
+                <h1 class="font-extrabold text-slate-900 text-sm md:text-base leading-none">Trainer Portal</h1>
+                <p id="coachName" class="text-[9px] md:text-[10px] font-bold text-blue-600 uppercase mt-1 tracking-widest">Coach Loading...</p>
+            </div>
+        </div>
+        <button onclick="logout()" class="text-[10px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors px-3 py-2">Sign Out</button>
+    </nav>
+
+    <main class="max-w-6xl mx-auto p-4 md:p-8 space-y-6 md:space-y-8">
+        
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            <div class="card p-5 md:p-6"><p class="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Clients</p><h2 id="statTotal" class="text-2xl md:text-3xl font-black mt-1">0</h2></div>
+            <div class="card p-5 md:p-6 border-t-4 border-t-blue-500"><p class="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Training Now</p><h2 id="statLive" class="text-2xl md:text-3xl font-black text-blue-600 mt-1">0</h2></div>
+            <div class="card p-5 md:p-6 border-t-4 border-t-emerald-500"><p class="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Paid Fees</p><h2 id="statPaid" class="text-2xl md:text-3xl font-black text-emerald-600 mt-1">0</h2></div>
+            <div class="card p-5 md:p-6 border-t-4 border-t-rose-500"><p class="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending</p><h2 id="statUnpaid" class="text-2xl md:text-3xl font-black text-rose-600 mt-1">0</h2></div>
+        </div>
+
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <h3 class="text-xl font-black text-slate-900">My Members</h3>
+            <input type="text" id="search" placeholder="Search name..." oninput="filter()" 
+                   class="w-full md:w-72 bg-white border border-slate-200 px-5 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/10">
+        </div>
+
+        <div id="membersGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"></div>
+    </main>
+
+    <a href="/public/trainer/trainer-chat.html" class="chat-fab">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+        </svg>
+    </a>
+
+    <div id="mModal" class="modal" onclick="if(event.target==this) closeModal()">
+        <div class="bg-white w-full max-w-xl rounded-[32px] overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="p-6 md:p-8 border-b border-slate-50 flex justify-between items-start bg-slate-50/50">
+                <div><h2 id="mName" class="text-xl md:text-2xl font-black text-slate-900">---</h2><p id="mId" class="text-[9px] font-bold text-slate-400 uppercase mt-1 tracking-widest">---</p></div>
+                <button onclick="closeModal()" class="w-10 h-10 bg-white border border-slate-100 rounded-full flex items-center justify-center font-bold text-slate-400 hover:text-slate-900 shadow-sm">&times;</button>
+            </div>
+            <div class="p-6 md:p-8 overflow-y-auto space-y-6 md:space-y-8">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-blue-50/50 border border-blue-100 p-4 md:p-5 rounded-2xl"><p class="text-[9px] font-black text-blue-400 uppercase">Avg XP</p><h4 id="mAvgXp" class="text-xl md:text-2xl font-black text-blue-700">0</h4></div>
+                    <div class="bg-emerald-50/50 border border-emerald-100 p-4 md:p-5 rounded-2xl"><p class="text-[9px] font-black text-emerald-400 uppercase">Active Time</p><h4 id="mTotalTime" class="text-xl md:text-2xl font-black text-emerald-700">0m</h4></div>
+                </div>
+                <div><h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Recent Activity</h4><div id="mHistory" class="space-y-3"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBcsmX7T1NotMi0T1XZ6b03yI3r7qZYQr8",
+            authDomain: "gym-membership-tracker-60626.firebaseapp.com",
+            projectId: "gym-membership-tracker-60626",
+            storageBucket: "gym-membership-tracker-60626.firebasestorage.app",
+            messagingSenderId: "260703319955",
+            appId: "1:260703319955:web:78206334baa1fc79725a66"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        let members = [];
+
+        async function init() {
+            const tid = localStorage.getItem('activeTrainerId') || localStorage.getItem('trainerId');
+            const tname = localStorage.getItem('activeTrainerName') || localStorage.getItem('trainerName');
+            
+            if(!tid) return window.location.href = 'login.html';
+            
+            document.getElementById('coachName').innerText = `Coach ${tname || 'Expert'}`;
+
+            const q = query(collection(db, "members"), where("trainerId", "==", tid));
+            
+            try {
+                const snap = await getDocs(q);
+                members = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                render();
+            } catch (error) {
+                console.error("Firestore Error:", error);
+            }
+        }
+
+        function render() {
+            const grid = document.getElementById('membersGrid');
+            grid.innerHTML = '';
+            let live = 0, paid = 0;
+
+            members.forEach(m => {
+                const currentMonth = new Date().toISOString().slice(0, 7);
+                const isPaidThisMonth = m.payments && m.payments.includes(currentMonth);
+                
+                if (m.isInside) live++;
+                if (isPaidThisMonth) paid++;
+
+                const card = document.createElement('div');
+                card.className = "card p-5 md:p-6 space-y-4 md:space-y-5 cursor-pointer active:scale-95 lg:active:scale-100 transition-transform";
+                card.onclick = () => showModal(m.id);
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-black italic text-xl shadow-lg shadow-slate-200">${m.name ? m.name.charAt(0) : '?'}</div>
+                        <div class="flex flex-col items-end gap-2">
+                            <span class="badge ${isPaidThisMonth ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}">
+                                ${isPaidThisMonth ? 'Paid' : 'Unpaid'}
+                            </span>
+                            ${m.isInside ? '<span class="badge bg-blue-600 text-white animate-pulse">Training</span>' : ''}
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-black text-slate-900 text-lg leading-tight">${m.name || 'Anonymous'}</h4>
+                        <div class="flex justify-between items-center mt-2">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">XP: ${m.totalXP || 0}</p>
+                            <div class="w-1.5 h-1.5 rounded-full ${m.isInside ? 'bg-blue-500' : 'bg-slate-200'}"></div>
+                        </div>
+                    </div>`;
+                grid.appendChild(card);
+            });
+
+            document.getElementById('statTotal').innerText = members.length;
+            document.getElementById('statLive').innerText = live;
+            document.getElementById('statPaid').innerText = paid;
+            document.getElementById('statUnpaid').innerText = members.length - paid;
+        }
+
+        window.showModal = (id) => {
+            const m = members.find(x => x.id === id);
+            if(!m) return;
+            const hist = m.workoutHistory || [];
+            const totalMins = hist.reduce((acc, curr) => acc + (Number(curr.duration) || 0), 0);
+            const totalXp = hist.reduce((acc, curr) => acc + (Number(curr.xp) || 0), 0);
+            
+            document.getElementById('mName').innerText = m.name || 'Member Details';
+            document.getElementById('mId').innerText = `ID: ${id.slice(0, 8)}...`;
+            document.getElementById('mAvgXp').innerText = hist.length ? Math.round(totalXp / hist.length) : 0;
+            document.getElementById('mTotalTime').innerText = totalMins + 'm';
+            
+            document.getElementById('mHistory').innerHTML = hist.length ? [...hist].reverse().slice(0, 5).map(h => `
+                <div class="bg-white p-4 rounded-2xl flex justify-between border border-slate-100 shadow-sm">
+                    <div><p class="text-[9px] font-black text-slate-400 uppercase">${h.date || 'Recent'}</p><h5 class="text-xs font-bold text-slate-800">${(h.muscles || []).join(' • ') || 'General Session'}</h5></div>
+                    <div class="text-right"><p class="text-xs font-black text-blue-600">${h.duration || 0}m</p><p class="text-[9px] font-bold text-slate-300 uppercase">${h.xp || 0} XP</p></div>
+                </div>`).join('') : '<div class="text-center py-8 text-slate-300 text-xs font-bold uppercase italic">No history recorded</div>';
+            
+            document.getElementById('mModal').classList.add('active');
+        };
+
+        window.closeModal = () => document.getElementById('mModal').classList.remove('active');
+        
+        window.logout = () => { 
+            localStorage.clear(); 
+            window.location.href = 'login.html'; 
+        };
+
+        window.filter = () => {
+            const term = document.getElementById('search').value.toLowerCase();
+            const cards = document.querySelectorAll('#membersGrid > div');
+            members.forEach((m, i) => {
+                if(cards[i]) cards[i].style.display = (m.name || '').toLowerCase().includes(term) ? 'block' : 'none';
+            });
+        };
+
+        init();
+    </script>
+</body>
+</html>

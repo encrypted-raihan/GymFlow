@@ -25,24 +25,40 @@
             border: 1px solid #f1f5f9; 
             box-shadow: 0 10px 30px -10px rgba(0,0,0,0.04); 
         }
+
+        /* High Priority Action Styling */
+        .hero-action {
+            background: #2563eb;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-action::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
         
-        /* PINNED BOTTOM NAVBAR - NO GAP */
         .nav-fixed-bottom {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
             height: 85px;
-            background: #ffffff; /* Solid background to prevent see-through */
+            background: #ffffff;
             border-top: 1px solid #f1f5f9;
             display: flex;
             justify-content: space-around;
             align-items: center;
-            padding: 0 20px pb-4; /* Extra padding for home indicators on mobile */
+            padding: 0 20px;
             z-index: 1000;
             box-shadow: 0 -10px 25px rgba(0,0,0,0.03);
         }
-
         .nav-item {
             display: flex;
             align-items: center;
@@ -56,13 +72,11 @@
             cursor: pointer;
             gap: 0px;
         }
-
         .nav-item.active {
             background: #2563eb;
             color: #ffffff;
             gap: 10px;
         }
-
         .nav-item span {
             font-size: 11px;
             font-weight: 800;
@@ -74,17 +88,14 @@
             opacity: 0;
             white-space: nowrap;
         }
-
         .nav-item.active span {
             max-width: 90px;
             opacity: 1;
         }
-
         .nav-item svg {
             width: 24px;
             height: 24px;
         }
-
         .page { transition: all 0.3s ease; }
         .page-hidden { display: none; opacity: 0; }
         
@@ -93,14 +104,12 @@
         .day-miss { background: #fff; color: #cbd5e1; }
         ::-webkit-scrollbar { width: 0px; }
         
-        /* Ensure content doesn't get hidden behind the nav */
         #appContainer {
             padding-bottom: 120px;
         }
     </style>
 </head>
 <body>
-
     <div id="appContainer" class="hidden max-w-md mx-auto p-6 space-y-6">
         
         <header class="flex justify-between items-center py-2">
@@ -111,12 +120,28 @@
                     <p id="gymNameDisplay" class="text-[11px] font-bold text-blue-600 uppercase tracking-widest">Identifying Gym...</p>
                 </div>
             </div>
-            <div class="text-right">
+            <div class="flex flex-col items-end gap-2">
                 <p id="totalXPDisplay" class="text-[10px] font-black text-slate-400 uppercase">0 Total XP</p>
+                <button onclick="logout()" class="text-[9px] font-black text-red-500 bg-red-50 px-3 py-1 rounded-full uppercase tracking-tighter active:scale-90 transition-transform">Logout</button>
             </div>
         </header>
 
         <div id="dashboardPage" class="page space-y-6">
+            <div id="attContainer">
+                <button id="attBtn" onclick="markAttendance()" class="premium-card hero-action p-6 w-full flex items-center justify-between active:scale-95 transition-all shadow-2xl shadow-blue-200">
+                    <div class="flex items-center gap-5">
+                        <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-white text-2xl backdrop-blur-md">📍</div>
+                        <div class="text-left">
+                            <h4 class="font-black text-white text-base">Check-In Today</h4>
+                            <p class="text-[10px] text-blue-100 font-bold uppercase tracking-widest">Confirm your presence</p>
+                        </div>
+                    </div>
+                    <div class="bg-white/10 px-4 py-2 rounded-xl backdrop-blur-md">
+                        <span class="text-xs font-black text-white">+50 XP</span>
+                    </div>
+                </button>
+            </div>
+
             <div class="premium-card p-6 space-y-5">
                 <div class="flex justify-between items-center">
                     <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Weekly Pulse</span>
@@ -146,16 +171,19 @@
                 </div>
             </div>
 
-            <div id="attContainer">
-                <button id="attBtn" onclick="markAttendance()" class="premium-card p-5 w-full flex items-center justify-between border-l-4 border-l-blue-600 active:scale-95 transition-all">
+            <div class="grid grid-cols-1 gap-4">
+                <button onclick="window.location.href='player-chat.html'" class="premium-card p-5 w-full flex items-center justify-between border-l-4 border-l-slate-900 active:scale-95 transition-all">
                     <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 text-xl">📍</div>
+                        <div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-900 text-xl">💬</div>
                         <div class="text-left">
-                            <h4 class="font-black text-slate-800 text-sm">Gym Check-In</h4>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase">Verify session today</p>
+                            <h4 class="font-black text-slate-800 text-sm">Messages</h4>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase">Chat with trainers</p>
                         </div>
                     </div>
-                    <span class="text-xs font-black text-blue-600">+50 XP</span>
+                    <div class="flex -space-x-2">
+                        <div class="w-6 h-6 rounded-full bg-blue-100 border-2 border-white"></div>
+                        <div class="w-6 h-6 rounded-full bg-slate-200 border-2 border-white"></div>
+                    </div>
                 </button>
             </div>
 
@@ -201,7 +229,6 @@
             <h3 class="text-2xl font-black text-slate-900 px-1">Member Vault</h3>
             <div id="levelRoadmap" class="space-y-3 pb-8"></div>
         </div>
-
     </div>
 
     <nav class="nav-fixed-bottom">
@@ -230,14 +257,14 @@
             <label><input type="checkbox" value="Shoulders" class="hidden peer" onchange="checkLimit(this)"><div class="p-6 premium-card text-center font-black text-xs uppercase peer-checked:bg-slate-900 peer-checked:text-white transition-all">Shoulders</div></label>
             <label><input type="checkbox" value="Abs" class="hidden peer" onchange="checkLimit(this)"><div class="p-6 premium-card text-center font-black text-xs uppercase peer-checked:bg-slate-900 peer-checked:text-white transition-all">Abs</div></label>
         </div>
-        <button onclick="startSession()" class="w-full py-5 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl">Confirm & Start</button>
+        <button onclick="startSession()" class="w-full py-5 bg-blue-600 text-white rounded-[10px] font-black uppercase tracking-widest shadow-xl">Confirm & Start</button>
         <button onclick="toggleOverlay('focusOverlay', false)" class="w-full mt-6 text-slate-400 font-bold text-[10px] uppercase">Back</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
+        
         const firebaseConfig = {
             apiKey: "AIzaSyBcsmX7T1NotMi0T1XZ6b03yI3r7qZYQr8",
             authDomain: "gym-membership-tracker-60626.firebaseapp.com",
@@ -254,9 +281,14 @@
         let radarChart = null;
         let xpBarChart = null;
 
+        window.logout = () => {
+            localStorage.removeItem('memberId');
+            window.location.href = "member-login.html";
+        };
+
         async function sync() {
             const id = localStorage.getItem('memberId');
-            if(!id) return window.location.href = window.location.origin + "/player/member-login.html";
+            if(!id) return window.location.href = "member-login.html";
             const snap = await getDoc(doc(db, "members", id));
             if(snap.exists()) {
                 currentMember = { id: snap.id, ...snap.data() };
@@ -269,8 +301,6 @@
         function updateUI() {
             const stats = calcLevel(currentMember.totalXP || 0);
             document.getElementById('userName').innerText = currentMember.name || "Athlete";
-            
-            // Comprehensive Gym Name Check
             const gName = currentMember.gymName || currentMember.gym || currentMember.gym_name || "Elite Athlete";
             document.getElementById('gymNameDisplay').innerText = gName;
             
@@ -280,12 +310,12 @@
             document.getElementById('xpBar').style.width = stats.p + '%';
             document.getElementById('pctLabel').innerText = Math.round(stats.p) + '%';
             document.getElementById('streakCount').innerText = `${currentMember.streak || 0} DAY STREAK`;
-
+            
             const today = new Date().toLocaleDateString();
             if(currentMember.lastAttendance === today) {
-                document.getElementById('attContainer').innerHTML = `<div class="premium-card p-5 w-full flex items-center justify-between border-l-4 border-l-emerald-500 bg-emerald-50/30"><div class="flex items-center gap-4"><div class="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white text-lg">✓</div><div><h4 class="font-black text-slate-800 text-sm">Attendance Locked</h4><p class="text-[10px] text-emerald-600 font-bold uppercase">Verified for today</p></div></div></div>`;
+                document.getElementById('attContainer').innerHTML = `<div class="premium-card p-6 w-full flex items-center justify-between border-l-8 border-l-emerald-500 bg-emerald-50/20"><div class="flex items-center gap-5"><div class="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-white text-xl">✓</div><div><h4 class="font-black text-slate-800 text-base">Check-In Done</h4><p class="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Locked for today</p></div></div></div>`;
             }
-
+            
             const wBtn = document.getElementById('workoutBtn');
             if(currentMember.isInside) {
                 wBtn.innerText = "FINISH TRAINING";
@@ -324,14 +354,14 @@
                 streak: (currentMember.streak || 0) + 1,
                 lastAttendance: today
             });
-            confetti({ particleCount: 100, spread: 50, origin: { y: 0.8 } });
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.7 }, colors: ['#2563eb', '#ffffff'] });
             sync();
         };
 
         window.handleWorkoutToggle = () => currentMember.isInside ? endSession() : toggleOverlay('focusOverlay', true);
         window.toggleOverlay = (id, s) => document.getElementById(id).classList.toggle('hidden', !s);
         window.checkLimit = (i) => { if(document.querySelectorAll('#focusOverlay input:checked').length > 3) i.checked = false; };
-
+        
         window.startSession = async () => {
             const s = Array.from(document.querySelectorAll('#focusOverlay input:checked')).map(x => x.value);
             if(!s.length) return alert("Select Focus");
@@ -370,11 +400,9 @@
             const hist = currentMember.workoutHistory || [];
             const cleanHist = hist.map(h => ({ ...h, xp: Number(h.xp) || 0, duration: Number(h.duration) || 0 }));
             
-            const totalXp = cleanHist.reduce((a,b)=>a+b.xp, 0);
-            const totalMins = cleanHist.reduce((a,b)=>a+b.duration, 0);
-            document.getElementById('avgXp').innerText = cleanHist.length ? Math.round(totalXp/cleanHist.length) : 0;
-            document.getElementById('totalHours').innerText = totalMins + 'm';
-
+            document.getElementById('avgXp').innerText = cleanHist.length ? Math.round(cleanHist.reduce((a,b)=>a+b.xp, 0)/cleanHist.length) : 0;
+            document.getElementById('totalHours').innerText = cleanHist.reduce((a,b)=>a+b.duration, 0) + 'm';
+            
             const last7 = cleanHist.slice(-7);
             const ctxB = document.getElementById('xpBarChart').getContext('2d');
             if(xpBarChart) xpBarChart.destroy();

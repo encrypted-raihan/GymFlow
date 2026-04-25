@@ -5,93 +5,332 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <title>GymFlow | Cash Flow</title>
+    <title>GymFlow | Cash Flow Pro</title>
     <style>
-        body { font-family: 'Inter', sans-serif; background: #f1f5f9; color: #1e293b; }
-        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.4); }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: #f8fafc; 
+            color: #1e293b; 
+        }
+        
+        /* Consistent 10px Radius as per system instructions */
+        .rounded-gym { border-radius: 10px; }
+        
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .expense-card { transition: transform 0.2s; }
-        .expense-card:hover { transform: translateY(-2px); }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .stat-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s ease;
+        }
+
+        .back-home-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            color: #0f172a;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .input-standard {
+            width: 100%;
+            background: #f1f5f9;
+            padding: 12px;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .input-standard:focus { border-color: #3b82f6; background: white; }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            width: 100%;
+            transition: opacity 0.2s;
+        }
+        .btn-primary:hover { opacity: 0.9; }
     </style>
 </head>
-<body class="p-4 lg:p-10">
+<body class="p-4 md:p-8">
 
-    <div class="max-w-5xl mx-auto">
-        <div class="flex justify-between items-center mb-8">
-            <div>
-                <h1 id="currentMonthTitle" class="text-3xl font-black tracking-tight text-slate-900 italic">March 2026</h1>
-                <p class="text-blue-600 font-bold text-[10px] uppercase tracking-widest">Expense & Payroll Ledger</p>
+    <div class="max-w-6xl mx-auto">
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <div class="flex items-center">
+                <a href="/public/admin/dashboard.html" class="back-home-btn mr-4">
+                    <span>←</span> <span class="hidden sm:inline">Dashboard</span>
+                </a>
+                <div>
+                    <h1 id="viewTitle" class="text-2xl font-black text-slate-900 tracking-tight italic">Loading Ledger...</h1>
+                    <p id="viewSubtitle" class="text-blue-600 font-bold text-[10px] uppercase tracking-[0.2em]">Live Cash Flow</p>
+                </div>
             </div>
-            <button onclick="location.href='dashboard.html'" class="bg-white border border-slate-200 p-3 rounded-2xl hover:bg-slate-50 transition shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
+            <button onclick="resetToCurrentMonth()" id="resetBtn" class="hidden bg-slate-200 text-slate-700 px-4 py-2 rounded-gym text-[10px] font-bold uppercase">
+                Back to Current Month
             </button>
         </div>
 
-        <div class="bg-slate-900 rounded-[2.5rem] p-10 text-white mb-10 shadow-2xl relative overflow-hidden">
-            <div class="relative z-10">
-                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Total Monthly Spend</p>
-                <h2 id="totalSpend" class="text-6xl font-black tracking-tighter">₹0</h2>
-                
-                <div class="grid grid-cols-2 gap-4 mt-8 pt-8 border-t border-white/10">
-                    <div>
-                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Fixed (Rent/Elec)</p>
-                        <p id="fixedTotal" class="text-xl font-bold">₹0</p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Staff Payroll</p>
-                        <p id="staffTotal" class="text-xl font-bold text-blue-400">₹0</p>
-                    </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="stat-card p-6 rounded-gym shadow-sm bg-slate-900 text-white relative overflow-hidden">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Expenses</p>
+                <h2 id="totalSpend" class="text-4xl font-black tracking-tighter">₹0</h2>
+                <div class="absolute -right-4 -bottom-4 opacity-10">
+                    <svg width="100" height="100" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z"/></svg>
                 </div>
             </div>
-            <div class="absolute -right-20 -top-20 w-64 h-64 bg-blue-600/20 rounded-full blur-[80px]"></div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-            <div class="lg:col-span-1 glass p-8 rounded-[2rem] shadow-sm h-fit">
-                <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-6">Log New Bill</h3>
-                <div class="space-y-4">
-                    <select id="expCategory" class="w-full bg-slate-50 p-4 rounded-2xl border-none text-sm font-bold outline-none">
-                        <option value="Rent">🏢 Monthly Rent</option>
-                        <option value="Electricity">⚡ Electricity</option>
-                        <option value="Maintenance">🛠️ Maintenance</option>
-                        <option value="Equipment">🏋️ Equipment</option>
-                        <option value="Misc">📦 Miscellaneous</option>
-                    </select>
-                    <input id="expTitle" type="text" placeholder="Label (e.g. Water Bill)" class="w-full bg-slate-50 p-4 rounded-2xl border-none text-sm outline-none font-medium">
-                    <input id="expAmount" type="number" placeholder="Amount (₹)" class="w-full bg-slate-50 p-4 rounded-2xl border-none text-sm font-black text-blue-600 outline-none">
-                    <button onclick="addExpense()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-200 hover:bg-blue-700 transition">Add to Ledger</button>
-                </div>
+            <div class="stat-card p-6 rounded-gym shadow-sm">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Facility (Fixed)</p>
+                <h2 id="fixedTotal" class="text-3xl font-black text-slate-800 tracking-tighter">₹0</h2>
             </div>
-
-            <div class="lg:col-span-1 glass p-8 rounded-[2rem] shadow-sm h-fit">
-                <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-6">Staff Registry</h3>
-                <div class="space-y-3 mb-6 pb-6 border-b border-slate-200/50">
-                    <input id="staffName" type="text" placeholder="Staff Name" class="w-full bg-slate-50 p-3 rounded-xl border-none text-xs outline-none">
-                    <div class="flex gap-2">
-                        <input id="staffBaseSalary" type="number" placeholder="Base Salary (₹)" class="flex-1 bg-slate-50 p-3 rounded-xl border-none text-xs outline-none font-bold text-blue-600">
-                        <button onclick="addStaff()" class="bg-slate-900 text-white px-4 rounded-xl text-[10px] font-black uppercase">Add</button>
-                    </div>
-                </div>
-                <div id="staffList" class="space-y-3 max-h-80 overflow-y-auto no-scrollbar">
-                    </div>
-            </div>
-
-            <div class="lg:col-span-1">
-                <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-6 px-2">Transactions</h3>
-                <div id="expenseList" class="space-y-3 max-h-[500px] overflow-y-auto no-scrollbar">
-                    </div>
+            <div class="stat-card p-6 rounded-gym shadow-sm">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Salaries Paid</p>
+                <h2 id="staffTotal" class="text-3xl font-black text-blue-600 tracking-tighter">₹0</h2>
             </div>
         </div>
 
-        <div class="border-t border-slate-200 pt-10 pb-20">
-            <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-6 px-2"></h3>
-            <div id="archiveList" class="grid grid-cols-1 md:grid-cols-3 gap-4 opacity-70 hover:opacity-100 transition-opacity">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <div class="lg:col-span-4 space-y-6">
+                <div class="bg-white p-6 rounded-gym border border-slate-200 shadow-sm">
+                    <h3 class="text-xs font-black uppercase text-slate-400 mb-4 tracking-widest">Log Transaction</h3>
+                    <div class="space-y-3">
+                        <select id="expCategory" class="input-standard font-bold text-slate-700 appearance-none">
+                            <option value="Rent">🏢 Monthly Rent</option>
+                            <option value="Electricity">⚡ Electricity</option>
+                            <option value="Maintenance">🛠️ Maintenance</option>
+                            <option value="Equipment">🏋️ Equipment</option>
+                            <option value="Misc">📦 Miscellaneous</option>
+                        </select>
+                        <input id="expTitle" type="text" placeholder="Entry Label" class="input-standard">
+                        <input id="expAmount" type="number" placeholder="Amount (₹)" class="input-standard font-black text-blue-600">
+                        <button onclick="addExpense()" class="btn-primary mt-2">Update Ledger</button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-gym border border-slate-200 shadow-sm">
+                    <h3 class="text-xs font-black uppercase text-slate-400 mb-4 tracking-widest">Payroll Management</h3>
+                    <div class="flex gap-2 mb-6">
+                        <div class="flex-1 space-y-2">
+                            <input id="staffName" type="text" placeholder="Staff Name" class="input-standard text-xs">
+                            <input id="staffBaseSalary" type="number" placeholder="Salary (₹)" class="input-standard text-xs">
+                        </div>
+                        <button onclick="addStaff()" class="bg-slate-900 text-white px-4 rounded-gym text-[10px] font-black uppercase">Add</button>
+                    </div>
+                    <div id="staffList" class="space-y-3 max-h-60 overflow-y-auto no-scrollbar"></div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-8">
+                <div class="bg-white rounded-gym border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <h3 class="text-xs font-black uppercase text-slate-400 tracking-widest">Transaction Ledger</h3>
+                        <span class="text-[10px] font-bold text-slate-400" id="ledgerStatus">Current Month</span>
+                    </div>
+                    <div id="expenseList" class="divide-y divide-slate-100 max-h-[700px] overflow-y-auto no-scrollbar">
+                        </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-12 border-t border-slate-200 pt-8 pb-20">
+            <h3 class="text-xs font-black uppercase text-slate-400 mb-6 tracking-widest">Historical Archives</h3>
+            <div id="archiveList" class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 </div>
         </div>
     </div>
 
-    <script type="module" src="expense.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBcsmX7T1NotMi0T1XZ6b03yI3r7qZYQr8",
+            authDomain: "gym-membership-tracker-60626.firebaseapp.com",
+            projectId: "gym-membership-tracker-60626",
+            storageBucket: "gym-membership-tracker-60626.firebasestorage.app",
+            messagingSenderId: "260703319955",
+            appId: "1:260703319955:web:78206334baa1fc79725a66"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const gymId = localStorage.getItem("activeGymId");
+
+        if (!gymId) window.location.href = "login.html";
+
+        const getMonthKey = () => new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+        let viewingMonth = getMonthKey();
+
+        // FUNCTIONAL ARCHIVE: Change the view to a previous month
+        window.viewArchive = (monthKey) => {
+            viewingMonth = monthKey;
+            const current = getMonthKey();
+            
+            document.getElementById('resetBtn').classList.toggle('hidden', monthKey === current);
+            document.getElementById('ledgerStatus').innerText = monthKey === current ? "Current Month" : "Archive View";
+            
+            loadFinancials();
+        };
+
+        window.resetToCurrentMonth = () => viewArchive(getMonthKey());
+
+        window.addExpense = async () => {
+            const category = document.getElementById('expCategory').value;
+            const title = document.getElementById('expTitle').value;
+            const amount = parseFloat(document.getElementById('expAmount').value);
+            if (!title || isNaN(amount)) return alert("Fill all fields");
+
+            try {
+                await addDoc(collection(db, "expenses"), {
+                    gymId, category, title, amount,
+                    monthKey: getMonthKey(),
+                    timestamp: Date.now()
+                });
+                document.getElementById('expTitle').value = "";
+                document.getElementById('expAmount').value = "";
+                loadFinancials();
+            } catch (e) { console.error(e); }
+        };
+
+        async function loadFinancials() {
+            try {
+                document.getElementById('viewTitle').innerText = viewingMonth;
+                const q = query(collection(db, "expenses"), where("gymId", "==", gymId));
+                const snap = await getDocs(q);
+                
+                const activeList = document.getElementById('expenseList');
+                const archiveList = document.getElementById('archiveList');
+                
+                activeList.innerHTML = ""; 
+                archiveList.innerHTML = "";
+                
+                let monthlyTotal = 0, fixedTotal = 0, salaryTotal = 0;
+                let archives = {}; 
+
+                snap.forEach(d => {
+                    const data = d.data();
+                    // Process Current Viewing Month
+                    if (data.monthKey === viewingMonth) {
+                        monthlyTotal += data.amount;
+                        if (['Rent', 'Electricity'].includes(data.category)) fixedTotal += data.amount;
+                        if (data.category === 'Salary') salaryTotal += data.amount;
+
+                        activeList.innerHTML += `
+                        <div class="px-6 py-4 flex justify-between items-center hover:bg-slate-50 transition-colors">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-gym bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-500 uppercase">
+                                    ${data.category.substring(0,2)}
+                                </div>
+                                <div>
+                                    <p class="font-bold text-slate-900 text-sm">${data.title}</p>
+                                    <p class="text-[9px] text-slate-400 font-black uppercase tracking-widest">${data.category}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-6">
+                                <p class="font-black text-slate-900 text-sm">₹${data.amount.toLocaleString()}</p>
+                                <button onclick="deleteEntry('${d.id}')" class="text-slate-300 hover:text-red-500 text-lg">✕</button>
+                            </div>
+                        </div>`;
+                    }
+
+                    // Always aggregate all months for the archive section
+                    if (!archives[data.monthKey]) archives[data.monthKey] = 0;
+                    archives[data.monthKey] += data.amount;
+                });
+
+                document.getElementById('totalSpend').innerText = `₹${monthlyTotal.toLocaleString()}`;
+                document.getElementById('fixedTotal').innerText = `₹${fixedTotal.toLocaleString()}`;
+                document.getElementById('staffTotal').innerText = `₹${salaryTotal.toLocaleString()}`;
+
+                if (activeList.innerHTML === "") activeList.innerHTML = `<p class="p-10 text-center text-slate-400 italic text-sm">No transactions found for this month.</p>`;
+
+                // Render functional archives
+                Object.keys(archives).sort().reverse().forEach(month => {
+                    const isActive = month === viewingMonth;
+                    archiveList.innerHTML += `
+                    <button onclick="viewArchive('${month}')" class="text-left p-4 rounded-gym border ${isActive ? 'border-blue-600 bg-blue-50' : 'border-slate-200 bg-white'} shadow-sm transition-all hover:scale-[1.02]">
+                        <p class="text-[9px] font-black ${isActive ? 'text-blue-600' : 'text-slate-400'} uppercase tracking-widest mb-1">${month}</p>
+                        <p class="text-lg font-black text-slate-800">₹${archives[month].toLocaleString()}</p>
+                    </button>`;
+                });
+
+            } catch (e) { console.error(e); }
+        }
+
+        window.addStaff = async () => {
+            const name = document.getElementById('staffName').value;
+            const salary = parseFloat(document.getElementById('staffBaseSalary').value);
+            if (!name || isNaN(salary)) return alert("Invalid entry");
+            try {
+                await addDoc(collection(db, "staff"), { gymId, name, baseSalary: salary });
+                document.getElementById('staffName').value = "";
+                document.getElementById('staffBaseSalary').value = "";
+                loadStaff();
+            } catch (e) { console.error(e); }
+        };
+
+        window.payStaff = async (staffId, name) => {
+            const amountInput = document.getElementById(`pay-amt-${staffId}`);
+            const amount = parseFloat(amountInput.value);
+            if (!confirm(`Log ₹${amount} salary for ${name}?`)) return;
+            try {
+                await addDoc(collection(db, "expenses"), {
+                    gymId, category: "Salary", title: `Salary: ${name}`,
+                    amount, monthKey: getMonthKey(), timestamp: Date.now()
+                });
+                loadFinancials();
+            } catch (e) { console.error(e); }
+        };
+
+        async function loadStaff() {
+            try {
+                const q = query(collection(db, "staff"), where("gymId", "==", gymId));
+                const snap = await getDocs(q);
+                const list = document.getElementById('staffList');
+                list.innerHTML = "";
+                snap.forEach(d => {
+                    const s = d.data();
+                    list.innerHTML += `
+                    <div class="p-3 bg-slate-50 rounded-gym border border-slate-100">
+                        <div class="flex justify-between items-center mb-2">
+                            <p class="text-[11px] font-black text-slate-800 uppercase tracking-tighter">${s.name}</p>
+                            <button onclick="deleteStaff('${d.id}')" class="text-slate-400 hover:text-red-500 text-[10px]">Remove</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <input id="pay-amt-${d.id}" type="number" value="${s.baseSalary}" 
+                                class="w-20 bg-white border border-slate-200 rounded-gym p-2 text-xs font-black text-blue-600 outline-none">
+                            <button onclick="payStaff('${d.id}', '${s.name}')" 
+                                class="flex-1 bg-blue-600 text-white rounded-gym text-[9px] font-black uppercase tracking-widest shadow-sm">
+                                Pay
+                            </button>
+                        </div>
+                    </div>`;
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        window.deleteEntry = async (id) => { if (confirm("Delete entry?")) { await deleteDoc(doc(db, "expenses", id)); loadFinancials(); } };
+        window.deleteStaff = async (id) => { if (confirm("Delete staff?")) { await deleteDoc(doc(db, "staff", id)); loadStaff(); } };
+
+        loadFinancials(); 
+        loadStaff();
+    </script>
 </body>
 </html>

@@ -7,306 +7,293 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <title>GymFlow Pro | Dashboard</title>
     <style>
-        :root { --bg-canvas: #f1f5f9; --glass: rgba(255, 255, 255, 0.7); }
+        :root { --bg-canvas: #fdfdfe; }
         body { 
             font-family: 'Inter', sans-serif; 
-            background: radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.08) 0px, transparent 50%),
-                        radial-gradient(at 100% 100%, rgba(29, 78, 216, 0.05) 0px, transparent 50%),
-                        var(--bg-canvas);
+            background: radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.03) 0px, transparent 50%), var(--bg-canvas);
             min-height: 100vh;
+            color: #0f172a;
         }
-        .glass-sidebar { background: var(--glass); backdrop-filter: blur(20px) saturate(180%); border-right: 1px solid rgba(255, 255, 255, 0.3); }
-        .glass-card { background: white; border: 1px solid rgba(226, 232, 240, 0.6); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); border-radius: 2rem; }
+
+        .premium-card { 
+            background: white; 
+            border: 1px solid rgba(226, 232, 240, 0.6); 
+            box-shadow: 0 4px 20px -10px rgba(0, 0, 0, 0.05);
+            border-radius: 16px; 
+        }
         
-        /* Custom Separation Styles */
-        .due-row { background-color: #fffafa !important; }
-        .due-row:hover td { background-color: #fff5f5 !important; }
-        .settled-row { opacity: 0.7; }
-        .section-divider { background: #f8fafc; border-top: 2px solid #e2e8f0; border-bottom: 2px solid #e2e8f0; }
+        .due-row { background-color: #fffafb !important; }
+        .due-row:hover td { background-color: #fff5f7 !important; }
+        .settled-row { opacity: 0.6; filter: grayscale(0.5); }
         
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
 
         /* =========================================
-           MOBILE-FIRST REIMAGINATION (UNDER 1024px)
+            THE "DOCK" FIX (STRICT MOBILE OVERRIDE)
            ========================================= */
         @media (max-width: 1023px) {
-            /* 1. Global Padding & Buffers */
             main.flex-1 {
-                padding-left: 1rem !important;
-                padding-right: 1rem !important;
-                padding-top: 1.5rem !important;
-                padding-bottom: 100px !important; /* Bottom nav buffer */
+                padding: 1.5rem 1.25rem 120px 1.25rem !important;
             }
 
-            /* 2. Hide Desktop Elements not needed on Mobile */
-            .lg\:hidden.flex.items-center.justify-between button.p-2\.5 { display: none !important; } /* Hide Hamburger */
-            #sidebarBackdrop { display: none !important; } /* Disable backdrop interaction */
-            #mainSidebar > div.mb-12, #mainSidebar > button.mt-auto { display: none !important; } /* Hide Sidebar Branding & Desktop Logout */
-            #sidebarContainer > p { display: none !important; } /* Hide 'Management' text */
+            .mobile-header {
+                background: rgba(255, 255, 255, 0.8);
+                backdrop-filter: blur(12px);
+                border: 1px solid rgba(255, 255, 255, 0.4);
+                margin: 12px;
+                border-radius: 16px;
+                width: calc(100% - 24px) !important;
+                position: sticky !important;
+                top: 12px !important;
+                z-index: 50;
+            }
 
-            /* 3. Transform Sidebar into Glass Bottom Navigation */
+            /* FORCE SIDEBAR TO BECOME BOTTOM DOCK */
             #mainSidebar {
                 transform: none !important;
                 position: fixed !important;
                 top: auto !important;
                 bottom: 0 !important;
                 left: 0 !important;
+                right: 0 !important;
                 width: 100% !important;
                 height: 75px !important;
                 flex-direction: row !important;
                 padding: 0 10px !important;
                 z-index: 1000 !important;
+                background: #0f172a !important; /* Dark theme for dock */
+                border: none !important;
+                border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
                 border-radius: 24px 24px 0 0 !important;
-                border-top: 1px solid rgba(255,255,255,0.6) !important;
-                border-right: none !important;
-                box-shadow: 0 -10px 40px rgba(0,0,0,0.06) !important;
-                background: rgba(255, 255, 255, 0.85) !important;
-                backdrop-filter: blur(25px) saturate(200%) !important;
-                transition: none !important;
+                box-shadow: 0 -10px 25px rgba(0,0,0,0.1) !important;
             }
 
-            /* 4. Format Bottom Nav Items */
+            /* Clean up Desktop Elements */
+            #mainSidebar > div:first-child, 
+            #sidebarContainer > p, 
+            #sidebarContainer > div.py-6, 
+            #mainSidebar > button:last-child {
+                display: none !important;
+            }
+
             #sidebarContainer {
                 display: flex !important;
                 flex-direction: row !important;
                 width: 100% !important;
                 height: 100% !important;
                 align-items: center !important;
-                justify-content: space-between !important;
+                justify-content: space-around !important;
                 gap: 5px !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
 
+            /* Normalize Navigation Items */
             #sidebarContainer > button, #sidebarContainer > a {
                 flex: 1 !important;
-                height: 85% !important;
                 display: flex !important;
                 flex-direction: column !important;
-                justify-content: center !important;
                 align-items: center !important;
-                padding: 5px !important;
+                justify-content: center !important;
+                background: transparent !important;
+                color: #64748b !important;
+                box-shadow: none !important;
+                padding: 0 !important;
                 margin: 0 !important;
-                border-radius: 16px !important;
-                text-align: center !important;
+                height: 100% !important;
+                border: none !important;
             }
 
-            /* Isolate Emoji & Text, hide extraneous icons */
-            #sidebarContainer > button span:first-child,
-            #sidebarContainer > a span:first-child {
-                font-size: 10px !important;
-                font-weight: 800 !important;
-                white-space: normal !important;
-                line-height: 1.2 !important;
-            }
-            #sidebarContainer > button span:last-child,
-            #sidebarContainer > a svg {
-                display: none !important; /* Hide unread counts/arrows */
+            /* Active State Logic */
+            #sidebarContainer > button.bg-slate-900, 
+            #sidebarContainer > a.bg-slate-900 {
+                color: #3b82f6 !important; /* Active blue */
+                background: transparent !important;
             }
 
-            /* 5. Transform Rigid Tables into Mobile Cards */
-            table, thead, tbody, th, td, tr {
+            /* Icon/Label Styling for Dock */
+            .nav-icon {
+                font-size: 20px !important;
+                margin-bottom: 4px !important;
                 display: block !important;
-                width: 100% !important;
             }
-            thead tr {
-                display: none !important; /* Hide standard headers */
+
+            .nav-label {
+                display: block !important;
+                font-size: 8px !important;
+                font-weight: 800 !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.05em;
             }
+
+            /* Hide Counters on mobile for clean look */
+            #countAll, #countUnpaid { display: none !important; }
+
+            /* Mobile Table Cards */
+            table, thead, tbody, th, td, tr { display: block !important; width: 100% !important; }
+            thead { display: none !important; }
             tbody tr {
                 display: flex !important;
                 flex-wrap: wrap !important;
-                border: 1px solid #f1f5f9 !important;
-                border-radius: 1.5rem !important;
                 margin-bottom: 1rem !important;
-                background: #ffffff !important;
-                padding: 12px !important;
-                box-shadow: 0 4px 10px rgba(0,0,0,0.02) !important;
+                padding: 16px !important;
+                border: 1px solid #f1f5f9 !important;
+                border-radius: 16px !important;
+                background: white !important;
             }
-            tbody tr.section-divider {
-                background: transparent !important;
-                border: none !important;
-                box-shadow: none !important;
-                padding: 0 0 10px 0 !important;
-                margin: 0 !important;
-            }
-            tbody td {
-                padding: 8px !important;
-                border: none !important;
-            }
-            /* Map TD to distinct card zones */
-            tbody td:nth-child(1) { width: 100% !important; border-bottom: 1px solid #f8fafc !important; }
-            tbody td:nth-child(2) { width: 50% !important; text-align: left !important; display: flex !important; align-items: center !important; padding-top: 15px !important; }
-            tbody td:nth-child(3) { width: 50% !important; text-align: right !important; display: flex !important; align-items: center !important; justify-content: flex-end !important; padding-top: 15px !important; }
-            tbody tr.section-divider td { width: 100% !important; border: none !important; padding: 0 !important; }
-
-            /* 6. Spacing Tweaks for Cards & Profile Modal */
-            .glass-card { padding: 1.5rem !important; }
-            #profileModal > div {
-                padding: 1.5rem !important;
-                border-radius: 2rem !important;
-                max-height: 85vh !important;
-                overflow-y: auto !important;
-            }
-            #liveFilterContainer { padding-bottom: 10px !important; }
-            #searchBar { width: 100% !important; max-width: none !important; margin-top: 10px !important; }
-            .flex.justify-between.items-center.mb-6 { flex-direction: column !important; align-items: flex-start !important; }
+            tbody td:nth-child(1) { width: 100% !important; border-bottom: 1px solid #f8fafc; padding-bottom: 10px; }
+            tbody td:nth-child(2) { width: 50% !important; padding-top: 12px; }
+            tbody td:nth-child(3) { width: 50% !important; text-align: right; padding-top: 12px; }
         }
     </style>
 </head>
 <body class="text-slate-900">
 
-    <div class="lg:hidden flex items-center justify-between p-5 bg-white/80 backdrop-blur-lg sticky top-0 z-50 border-b border-slate-100">
-        <h1 class="text-xl font-extrabold tracking-tighter italic">GymFlow<span class="text-blue-600">.</span></h1>
-        <button onclick="logout()" class="px-4 py-2 bg-red-50 text-red-600 rounded-xl font-bold text-xs shadow-sm active:scale-95 transition-transform">Sign Out</button>
+    <div class="lg:hidden mobile-header flex items-center justify-between p-4 shadow-sm z-50">
+        <div class="flex items-center gap-2">
+            <div class="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+            <h1 class="text-lg font-black tracking-tighter italic">GymFlow<span class="text-blue-600">.</span></h1>
+        </div>
+        <button onclick="logout()" class="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg font-black text-[9px] uppercase tracking-widest active:scale-95">Sign Out</button>
     </div>
 
-    <div id="sidebarBackdrop" onclick="toggleMobileMenu()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] hidden lg:hidden"></div>
+    <div id="sidebarBackdrop" onclick="toggleMobileMenu()" class="fixed inset-0 bg-slate-900/10 backdrop-blur-sm z-[60] hidden lg:hidden"></div>
 
     <div class="flex flex-col lg:flex-row">
-        <aside id="mainSidebar" class="fixed inset-y-0 left-0 w-72 bg-white lg:glass-sidebar z-[70] p-8 flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out lg:translate-x-0 lg:sticky lg:h-screen lg:top-0">
-            <div class="mb-12 flex justify-between items-center">
-                <div>
-                    <h1 class="text-2xl font-extrabold tracking-tighter italic">GymFlow<span class="text-blue-600">.</span></h1>
-                    <p id="displayGymName" class="text-[9px] font-black text-blue-500 uppercase tracking-[0.2em] mt-2"></p>
-                </div>
-                <button onclick="toggleMobileMenu()" class="lg:hidden text-slate-300 hover:text-slate-900">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
+        <aside id="mainSidebar" class="fixed inset-y-0 left-0 w-72 bg-white border-r border-slate-100 z-[70] p-8 flex flex-col transform -translate-x-full lg:translate-x-0 lg:sticky lg:h-screen lg:top-0">
+            <div class="mb-12">
+                <h1 class="text-3xl font-black tracking-tighter italic text-slate-900">GymFlow<span class="text-blue-600">.</span></h1>
+                <p id="displayGymName" class="text-[9px] font-black text-blue-500 uppercase tracking-[0.25em] mt-2 opacity-80"></p>
             </div>
 
-            <nav id="sidebarContainer" class="space-y-1 flex-1">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 ml-2">Management</p>
+            <nav id="sidebarContainer" class="space-y-1.5 flex-1">
+                <p class="text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-6 ml-2">Console</p>
                 
-                <button onclick="setFilter('all'); toggleMobileMenu()" id="btnFilterAll" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold bg-slate-900 text-white shadow-sm mb-2 transition-all">
-                    <span>👥 Members</span>
-                    <span id="countAll" class="text-[10px] opacity-50 font-black">0</span>
+                <button onclick="setFilter('all')" id="btnFilterAll" class="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-sm font-bold bg-slate-900 text-white shadow-xl shadow-slate-200 transition-all active:scale-80">
+                    <span class="nav-icon lg:hidden">👥</span>
+                    <span class="nav-label">Members</span>
+                    <span id="countAll" class="text-[10px] opacity-40 font-black">0</span>
                 </button>
                 
-                <button onclick="setFilter('unpaid'); toggleMobileMenu()" id="btnFilterUnpaid" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 bg-transparent hover:bg-white/50 transition mb-2">
-                    <span>⏳ Pending Dues</span>
+                <button onclick="setFilter('unpaid')" id="btnFilterUnpaid" class="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-sm font-bold text-slate-500 hover:bg-slate-50 transition active:scale-80">
+                    <span class="nav-icon lg:hidden">⚠️</span>
+                    <span class="nav-label">Pending</span>
                     <span id="countUnpaid" class="text-[10px] text-red-500 font-black">0</span>
                 </button>
 
-                <a href="expense.html" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition group">
-                    <span>📊 Expenses</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 opacity-0 group-hover:opacity-100 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" /></svg>
+                <div class="py-6"><hr class="border-slate-50"></div>
+
+                <a href="expense.html" class="w-full flex items-center px-5 py-4 rounded-2xl text-sm font-bold text-slate-500 hover:bg-blue-50/50 hover:text-blue-600 transition">
+                    <span class="nav-icon lg:hidden">📉</span>
+                    <span class="nav-label">Expenses</span>
                 </a>
-                <a href="revenue.html" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition group">
-                      <span>📈 Revenue</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 opacity-0 group-hover:opacity-100 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" /></svg>
+                <a href="revenue.html" class="w-full flex items-center px-5 py-4 rounded-2xl text-sm font-bold text-slate-500 hover:bg-blue-50/50 hover:text-blue-600 transition">
+                    <span class="nav-icon lg:hidden">💰</span>
+                    <span class="nav-label">Revenue</span>
                 </a>
-                <a href="insights.html" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition group">
-                    <div class="flex items-center gap-2">
-                        <span>🎯 Insights</span> 
-                    </div>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 opacity-0 group-hover:opacity-100 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" />
-                    </svg>
+                <a href="insights.html" class="w-full flex items-center px-5 py-4 rounded-2xl text-sm font-bold text-slate-500 hover:bg-blue-50/50 hover:text-blue-600 transition">
+                    <span class="nav-icon lg:hidden">📊</span>
+                    <span class="nav-label">Insights</span>
                 </a>
-                <a href="trainer.html" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition group">
-                    <div class="flex items-center gap-2">
-                        <span>👟 Manage Trainers</span>
-                    </div>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 opacity-0 group-hover:opacity-100 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" />
-                    </svg>
+                <a href="trainer.html" class="w-full flex items-center px-5 py-4 rounded-2xl text-sm font-bold text-slate-500 hover:bg-blue-50/50 hover:text-blue-600 transition">
+                    <span class="nav-icon lg:hidden">🏋️</span>
+                    <span class="nav-label">Trainers</span>
                 </a>
             </nav>
 
-            <button onclick="logout()" class="mt-auto flex items-center gap-3 text-xs font-bold text-slate-400 hover:text-red-500 transition">🚪 Sign Out</button>
+            <button onclick="logout()" class="mt-auto flex items-center gap-3 text-[10px] font-black uppercase text-slate-300 hover:text-red-500 transition tracking-widest">Logout System</button>
         </aside>
 
-        <main class="flex-1 p-6 lg:p-10">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                <div class="glass-card p-8">
-                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">Total Roster</p>
-                    <h3 id="statTotal" class="text-5xl font-extrabold tracking-tighter">0</h3>
+        <main class="flex-1 p-6 lg:p-14">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-14">
+                <div class="premium-card p-8">
+                    <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-4">Total Roster</p>
+                    <h3 id="statTotal" class="text-5xl font-black tracking-tighter text-slate-900">0</h3>
                 </div>
-                <div class="glass-card p-8 bg-blue-50/50 border-blue-100">
-                    <p class="text-[11px] font-bold text-blue-600 uppercase tracking-widest mb-4">Monthly Revenue</p>
+                <div class="premium-card p-8 border-blue-50">
+                    <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-4">Revenue</p>
                     <div class="flex items-baseline gap-1">
-                        <span class="text-xl font-bold text-blue-600 italic">₹</span>
-                        <h3 id="statRevenue" class="text-4xl font-extrabold tracking-tighter">0</h3>
+                        <span class="text-xl font-bold text-blue-600">₹</span>
+                        <h3 id="statRevenue" class="text-4xl font-black tracking-tighter text-slate-900">0</h3>
                     </div>
                 </div>
-                <div class="glass-card p-8 bg-slate-900 text-white border-none shadow-2xl">
-                    <span id="statPercent" class="text-blue-400 font-black text-sm">0%</span>
-                    <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-8">
+                <div class="premium-card p-8 bg-slate-900 text-white border-none shadow-2xl">
+                    <div class="flex justify-between items-center mb-6">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Collection Rate</p>
+                        <span id="statPercent" class="text-blue-400 font-black text-sm">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
                         <div id="statBar" class="bg-blue-500 h-full transition-all duration-1000" style="width: 0%"></div>
                     </div>
                 </div>
-                <div class="glass-card p-8 bg-blue-600 text-white border-none shadow-xl cursor-pointer group" onclick="document.getElementById('regSection').classList.toggle('hidden')">
-                    <p class="text-[11px] font-bold text-blue-200 uppercase tracking-widest mb-4">Quick Action</p>
-                    <h3 class="text-2xl font-extrabold leading-tight">Add New Member <span class="group-hover:translate-x-2 inline-block transition">→</span></h3>
+                <div class="premium-card p-8 bg-blue-600 text-white border-none shadow-blue-200 shadow-xl cursor-pointer hover:bg-blue-700 transition active:scale-[0.97]" onclick="document.getElementById('regSection').classList.toggle('hidden')">
+                    <p class="text-[10px] font-bold text-blue-100 uppercase tracking-widest mb-4">Action</p>
+                    <h3 class="text-2xl font-black leading-tight">Add Athlete <span class="inline-block translate-x-2">→</span></h3>
                 </div>
             </div>
 
-            <section class="mb-12">
-                <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+            <section class="mb-14">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-6">
                     <div>
-                        <h2 class="text-2xl font-black tracking-tight text-slate-900">Live on Floor</h2>
-                        <p id="countTraining" class="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">0 MEMBERS TRAINING NOW</p>
+                        <h2 class="text-2xl font-black tracking-tight text-slate-900">Live Session</h2>
+                        <p id="countTraining" class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Status: Active Monitor</p>
                     </div>
-                    
-                    <div id="liveFilterContainer" class="flex gap-2 overflow-x-auto no-scrollbar py-2">
-                        <button onclick="setLiveFilter('all')" class="live-f-btn px-4 py-2 rounded-xl text-[8px] font-black uppercase bg-slate-900 text-white shadow-sm whitespace-nowrap">All</button>
-                        <button onclick="setLiveFilter('Chest')" class="live-f-btn px-4 py-2 rounded-xl text-[8px] font-black uppercase bg-white border border-slate-100 text-slate-400 whitespace-nowrap">Chest</button>
-                        <button onclick="setLiveFilter('Back')" class="live-f-btn px-4 py-2 rounded-xl text-[8px] font-black uppercase bg-white border border-slate-100 text-slate-400 whitespace-nowrap">Back</button>
-                        <button onclick="setLiveFilter('Legs')" class="live-f-btn px-4 py-2 rounded-xl text-[8px] font-black uppercase bg-white border border-slate-100 text-slate-400 whitespace-nowrap">Legs</button>
-                        <button onclick="setLiveFilter('Shoulders')" class="live-f-btn px-4 py-2 rounded-xl text-[8px] font-black uppercase bg-white border border-slate-100 text-slate-400 whitespace-nowrap">Shoulders</button>
-                        <button onclick="setLiveFilter('Cardio')" class="live-f-btn px-4 py-2 rounded-xl text-[8px] font-black uppercase bg-white border border-slate-100 text-slate-400 whitespace-nowrap">Cardio</button>
+                    <div id="liveFilterContainer" class="flex gap-1.5 bg-slate-100/50 p-1.5 rounded-2xl overflow-x-auto no-scrollbar">
+                        <button onclick="setLiveFilter('all')" class="live-f-btn px-5 py-2.5 rounded-xl text-[9px] font-black uppercase bg-white text-slate-900 shadow-sm border border-slate-200/50">All</button>
+                        <button onclick="setLiveFilter('Chest')" class="live-f-btn px-5 py-2.5 rounded-xl text-[9px] font-black uppercase text-slate-400 hover:text-slate-600">Chest</button>
+                        <button onclick="setLiveFilter('Back')" class="live-f-btn px-5 py-2.5 rounded-xl text-[9px] font-black uppercase text-slate-400 hover:text-slate-600">Back</button>
+                        <button onclick="setLiveFilter('Legs')" class="live-f-btn px-5 py-2.5 rounded-xl text-[9px] font-black uppercase text-slate-400 hover:text-slate-600">Legs</button>
+                        <button onclick="setLiveFilter('Cardio')" class="live-f-btn px-5 py-2.5 rounded-xl text-[9px] font-black uppercase text-slate-400 hover:text-slate-600">Cardio</button>
                     </div>
                 </div>
-                <div id="liveMembersGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+                <div id="liveMembersGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"></div>
             </section>
 
-            <section id="regSection" class="hidden glass-card p-8 mb-12 border-2 border-blue-100 shadow-2xl">
-                <h3 class="text-xl font-black mb-6">New Member Registration</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <input id="regName" placeholder="Full Name" class="bg-slate-50 p-4 rounded-xl border border-slate-200 outline-none">
-    <input id="regPhone" placeholder="Phone Number" class="bg-slate-50 p-4 rounded-xl border border-slate-200 outline-none">
-    
-    <div class="relative">
-        <select id="regTrainer" class="w-full bg-slate-50 p-4 rounded-xl border border-slate-200 outline-none appearance-none font-medium text-slate-500">
-            <option value="None">No Trainer Assigned</option>
-            </select>
-        <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-        </div>
-    </div>
-
-    <input id="regPlan" list="planOptions" placeholder="Plan" class="bg-slate-50 p-4 rounded-xl border border-slate-200 outline-none">
-    <datalist id="planOptions"><option value="Normal"><option value="Cardio"><option value="Personal Training"></datalist>
-    
-    <input id="regMonthlyFee" type="number" placeholder="Monthly Fee (₹)" class="bg-slate-50 p-4 rounded-xl border border-slate-200 outline-none">
-    <input id="regJoiningFee" type="number" placeholder="Joining Fee (₹)" class="bg-slate-50 p-4 rounded-xl border border-slate-200 outline-none">
-</div>
-                <div class="mt-8 flex justify-end"><button onclick="addNewMember()" class="bg-slate-900 text-white font-black px-12 py-4 rounded-xl uppercase text-xs">Save Member</button></div>
+            <section id="regSection" class="hidden premium-card p-10 mb-14 border-2 border-blue-50 bg-slate-50/30">
+                <h3 class="text-lg font-black mb-10 border-b border-slate-100 pb-5">Member Onboarding</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <input id="regName" placeholder="Athlete Full Name" class="bg-white p-5 rounded-2xl border border-slate-200 outline-none text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all">
+                    <input id="regPhone" placeholder="Mobile Number" class="bg-white p-5 rounded-2xl border border-slate-200 outline-none text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all">
+                    <select id="regTrainer" class="bg-white p-5 rounded-2xl border border-slate-200 outline-none text-sm font-bold text-slate-500 appearance-none">
+                        <option value="None">Direct Management</option>
+                    </select>
+                    <input id="regPlan" list="planOptions" placeholder="Training Plan" class="bg-white p-5 rounded-2xl border border-slate-200 outline-none text-sm focus:border-blue-500 transition-all">
+                    <datalist id="planOptions"><option value="Normal"><option value="Cardio"><option value="Personal Training"></datalist>
+                    <input id="regMonthlyFee" type="number" placeholder="Fee (₹)" class="bg-white p-5 rounded-2xl border border-slate-200 outline-none text-sm focus:border-blue-500 transition-all">
+                    <input id="regJoiningFee" type="number" placeholder="Join Fee (₹)" class="bg-white p-5 rounded-2xl border border-slate-200 outline-none text-sm focus:border-blue-500 transition-all">
+                </div>
+                <div class="mt-10 flex justify-end">
+                    <button onclick="addNewMember()" class="bg-slate-900 text-white font-black px-14 py-5 rounded-2xl uppercase text-[10px] tracking-[0.2em] hover:bg-blue-600 transition shadow-xl shadow-slate-200">Register Athlete</button>
+                </div>
             </section>
 
-            <div class="flex justify-between items-center mb-6">
-                <h2 id="listTitle" class="text-3xl font-extrabold tracking-tight">Active Roster</h2>
-                <input id="searchBar" type="text" placeholder="Search..." class="bg-white border border-slate-200 px-6 py-3 rounded-2xl text-sm outline-none w-64">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
+                <h2 id="listTitle" class="text-4xl font-black tracking-tight italic text-slate-900">Active <span class="text-slate-300">Roster</span></h2>
+                <div class="relative w-full md:w-96">
+                    <input id="searchBar" type="text" placeholder="Search records..." class="w-full bg-white border border-slate-200 px-7 py-5 rounded-2xl text-xs font-bold outline-none shadow-sm focus:border-slate-900 transition-all">
+                </div>
             </div>
 
-            <div class="glass-card overflow-hidden">
+            <div class="premium-card overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
+                    <table class="w-full text-left">
                         <thead>
-                            <tr class="bg-slate-50 border-b border-slate-100">
-                                <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Member Name</th>
-                                <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Payment Status</th>
-                                <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
+                            <tr class="bg-slate-50/50 border-b border-slate-100">
+                                <th class="p-7 text-[10px] font-black text-slate-400 uppercase tracking-widest">Athlete Profile</th>
+                                <th class="p-7 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Payment</th>
+                                <th class="p-7 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Control</th>
                             </tr>
                         </thead>
                         <tbody id="memberTableBody" class="divide-y divide-slate-50"></tbody>
                     </table>
                 </div>
-                <div class="bg-slate-50/30 p-6 flex justify-between items-center border-t border-slate-100">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase">Page <span id="currentPageNum">1</span> of <span id="totalPageNum">1</span></p>
-                    <div class="flex gap-4">
-                        <button onclick="changePage(-1)" id="prevBtn" class="text-xs font-black uppercase text-slate-400 hover:text-slate-900">← Prev</button>
-                        <button onclick="changePage(1)" id="nextBtn" class="text-xs font-black uppercase text-slate-400 hover:text-slate-900">Next →</button>
+                <div class="bg-slate-50/30 p-8 flex justify-between items-center border-t border-slate-100">
+                    <p class="text-slate-300 text-[10px] font-black uppercase tracking-widest">Record <span id="currentPageNum" class="text-slate-900">1</span> of <span id="totalPageNum">1</span></p>
+                    <div class="flex gap-10">
+                        <button onclick="changePage(-1)" id="prevBtn" class="text-[10px] font-black uppercase text-slate-400 hover:text-slate-900 transition tracking-widest">← Previous</button>
+                        <button onclick="changePage(1)" id="nextBtn" class="text-[10px] font-black uppercase text-slate-400 hover:text-slate-900 transition tracking-widest">Next →</button>
                     </div>
                 </div>
             </div>
@@ -314,21 +301,21 @@
     </div>
 
     <div id="profileModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md">
-        <div class="bg-white rounded-[3rem] w-full max-w-lg p-10 shadow-2xl relative">
-            <button onclick="closeProfile()" class="absolute top-8 right-8 text-slate-300 hover:text-slate-900 text-2xl font-bold">✕</button>
-            <div class="mb-8">
-                <div id="profStatusBadge" class="inline-block text-[9px] font-black px-3 py-1 rounded-full uppercase mb-4 shadow-sm">STATUS</div>
-                <h2 id="profName" class="text-4xl font-extrabold tracking-tighter text-slate-900">Member</h2>
-                <p id="profPhone" class="text-slate-400 text-sm font-medium mt-1"></p>
+        <div class="bg-white rounded-[32px] w-full max-w-lg p-12 shadow-2xl relative border border-white">
+            <button onclick="closeProfile()" class="absolute top-10 right-10 text-slate-300 hover:text-slate-900 text-2xl font-bold">✕</button>
+            <div class="mb-10">
+                <div id="profStatusBadge" class="inline-block text-[9px] font-black px-4 py-1.5 rounded-full uppercase mb-6 tracking-widest shadow-sm">STATUS</div>
+                <h2 id="profName" class="text-4xl font-black tracking-tighter text-slate-900">Member</h2>
+                <p id="profPhone" class="text-slate-400 text-xs font-bold mt-2 uppercase tracking-tight"></p>
             </div>
-            <div id="currentMonthContainer" class="mb-8"></div>
-            <div class="border-t border-slate-100 pt-6">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Payment History</p>
-                <div id="historyList" class="space-y-2 max-h-56 overflow-y-auto pr-2 custom-scrollbar"></div>
+            <div id="currentMonthContainer" class="mb-10"></div>
+            <div class="border-t border-slate-100 pt-8">
+                <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-6">Archive History</p>
+                <div id="historyList" class="space-y-3 max-h-56 overflow-y-auto pr-3 custom-scrollbar"></div>
             </div>
-            <div class="flex justify-between items-center mt-10 border-t border-slate-100 pt-8">
-                <button id="statusToggleBtn" class="text-[10px] font-black uppercase text-slate-400 hover:text-red-500">Pause Member</button>
-                <button onclick="deleteMember()" class="text-[10px] font-black uppercase text-red-300 hover:text-red-600">Delete</button>
+            <div class="flex justify-between items-center mt-12 border-t border-slate-100 pt-10">
+                <button id="statusToggleBtn" class="text-[10px] font-black uppercase text-slate-400 hover:text-red-500 tracking-widest">Freeze Account</button>
+                <button onclick="deleteMember()" class="text-[10px] font-black uppercase text-red-200 hover:text-red-600 tracking-widest">Purge Data</button>
             </div>
         </div>
     </div>
@@ -336,21 +323,9 @@
     <script type="module" src="../script.js"></script>
     <script>
         window.logout = () => { localStorage.clear(); location.href = "../login.html"; };
-        window.closeProfile = () => { document.getElementById('profileModal').classList.add('hidden'); window.dispatchEvent(new CustomEvent('profileClosed')); };
-        
-        // Retained intact, visually deactivated on mobile by CSS
-        window.toggleMobileMenu = () => {
-            const sidebar = document.getElementById('mainSidebar');
-            const backdrop = document.getElementById('sidebarBackdrop');
-            const isHidden = sidebar.classList.contains('-translate-x-full');
-
-            if (isHidden) {
-                sidebar.classList.remove('-translate-x-full');
-                backdrop.classList.remove('hidden');
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                backdrop.classList.add('hidden');
-            }
+        window.closeProfile = () => { 
+            document.getElementById('profileModal').classList.add('hidden');
+            window.dispatchEvent(new CustomEvent('profileClosed'));
         };
     </script>
 </body>

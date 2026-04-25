@@ -90,8 +90,14 @@ function updateStats() {
     });
 
     allMembers.forEach(m => {
-        if (m.joinDate && m.joinDate.startsWith(cur)) {
-            currentMonthRevenue += parseFloat(m.joiningFee) || 0;
+        // Compatibility check for joinDate or joinedDate
+        const joinData = m.joinDate || m.joinedDate;
+        if (joinData) {
+            const d = new Date(joinData);
+            const code = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+            if (code === cur) {
+                currentMonthRevenue += parseFloat(m.joiningFee) || 0;
+            }
         }
     });
 
@@ -288,9 +294,15 @@ function refreshProfileUI() {
 
     const hist = document.getElementById('historyList');
     hist.innerHTML = "";
+    
+    // FIX: Compatibility for both joinDate (string) and joinedDate (timestamp)
     let ptr = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const joinDateObj = new Date(m.joinDate || "2025-01-01");
-    const limit = new Date(joinDateObj.getFullYear(), joinDateObj.getMonth(), 1);
+    const joinData = m.joinDate || m.joinedDate || Date.now();
+    const joinDateObj = new Date(joinData);
+    
+    // Safety fallback if date is invalid
+    const validJoinDate = isNaN(joinDateObj.getTime()) ? new Date("2025-01-01") : joinDateObj;
+    const limit = new Date(validJoinDate.getFullYear(), validJoinDate.getMonth(), 1);
 
     while (ptr >= limit) {
         const code = ptr.toISOString().slice(0, 7);
@@ -335,7 +347,7 @@ window.addNewMember = async () => {
     const monthlyFee = parseFloat(document.getElementById('regMonthlyFee').value);
     const joiningFee = parseFloat(document.getElementById('regJoiningFee').value);
     const activeGymId = localStorage.getItem("activeGymId") || localStorage.getItem("gymId");
-
+    
     if (!name || !phone) return alert("Name and Phone are required");
 
     try {
@@ -344,15 +356,15 @@ window.addNewMember = async () => {
             name,
             phone,
             plan,
-            trainerId, 
+            trainerId,
             monthlyFee,
             joiningFee,
             status: 'active',
-            joinedDate: Date.now(),
+            joinDate: new Date().toISOString().slice(0, 10), 
             lastPaymentDate: Date.now()
         });
 
-        alert("Member registered with trainer!");
+        alert("Member registered !");
         location.reload();
     } catch (e) {
         console.error(e);
