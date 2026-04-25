@@ -321,7 +321,7 @@ function refreshProfileUI() {
 // 5. ACTIONS
 window.sendWhatsAppReminder = (phone, name) => {
     const monthName = new Date().toLocaleString('default', { month: 'long' });
-    const msg = `ഹലോ ${name}, GymFlow-ൽ നിങ്ങളുടെ ഈ മാസത്തെ (${monthName}) ഫീസ്‌ അടക്കാൻ സമയമായി. ദയവായി ശ്രദ്ധിക്കുമല്ലോ.`;
+    const msg = `Hello ${name}, this is a reminder from ${localStorage.getItem("activeGymName") || "our gym"} that your membership fee for ${monthName} is due. Kindly make the payment at your earliest convenience. Thank you!`;
     window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
 };
 

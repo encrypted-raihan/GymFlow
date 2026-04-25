@@ -263,9 +263,23 @@
         const area = document.getElementById('msgBox');
         const monthName = now.toLocaleString('default', { month: 'long' });
         
-        if(type === 'due') area.value = `Hello {{name}},\n\nThis is a professional reminder from the billing department. Your membership fees for ${monthName} are currently outstanding.\n\nPlease finalize payment today to ensure uninterrupted floor access.\n\nThank you.`;
-        else if(type === 'inactive') area.value = `Hi {{name}},\n\nWe noticed your plan is currently on pause. Are you planning a return to training this week?\n\nLet us know if you need any adjustments.`;
-        else area.value = `Hi {{name}},\n\nExcellent progress on your training this ${monthName}! Is there anything we can assist you with regarding your current fitness goals?`;
+        if(type === 'due') 
+    area.value = `Hi ${name || "Member"},
+This is a professional reminder from ${localStorage.getItem("activeGymName") || "our gym"} billing department. Your membership fees for ${monthName} are currently outstanding.
+Please finalize payment today to ensure uninterrupted access.
+Thank you.`;
+
+else if(type === 'inactive') 
+    area.value = `Hi ${name || "Member"},
+We noticed your membership at ${localStorage.getItem("activeGymName") || "our gym"} is currently paused. Are you planning to get back to training this week?
+We’d be happy to help with any support you need.
+Looking forward to hearing from you!`;
+
+else 
+    area.value = `Hi ${name || "Member"},
+You're making great progress this ${monthName} at ${localStorage.getItem("activeGymName") || "our gym"} — keep it up!
+Let us know if you need any support with your current fitness goals. We're here to help.
+Stay strong! 💪`;
 
         renderTable();
     }
