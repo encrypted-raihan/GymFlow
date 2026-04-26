@@ -26,22 +26,11 @@
             box-shadow: 0 10px 30px -10px rgba(0,0,0,0.04); 
         }
 
-        /* High Priority Action Styling */
         .hero-action {
             background: #2563eb;
             border: none;
             position: relative;
             overflow: hidden;
-        }
-        .hero-action::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            pointer-events: none;
         }
         
         .nav-fixed-bottom {
@@ -70,7 +59,6 @@
             border: none;
             background: transparent;
             cursor: pointer;
-            gap: 0px;
         }
         .nav-item.active {
             background: #2563eb;
@@ -92,21 +80,58 @@
             max-width: 90px;
             opacity: 1;
         }
-        .nav-item svg {
-            width: 24px;
-            height: 24px;
+        .nav-item svg { width: 24px; height: 24px; }
+
+        @keyframes flame-pulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 5px #f97316); }
+            50% { transform: scale(1.1); filter: drop-shadow(0 0 15px #ea580c); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 5px #f97316); }
         }
+
+        .flame-active {
+            animation: flame-pulse 2s infinite ease-in-out;
+            display: inline-block;
+        }
+
+        .streak-circle {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle, #fff 60%, #f8fafc 100%);
+            border-radius: 50%;
+            border: 4px solid #f1f5f9;
+        }
+
+        @keyframes pulse-red {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .live-dot {
+            height: 8px; width: 8px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+            animation: pulse-red 1.5s infinite;
+        }
+
+        .live-text-active {
+            color: #ef4444 !important;
+            font-size: 11px !important;
+            font-weight: 900 !important;
+            opacity: 1 !important;
+        }
+
         .page { transition: all 0.3s ease; }
         .page-hidden { display: none; opacity: 0; }
-        
-        .day-pill { width: 40px; height: 50px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; transition: all 0.3s; border: 1px solid #f1f5f9; }
-        .day-hit { background: #2563eb; color: white; border-color: #2563eb; font-weight: 800; }
-        .day-miss { background: #fff; color: #cbd5e1; }
         ::-webkit-scrollbar { width: 0px; }
-        
-        #appContainer {
-            padding-bottom: 120px;
-        }
+        #appContainer { padding-bottom: 120px; }
     </style>
 </head>
 <body>
@@ -142,19 +167,15 @@
                 </button>
             </div>
 
-            <div class="premium-card p-6 space-y-5">
-                <div class="flex justify-between items-center">
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Weekly Pulse</span>
-                    <span id="streakCount" class="text-[10px] font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-full uppercase">0 Day Streak</span>
+            <div class="premium-card p-8 flex flex-col items-center justify-center space-y-4">
+                <div class="streak-circle shadow-2xl shadow-orange-100">
+                    <div id="streakFlame" class="text-4xl opacity-20">🔥</div>
+                    <h1 id="streakNumber" class="text-4xl font-black text-slate-900 mt-1">0</h1>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Day Streak</p>
                 </div>
-                <div id="streakPills" class="flex justify-between">
-                    <div class="day-pill day-miss"><span>S</span><b class="mt-1"></b></div>
-                    <div class="day-pill day-miss"><span>M</span><b class="mt-1"></b></div>
-                    <div class="day-pill day-miss"><span>T</span><b class="mt-1"></b></div>
-                    <div class="day-pill day-miss"><span>W</span><b class="mt-1"></b></div>
-                    <div class="day-pill day-miss"><span>T</span><b class="mt-1"></b></div>
-                    <div class="day-pill day-miss"><span>F</span><b class="mt-1"></b></div>
-                    <div class="day-pill day-miss"><span>S</span><b class="mt-1"></b></div>
+                <div class="text-center">
+                    <h4 id="streakStatus" class="font-black text-slate-800 text-sm italic uppercase tracking-widest">Start Your Streak</h4>
+                    <p class="text-[10px] text-slate-400 font-bold mt-1">Keep the flame alive!</p>
                 </div>
             </div>
 
@@ -171,21 +192,19 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-4">
-                <button onclick="window.location.href='player-chat.html'" class="premium-card p-5 w-full flex items-center justify-between border-l-4 border-l-slate-900 active:scale-95 transition-all">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-900 text-xl">💬</div>
-                        <div class="text-left">
-                            <h4 class="font-black text-slate-800 text-sm">Messages</h4>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase">Chat with trainers</p>
-                        </div>
+            <button onclick="window.location.href='player-chat.html'" class="premium-card p-5 w-full flex items-center justify-between border-l-4 border-l-slate-900 active:scale-95 transition-all">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-900 text-xl">💬</div>
+                    <div class="text-left">
+                        <h4 class="font-black text-slate-800 text-sm">Messages</h4>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Chat with trainers</p>
                     </div>
-                    <div class="flex -space-x-2">
-                        <div class="w-6 h-6 rounded-full bg-blue-100 border-2 border-white"></div>
-                        <div class="w-6 h-6 rounded-full bg-slate-200 border-2 border-white"></div>
-                    </div>
-                </button>
-            </div>
+                </div>
+                <div class="flex -space-x-2">
+                    <div class="w-6 h-6 rounded-full bg-blue-100 border-2 border-white"></div>
+                    <div class="w-6 h-6 rounded-full bg-slate-200 border-2 border-white"></div>
+                </div>
+            </button>
 
             <div class="premium-card p-8 text-center space-y-6">
                 <div id="timerContainer" class="hidden">
@@ -214,14 +233,14 @@
                     <h4 id="totalHours" class="text-xl font-black text-slate-900">0m</h4>
                 </div>
             </div>
+            
             <div class="premium-card p-6">
-                <p class="text-[10px] font-black text-slate-400 uppercase mb-6 tracking-widest text-center">Daily XP Intensity</p>
-                <div class="h-48"><canvas id="xpBarChart"></canvas></div>
+                <p class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest text-center">Muscle Focus Profile</p>
+                <div class="h-64 flex items-center justify-center">
+                    <canvas id="muscleRadarChart"></canvas>
+                </div>
             </div>
-            <div class="premium-card p-6">
-                <p class="text-[10px] font-black text-slate-400 uppercase mb-6 tracking-widest text-center">Focus Area Distribution</p>
-                <div class="h-64"><canvas id="radarChart"></canvas></div>
-            </div>
+
             <div id="historyList" class="space-y-3 pb-4"></div>
         </div>
 
@@ -250,12 +269,12 @@
         <h2 class="text-3xl font-black mb-1 text-slate-900">Training Focus</h2>
         <p class="text-slate-400 font-bold text-xs mb-10 uppercase">Target up to 3 areas</p>
         <div class="grid grid-cols-2 gap-3 mb-10">
-            <label><input type="checkbox" value="Chest" class="hidden peer" onchange="checkLimit(this)"><div class="p-6 premium-card text-center font-black text-xs uppercase peer-checked:bg-slate-900 peer-checked:text-white transition-all">Chest</div></label>
-            <label><input type="checkbox" value="Back" class="hidden peer" onchange="checkLimit(this)"><div class="p-6 premium-card text-center font-black text-xs uppercase peer-checked:bg-slate-900 peer-checked:text-white transition-all">Back</div></label>
-            <label><input type="checkbox" value="Legs" class="hidden peer" onchange="checkLimit(this)"><div class="p-6 premium-card text-center font-black text-xs uppercase peer-checked:bg-slate-900 peer-checked:text-white transition-all">Legs</div></label>
-            <label><input type="checkbox" value="Arms" class="hidden peer" onchange="checkLimit(this)"><div class="p-6 premium-card text-center font-black text-xs uppercase peer-checked:bg-slate-900 peer-checked:text-white transition-all">Arms</div></label>
-            <label><input type="checkbox" value="Shoulders" class="hidden peer" onchange="checkLimit(this)"><div class="p-6 premium-card text-center font-black text-xs uppercase peer-checked:bg-slate-900 peer-checked:text-white transition-all">Shoulders</div></label>
-            <label><input type="checkbox" value="Abs" class="hidden peer" onchange="checkLimit(this)"><div class="p-6 premium-card text-center font-black text-xs uppercase peer-checked:bg-slate-900 peer-checked:text-white transition-all">Abs</div></label>
+            <label><input type="checkbox" value="Chest" class="hidden peer" onchange="checkLimit(this)"><div class="p-6 premium-card text-center font-black text-xs uppercase peer-checked:bg-slate-900 peer-checked:text-white transition-all flex flex-col items-center gap-1">Chest <span id="count-Chest" class="text-[9px] opacity-60 font-bold">0 LIVE</span></div></label>
+            <label><input type="checkbox" value="Back" class="hidden peer" onchange="checkLimit(this)"><div class="p-6 premium-card text-center font-black text-xs uppercase peer-checked:bg-slate-900 peer-checked:text-white transition-all flex flex-col items-center gap-1">Back <span id="count-Back" class="text-[9px] opacity-60 font-bold">0 LIVE</span></div></label>
+            <label><input type="checkbox" value="Legs" class="hidden peer" onchange="checkLimit(this)"><div class="p-6 premium-card text-center font-black text-xs uppercase peer-checked:bg-slate-900 peer-checked:text-white transition-all flex flex-col items-center gap-1">Legs <span id="count-Legs" class="text-[9px] opacity-60 font-bold">0 LIVE</span></div></label>
+            <label><input type="checkbox" value="Arms" class="hidden peer" onchange="checkLimit(this)"><div class="p-6 premium-card text-center font-black text-xs uppercase peer-checked:bg-slate-900 peer-checked:text-white transition-all flex flex-col items-center gap-1">Arms <span id="count-Arms" class="text-[9px] opacity-60 font-bold">0 LIVE</span></div></label>
+            <label><input type="checkbox" value="Shoulders" class="hidden peer" onchange="checkLimit(this)"><div class="p-6 premium-card text-center font-black text-xs uppercase peer-checked:bg-slate-900 peer-checked:text-white transition-all flex flex-col items-center gap-1">Shoulders <span id="count-Shoulders" class="text-[9px] opacity-60 font-bold">0 LIVE</span></div></label>
+            <label><input type="checkbox" value="Abs" class="hidden peer" onchange="checkLimit(this)"><div class="p-6 premium-card text-center font-black text-xs uppercase peer-checked:bg-slate-900 peer-checked:text-white transition-all flex flex-col items-center gap-1">Abs <span id="count-Abs" class="text-[9px] opacity-60 font-bold">0 LIVE</span></div></label>
         </div>
         <button onclick="startSession()" class="w-full py-5 bg-blue-600 text-white rounded-[10px] font-black uppercase tracking-widest shadow-xl">Confirm & Start</button>
         <button onclick="toggleOverlay('focusOverlay', false)" class="w-full mt-6 text-slate-400 font-bold text-[10px] uppercase">Back</button>
@@ -263,7 +282,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, arrayUnion, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         
         const firebaseConfig = {
             apiKey: "AIzaSyBcsmX7T1NotMi0T1XZ6b03yI3r7qZYQr8",
@@ -279,12 +298,8 @@
         let currentMember = null;
         let timerInterval = null;
         let radarChart = null;
-        let xpBarChart = null;
 
-        window.logout = () => {
-            localStorage.removeItem('memberId');
-            window.location.href = "member-login.html";
-        };
+        window.logout = () => { localStorage.removeItem('memberId'); window.location.href = "member-login.html"; };
 
         async function sync() {
             const id = localStorage.getItem('memberId');
@@ -292,27 +307,51 @@
             const snap = await getDoc(doc(db, "members", id));
             if(snap.exists()) {
                 currentMember = { id: snap.id, ...snap.data() };
+                currentMember.gymId = currentMember.gymId || currentMember.gym_id || currentMember.gym;
                 document.getElementById('appContainer').classList.remove('hidden');
                 updateUI();
                 renderStreak();
+                initLiveCounts(); 
             }
+        }
+
+        function initLiveCounts() {
+            const gymId = currentMember.gymId;
+            if(!gymId) return;
+            const q = query(collection(db, "members"), where("gymId", "==", gymId), where("isInside", "==", true));
+            onSnapshot(q, (snapshot) => {
+                const counts = { Chest:0, Back:0, Legs:0, Arms:0, Shoulders:0, Abs:0 };
+                snapshot.forEach(doc => {
+                    const parts = doc.data().activeWorkoutParts || [];
+                    parts.forEach(p => { if(counts[p] !== undefined) counts[p]++; });
+                });
+                Object.keys(counts).forEach(part => {
+                    const el = document.getElementById(`count-${part}`);
+                    if(el) {
+                        if(counts[part] > 0) {
+                            el.innerHTML = `<span class="live-dot"></span>${counts[part]} LIVE`;
+                            el.className = "live-text-active";
+                        } else {
+                            el.innerHTML = `0 LIVE`;
+                            el.className = "text-[9px] opacity-60 font-bold";
+                        }
+                    }
+                });
+            });
         }
 
         function updateUI() {
             const stats = calcLevel(currentMember.totalXP || 0);
             document.getElementById('userName').innerText = currentMember.name || "Athlete";
-            const gName = currentMember.gymName || currentMember.gym || currentMember.gym_name || "Elite Athlete";
-            document.getElementById('gymNameDisplay').innerText = gName;
-            
+            document.getElementById('gymNameDisplay').innerText = currentMember.gymName || "Elite Athlete";
             document.getElementById('hudLevel').innerText = stats.lvl;
             document.getElementById('totalXPDisplay').innerText = `${(currentMember.totalXP || 0).toLocaleString()} XP`;
             document.getElementById('xpRatio').innerText = `${Math.floor(stats.cur)} / ${stats.r}`;
             document.getElementById('xpBar').style.width = stats.p + '%';
             document.getElementById('pctLabel').innerText = Math.round(stats.p) + '%';
-            document.getElementById('streakCount').innerText = `${currentMember.streak || 0} DAY STREAK`;
             
-            const today = new Date().toLocaleDateString();
-            if(currentMember.lastAttendance === today) {
+            const todayStr = new Date().toLocaleDateString();
+            if(currentMember.lastAttendance === todayStr) {
                 document.getElementById('attContainer').innerHTML = `<div class="premium-card p-6 w-full flex items-center justify-between border-l-8 border-l-emerald-500 bg-emerald-50/20"><div class="flex items-center gap-5"><div class="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-white text-xl">✓</div><div><h4 class="font-black text-slate-800 text-base">Check-In Done</h4><p class="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Locked for today</p></div></div></div>`;
             }
             
@@ -338,6 +377,49 @@
             return { lvl, cur, r, p: (cur/r)*100 };
         }
 
+        window.markAttendance = async () => {
+            const today = new Date();
+            const todayStr = today.toLocaleDateString();
+            if (currentMember.lastAttendance === todayStr) return;
+
+            let newStreak = 1;
+            if (currentMember.lastAttendance) {
+                const lastDate = new Date(currentMember.lastAttendance);
+                const diffTime = Math.abs(new Date(today).setHours(0,0,0,0) - new Date(lastDate).setHours(0,0,0,0));
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                newStreak = (diffDays === 1) ? (currentMember.streak || 0) + 1 : 1;
+            }
+
+            await updateDoc(doc(db, "members", currentMember.id), {
+                totalXP: (currentMember.totalXP || 0) + 50,
+                streak: newStreak,
+                lastAttendance: todayStr
+            });
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.7 }, colors: ['#f97316', '#2563eb', '#ffffff'] });
+            sync();
+        };
+
+        function renderStreak() {
+            const s = currentMember.streak || 0;
+            const numEl = document.getElementById('streakNumber');
+            const flameEl = document.getElementById('streakFlame');
+            const statusEl = document.getElementById('streakStatus');
+            if(!numEl) return;
+            numEl.innerText = s;
+            if (s >= 1) {
+                flameEl.classList.add('flame-active');
+                flameEl.classList.remove('opacity-20');
+                if (s < 3) statusEl.innerText = "Warming Up ⚡️";
+                else if (s < 7) statusEl.innerText = "Relentless Force 🦾";
+                else if (s < 14) statusEl.innerText = "Absolute Beast 👹";
+                else statusEl.innerText = "God Mode Engaged 👑";
+            } else {
+                flameEl.classList.remove('flame-active');
+                flameEl.classList.add('opacity-20');
+                statusEl.innerText = "Start Your Streak";
+            }
+        }
+
         window.switchTab = (t) => {
             document.querySelectorAll('.page').forEach(p => p.classList.add('page-hidden'));
             document.getElementById(t + 'Page').classList.remove('page-hidden');
@@ -347,85 +429,46 @@
             if(t === 'armory') renderArmory();
         };
 
-        window.markAttendance = async () => {
-            const today = new Date().toLocaleDateString();
-            await updateDoc(doc(db, "members", currentMember.id), {
-                totalXP: (currentMember.totalXP || 0) + 50,
-                streak: (currentMember.streak || 0) + 1,
-                lastAttendance: today
-            });
-            confetti({ particleCount: 150, spread: 70, origin: { y: 0.7 }, colors: ['#2563eb', '#ffffff'] });
-            sync();
-        };
-
-        window.handleWorkoutToggle = () => currentMember.isInside ? endSession() : toggleOverlay('focusOverlay', true);
-        window.toggleOverlay = (id, s) => document.getElementById(id).classList.toggle('hidden', !s);
-        window.checkLimit = (i) => { if(document.querySelectorAll('#focusOverlay input:checked').length > 3) i.checked = false; };
-        
-        window.startSession = async () => {
-            const s = Array.from(document.querySelectorAll('#focusOverlay input:checked')).map(x => x.value);
-            if(!s.length) return alert("Select Focus");
-            await updateDoc(doc(db, "members", currentMember.id), {
-                isInside: true, lastIn: new Date().toISOString(), activeWorkoutParts: s
-            });
-            toggleOverlay('focusOverlay', false);
-            sync();
-        };
-
-        async function endSession() {
-            const d = new Date() - new Date(currentMember.lastIn);
-            const m = Math.max(1, Math.round(d / 60000));
-            const x = m * 10;
-            await updateDoc(doc(db, "members", currentMember.id), {
-                isInside: false,
-                totalXP: (currentMember.totalXP || 0) + x,
-                workoutHistory: arrayUnion({
-                    date: new Date().toLocaleDateString(), duration: m, xp: x, muscles: currentMember.activeWorkoutParts || ["Gym"]
-                })
-            });
-            sync();
-        }
-
-        function startTimer() {
-            if(timerInterval) clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                const d = new Date() - new Date(currentMember.lastIn);
-                const m = Math.floor(d/60000).toString().padStart(2,'0');
-                const s = Math.floor((d%60000)/1000).toString().padStart(2,'0');
-                document.getElementById('timer').innerText = `${m}:${s}`;
-            }, 1000);
-        }
-
         function renderCharts() {
-            const hist = currentMember.workoutHistory || [];
-            const cleanHist = hist.map(h => ({ ...h, xp: Number(h.xp) || 0, duration: Number(h.duration) || 0 }));
+            const h = currentMember.workoutHistory || [];
+            const cleanHist = h.map(x => ({ ...x, xp: Number(x.xp) || 0, duration: Number(x.duration) || 0 }));
             
             document.getElementById('avgXp').innerText = cleanHist.length ? Math.round(cleanHist.reduce((a,b)=>a+b.xp, 0)/cleanHist.length) : 0;
             document.getElementById('totalHours').innerText = cleanHist.reduce((a,b)=>a+b.duration, 0) + 'm';
             
-            const last7 = cleanHist.slice(-7);
-            const ctxB = document.getElementById('xpBarChart').getContext('2d');
-            if(xpBarChart) xpBarChart.destroy();
-            xpBarChart = new Chart(ctxB, {
-                type: 'bar',
-                data: {
-                    labels: last7.map(h => h.date.split('/')[1] + '/' + h.date.split('/')[0]),
-                    datasets: [{ data: last7.map(h => h.xp), backgroundColor: '#2563eb', borderRadius: 6 }]
-                },
-                options: { scales: { y: { display: false }, x: { grid: { display: false } } }, plugins: { legend: { display: false } } }
+            const labels = ["Chest", "Back", "Legs", "Arms", "Shoulders", "Abs"];
+            const counts = labels.map(label => {
+                return h.filter(session => session.muscles && session.muscles.includes(label)).length;
             });
 
-            const m = { Chest:0, Back:0, Legs:0, Arms:0, Shoulders:0, Abs:0 };
-            cleanHist.forEach(h => h.muscles.forEach(x => m[x] = (m[x] || 0) + 1));
-            const ctxR = document.getElementById('radarChart').getContext('2d');
+            const ctxR = document.getElementById('muscleRadarChart').getContext('2d');
             if(radarChart) radarChart.destroy();
             radarChart = new Chart(ctxR, {
                 type: 'radar',
                 data: {
-                    labels: Object.keys(m),
-                    datasets: [{ data: Object.values(m), backgroundColor: 'rgba(37, 99, 235, 0.1)', borderColor: '#2563eb', borderWidth: 2 }]
+                    labels: labels,
+                    datasets: [{
+                        label: 'Focus',
+                        data: counts,
+                        backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                        borderColor: '#2563eb',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#2563eb',
+                        pointRadius: 4
+                    }]
                 },
-                options: { scales: { r: { ticks: { display: false }, grid: { color: '#f1f5f9' } } }, plugins: { legend: { display: false } } }
+                options: {
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9' },
+                            angleLines: { color: '#f1f5f9' },
+                            ticks: { display: false, stepSize: 1 },
+                            pointLabels: { font: { size: 10, weight: 'bold', family: 'Plus Jakarta Sans' }, color: '#94a3b8' }
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
             });
         }
 
@@ -455,18 +498,43 @@
             r.innerHTML = h;
         }
 
-        function renderStreak() {
-            const hist = currentMember.workoutHistory || [];
-            const pills = document.querySelectorAll('.day-pill');
-            const now = new Date();
-            const start = new Date(now);
-            start.setDate(now.getDate() - now.getDay());
-            pills.forEach((pill, i) => {
-                const d = new Date(start); d.setDate(start.getDate() + i);
-                const wasHere = hist.some(h => h.date === d.toLocaleDateString());
-                pill.className = wasHere ? 'day-pill day-hit' : 'day-pill day-miss';
-                pill.querySelector('b').innerText = d.getDate();
+        window.handleWorkoutToggle = () => currentMember.isInside ? endSession() : toggleOverlay('focusOverlay', true);
+        window.toggleOverlay = (id, s) => document.getElementById(id).classList.toggle('hidden', !s);
+        window.checkLimit = (i) => { if(document.querySelectorAll('#focusOverlay input:checked').length > 3) i.checked = false; };
+        
+        window.startSession = async () => {
+            const s = Array.from(document.querySelectorAll('#focusOverlay input:checked')).map(x => x.value);
+            if(!s.length) return alert("Select Focus");
+            await updateDoc(doc(db, "members", currentMember.id), {
+                isInside: true, lastIn: new Date().toISOString(), activeWorkoutParts: s
             });
+            toggleOverlay('focusOverlay', false);
+            sync();
+        };
+
+        async function endSession() {
+            const d = new Date() - new Date(currentMember.lastIn);
+            const m = Math.max(1, Math.round(d / 60000));
+            const x = m * 10;
+            await updateDoc(doc(db, "members", currentMember.id), {
+                isInside: false,
+                totalXP: (currentMember.totalXP || 0) + x,
+                activeWorkoutParts: [],
+                workoutHistory: arrayUnion({
+                    date: new Date().toLocaleDateString(), duration: m, xp: x, muscles: currentMember.activeWorkoutParts || ["Gym"]
+                })
+            });
+            sync();
+        }
+
+        function startTimer() {
+            if(timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                const d = new Date() - new Date(currentMember.lastIn);
+                const m = Math.floor(d/60000).toString().padStart(2,'0');
+                const s = Math.floor((d%60000)/1000).toString().padStart(2,'0');
+                document.getElementById('timer').innerText = `${m}:${s}`;
+            }, 1000);
         }
 
         sync();
