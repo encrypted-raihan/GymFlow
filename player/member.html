@@ -409,10 +409,10 @@
             if (s >= 1) {
                 flameEl.classList.add('flame-active');
                 flameEl.classList.remove('opacity-20');
-                if (s < 3) statusEl.innerText = "Warming Up ⚡️";
-                else if (s < 7) statusEl.innerText = "Relentless Force 🦾";
-                else if (s < 14) statusEl.innerText = "Absolute Beast 👹";
-                else statusEl.innerText = "God Mode Engaged 👑";
+                if (s < 3) statusEl.innerText = "Warming Up ";
+                else if (s < 7) statusEl.innerText = "Relentless Force ";
+                else if (s < 14) statusEl.innerText = "Absolute Beast ";
+                else statusEl.innerText = "God Mode Engaged ";
             } else {
                 flameEl.classList.remove('flame-active');
                 flameEl.classList.add('opacity-20');
