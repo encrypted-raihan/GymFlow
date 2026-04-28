@@ -321,8 +321,26 @@ function refreshProfileUI() {
 // 5. ACTIONS
 window.sendWhatsAppReminder = (phone, name) => {
     const monthName = new Date().toLocaleString('default', { month: 'long' });
-    const msg = `Hello ${name}, this is a reminder from ${localStorage.getItem("activeGymName") || "our gym"} that your membership fee for ${monthName} is due. Kindly make the payment at your earliest convenience. Thank you!`;
-    window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    const gymName = localStorage.getItem("activeGymName") || "our gym";
+    const msg = `Hello ${name}, this is a reminder from ${gymName} that your membership fee for ${monthName} is due. Kindly make the payment at your earliest convenience. Thank you!`;
+
+    // 1. Remove any non-digits (removes +, spaces, dashes)
+    let cleanPhone = phone.replace(/\D/g, '');
+
+    // 2. Ensure it has the country code exactly once
+    // If it starts with 91 and is 12 digits, it's likely already correct.
+    // If it's 10 digits, we add the 91.
+    if (cleanPhone.length === 10) {
+        cleanPhone = `91${cleanPhone}`;
+    } else if (cleanPhone.length > 10 && !cleanPhone.startsWith('91')) {
+        // If it has a different country code already, we leave it alone 
+        // but ensure it's digits only.
+    }
+
+    // 3. Use the 'api' subdomain which is often more stable for app-redirection
+    const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msg)}`;
+    
+    window.open(url, '_blank');
 };
 
 window.togglePay = async (code) => {
