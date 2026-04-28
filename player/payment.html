@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <title>Quick Pay | Member Portal</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #0f172a; }
+        .saas-card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; }
+        .upi-btn { transition: all 0.2s ease; border-radius: 16px; }
+        .upi-btn:active { transform: scale(0.95); }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="p-4 flex items-center justify-center min-h-screen">
+
+    <div class="w-full max-w-sm">
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight">Express <span class="text-emerald-600">Checkout</span></h1>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">GymFlow Secure Payment</p>
+        </div>
+
+        <div class="saas-card p-6 mb-6 shadow-sm">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <p id="monthLabel" class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Membership Fee</p>
+                    <p id="gymName" class="text-sm font-bold text-slate-800">GymFlow Pro</p>
+                </div>
+                <div class="text-right">
+                    <p id="amountDisplay" class="text-3xl font-black text-slate-900 leading-none">₹0</p>
+                </div>
+            </div>
+            
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <div class="flex justify-between items-center">
+                    <span class="text-[9px] font-black text-slate-400 uppercase">Verification ID</span>
+                    <span id="txNote" class="text-[10px] font-mono font-bold text-slate-600">LOADING...</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="actionArea" class="space-y-6">
+    <div>
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 text-center">Open via App</p>
+        <div class="grid grid-cols-3 gap-3">
+            <button onclick="payWith('gpay')" class="saas-card p-4 flex flex-col items-center justify-center gap-2 hover:border-emerald-500 active:bg-slate-50 transition-all">
+                <svg class="h-6 w-6" viewBox="0 0 48 48"><path fill="#4285F4" d="M36.1 24.1c0-.9-.1-1.7-.2-2.5H24v4.8h6.8c-.3 1.5-1.1 2.8-2.4 3.7v3.1h3.9c2.3-2.1 3.8-5.2 3.8-9.1z"/><path fill="#34A853" d="M24 36.4c3.3 0 6.1-1.1 8.1-3l-3.9-3.1c-1.1.7-2.5 1.2-4.2 1.2-3.2 0-5.9-2.2-6.9-5.1h-4v3.1c2 4 6.2 6.9 11 6.9z"/><path fill="#FBBC05" d="M17.1 26.4c-.2-.7-.4-1.5-.4-2.4s.2-1.7.4-2.4v-3.1h-4c-.8 1.6-1.3 3.4-1.3 5.5s.5 3.9 1.3 5.5l4-3.1z"/><path fill="#EA4335" d="M24 16.6c1.8 0 3.4.6 4.7 1.9l3.5-3.5C30.1 13 27.3 12 24 12c-4.8 0-9 2.9-11 6.9l4 3.1c1-2.9 3.7-5.1 6.9-5.1z"/></svg>
+                <span class="text-[9px] font-bold text-slate-500">G-Pay</span>
+            </button>
+            <button onclick="payWith('phonepe')" class="saas-card p-4 flex flex-col items-center justify-center gap-2 hover:border-emerald-500 active:bg-slate-50 transition-all">
+                <svg class="h-6 w-6" viewBox="0 0 24 24"><path fill="#6739B7" d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm3.32 13.56l-1.68-.96v-1.92c0-.36-.18-.69-.48-.87L12 11.13c-.3-.18-.66-.18-.96 0l-1.16.68c-.3.18-.48.51-.48.87v1.92l1.68.96c.3.18.66.18.96 0l1.16-.68c.3-.18.48-.51.48-.87v-.65h-1.68v.65l-.48.27-.48-.27v-.55l.48-.27.48.27v.38h.72v-.38l-1.2-0.69-1.2.69v1.38l1.2.69 1.2-.69v-.38z"/></svg>
+                <span class="text-[9px] font-bold text-slate-500">PhonePe</span>
+            </button>
+            <button onclick="payWith('paytm')" class="saas-card p-4 flex flex-col items-center justify-center gap-2 hover:border-emerald-500 active:bg-slate-50 transition-all">
+                <svg class="h-6 w-6" viewBox="0 0 24 24"><path fill="#00BAF2" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM9.5 15.5H7.7v-7h1.8v7zm5.8-4.5l-1.2 2.5-1.2-2.5h-1.9l2.1 4.5v2.5h1.8v-2.5l2.1-4.5h-1.7z"/></svg>
+                <span class="text-[9px] font-bold text-slate-500">Paytm</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="space-y-3">
+        <button onclick="payWith('generic')" class="w-full py-4 bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all">
+            Open Other UPI App
+        </button>
+
+        <div class="relative py-2">
+            <div class="absolute inset-0 flex items-center"><span class="w-full border-t border-slate-200"></span></div>
+            <div class="relative flex justify-center text-[10px] uppercase font-bold"><span class="bg-[#f8fafc] px-2 text-slate-400">Step 2: After Payment</span></div>
+        </div>
+
+        <button onclick="declarePayment()" id="confirmBtn" class="w-full py-4 bg-emerald-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-emerald-200 shadow-lg active:scale-95 transition-all">
+            Confirm Payment Sent
+        </button>
+    </div>
+</div>
+
+        <div id="successState" class="hidden text-center py-10">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <h2 class="text-xl font-black text-slate-900">Syncing Request...</h2>
+            <p class="text-xs text-slate-500 mt-2">Dashboard unlocking in 3 seconds.</p>
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBcsmX7T1NotMi0T1XZ6b03yI3r7qZYQr8",
+        authDomain: "gym-membership-tracker-60626.firebaseapp.com",
+        projectId: "gym-membership-tracker-60626",
+        storageBucket: "gym-membership-tracker-60626.firebasestorage.app",
+        messagingSenderId: "260703319955",
+        appId: "1:260703319955:web:78206334baa1fc79725a66"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Global variables to store data once fetched
+    const MEMBER_ID = localStorage.getItem('activeMemberId');
+    const GYM_NAME = localStorage.getItem("activeGymName") || "GymFlow Pro";
+    const UPI_ID = "merchant@upi"; // <--- CHANGE TO YOUR ACTUAL VPA (e.g. gymflow@okicici)
+    
+    const monthId = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+    const monthLabel = new Date().toLocaleString('default', { month: 'long' });
+
+    /**
+     * Fetches user data and populates the UI
+     */
+    async function setupPayment() {
+        if (!MEMBER_ID) {
+            console.error("No Member ID found");
+            document.getElementById('txNote').innerText = "SESSION EXPIRED";
+            return;
+        }
+
+        try {
+            const snap = await getDoc(doc(db, "members", MEMBER_ID));
+            if (snap.exists()) {
+                const member = snap.data();
+                const amount = member.monthlyFee || 500;
+                const firstName = (member.name || "Member").split(' ')[0].toUpperCase();
+                const note = `${firstName}_${GYM_NAME.replace(/\s/g,'').toUpperCase()}_${MEMBER_ID.slice(-4)}`;
+
+                // Update UI Elements
+                document.getElementById('amountDisplay').innerText = `₹${amount}`;
+                document.getElementById('gymName').innerText = GYM_NAME;
+                document.getElementById('monthLabel').innerText = `${monthLabel} Fee`;
+                document.getElementById('txNote').innerText = note;
+            }
+        } catch (e) {
+            console.error("Fetch error:", e);
+        }
+    }
+
+    /**
+     * Handles UPI Redirection
+     * Accessible via window.payWith
+     */
+    window.payWith = (appType) => {
+        const amount = document.getElementById('amountDisplay').innerText.replace('₹', '');
+        const note = document.getElementById('txNote').innerText;
+
+        if (amount === "0" || note === "LOADING...") {
+            alert("Please wait for payment details to load.");
+            return;
+        }
+
+        // The Deep Link
+        const upiLink = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(GYM_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
+
+        // Trigger Redirection
+        window.location.href = upiLink;
+        
+        // Android-specific: Attempting to force open specific apps if the generic link fails
+        // Note: This only works if the app is installed.
+        console.log(`Redirecting to ${appType || 'UPI'}: ${upiLink}`);
+    };
+
+    /**
+     * Updates Firestore status when user confirms they paid
+     */
+    window.declarePayment = async () => {
+        const btn = document.getElementById('confirmBtn');
+        btn.innerText = "NOTIFYING ADMIN...";
+        btn.disabled = true;
+
+        try {
+            await updateDoc(doc(db, "members", MEMBER_ID), {
+                paymentStatus: 'verifying',
+                pendingMonth: monthId,
+                lastAction: new Date().toISOString()
+            });
+
+            document.getElementById('actionArea').classList.add('hidden');
+            document.getElementById('successState').classList.remove('hidden');
+
+            setTimeout(() => {
+                window.location.href = 'member.html';
+            }, 3000);
+        } catch (e) {
+            console.error("Update error:", e);
+            alert("Failed to sync. Please check your internet connection.");
+            btn.disabled = false;
+            btn.innerText = "Confirm Payment Sent";
+        }
+    };
+
+    // Run setup on load
+    setupPayment();
+</script>
+</body>
+</html>
