@@ -19,7 +19,6 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
 
     if(!inputUser || !inputPass) return alert("Please enter credentials");
 
-    // Querying the gyms collection
     const q = query(
         collection(db, "gyms"), 
         where("username", "==", inputUser), 
@@ -32,23 +31,26 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
         if(!snap.empty) {
             const gymDoc = snap.docs[0];
             const gymData = gymDoc.data();
-            
-            // 1. CLEAR OLD DATA to ensure a fresh session
+
+            // 🔴 ADD THIS BLOCK (PAUSE CHECK)
+            if (gymData.isPaused) {
+                alert("Gym access is paused. Contact admin.");
+                return;
+            }
+
+            // 1. CLEAR OLD DATA
             localStorage.clear();
 
             // 2. SET SESSION DATA
-            // activeGymId is used for the dashboard
             localStorage.setItem("activeGymId", gymDoc.id);
-            
-            // adminGymId is used for payment-logs.html
             localStorage.setItem("adminGymId", gymDoc.id); 
 
-            // Only declare displayName ONCE to avoid SyntaxError
             const displayName = gymData.gymName || gymData.name || "My Gym";
             localStorage.setItem("activeGymName", displayName);
             
-            // 3. REDIRECT to the dashboard
+            // 3. REDIRECT
             window.location.href = 'admin/dashboard.html';
+
         } else {
             alert("Invalid Credentials. Please check your username or password.");
         }
