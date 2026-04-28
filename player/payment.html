@@ -4,84 +4,102 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <title>Quick Pay | Member Portal</title>
+    <title>Payment | Member Portal</title>
     <style>
         body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #0f172a; }
         .saas-card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; }
-        .upi-btn { transition: all 0.2s ease; border-radius: 16px; }
-        .upi-btn:active { transform: scale(0.95); }
         .hidden { display: none; }
+        @keyframes bounce-in {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-success { animation: bounce-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
     </style>
 </head>
 <body class="p-4 flex items-center justify-center min-h-screen">
 
     <div class="w-full max-w-sm">
+        <div class="flex justify-between items-center mb-6" id="homeBtnContainer">
+            <button onclick="window.location.href='member.html'" class="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black text-slate-500 hover:bg-slate-50 active:scale-95 transition-all shadow-sm">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                DASHBOARD
+            </button>
+            <div class="h-1 w-12 bg-slate-200 rounded-full"></div>
+        </div>
+
         <div class="text-center mb-8">
             <h1 class="text-2xl font-black text-slate-900 tracking-tight">Express <span class="text-emerald-600">Checkout</span></h1>
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">GymFlow Secure Payment</p>
         </div>
 
-        <div class="saas-card p-6 mb-6 shadow-sm">
+        <div id="detailsCard" class="saas-card p-6 mb-6 shadow-sm">
             <div class="flex justify-between items-center mb-6">
                 <div>
                     <p id="monthLabel" class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Membership Fee</p>
-                    <p id="gymName" class="text-sm font-bold text-slate-800">GymFlow Pro</p>
+                    <p id="gymName" class="text-sm font-bold text-slate-800">LOADING...</p>
                 </div>
                 <div class="text-right">
                     <p id="amountDisplay" class="text-3xl font-black text-slate-900 leading-none">₹0</p>
                 </div>
             </div>
-            
             <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
                 <div class="flex justify-between items-center">
                     <span class="text-[9px] font-black text-slate-400 uppercase">Verification ID</span>
-                    <span id="txNote" class="text-[10px] font-mono font-bold text-slate-600">LOADING...</span>
+                    <span id="txNote" class="text-[10px] font-mono font-bold text-slate-600 uppercase">...</span>
                 </div>
             </div>
         </div>
 
-        <div id="actionArea" class="space-y-6">
-    <div>
-        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 text-center">Open via App</p>
-        <div class="grid grid-cols-3 gap-3">
-            <button onclick="payWith('gpay')" class="saas-card p-4 flex flex-col items-center justify-center gap-2 hover:border-emerald-500 active:bg-slate-50 transition-all">
-                <svg class="h-6 w-6" viewBox="0 0 48 48"><path fill="#4285F4" d="M36.1 24.1c0-.9-.1-1.7-.2-2.5H24v4.8h6.8c-.3 1.5-1.1 2.8-2.4 3.7v3.1h3.9c2.3-2.1 3.8-5.2 3.8-9.1z"/><path fill="#34A853" d="M24 36.4c3.3 0 6.1-1.1 8.1-3l-3.9-3.1c-1.1.7-2.5 1.2-4.2 1.2-3.2 0-5.9-2.2-6.9-5.1h-4v3.1c2 4 6.2 6.9 11 6.9z"/><path fill="#FBBC05" d="M17.1 26.4c-.2-.7-.4-1.5-.4-2.4s.2-1.7.4-2.4v-3.1h-4c-.8 1.6-1.3 3.4-1.3 5.5s.5 3.9 1.3 5.5l4-3.1z"/><path fill="#EA4335" d="M24 16.6c1.8 0 3.4.6 4.7 1.9l3.5-3.5C30.1 13 27.3 12 24 12c-4.8 0-9 2.9-11 6.9l4 3.1c1-2.9 3.7-5.1 6.9-5.1z"/></svg>
-                <span class="text-[9px] font-bold text-slate-500">G-Pay</span>
-            </button>
-            <button onclick="payWith('phonepe')" class="saas-card p-4 flex flex-col items-center justify-center gap-2 hover:border-emerald-500 active:bg-slate-50 transition-all">
-                <svg class="h-6 w-6" viewBox="0 0 24 24"><path fill="#6739B7" d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm3.32 13.56l-1.68-.96v-1.92c0-.36-.18-.69-.48-.87L12 11.13c-.3-.18-.66-.18-.96 0l-1.16.68c-.3.18-.48.51-.48.87v1.92l1.68.96c.3.18.66.18.96 0l1.16-.68c.3-.18.48-.51.48-.87v-.65h-1.68v.65l-.48.27-.48-.27v-.55l.48-.27.48.27v.38h.72v-.38l-1.2-0.69-1.2.69v1.38l1.2.69 1.2-.69v-.38z"/></svg>
-                <span class="text-[9px] font-bold text-slate-500">PhonePe</span>
-            </button>
-            <button onclick="payWith('paytm')" class="saas-card p-4 flex flex-col items-center justify-center gap-2 hover:border-emerald-500 active:bg-slate-50 transition-all">
-                <svg class="h-6 w-6" viewBox="0 0 24 24"><path fill="#00BAF2" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM9.5 15.5H7.7v-7h1.8v7zm5.8-4.5l-1.2 2.5-1.2-2.5h-1.9l2.1 4.5v2.5h1.8v-2.5l2.1-4.5h-1.7z"/></svg>
-                <span class="text-[9px] font-bold text-slate-500">Paytm</span>
-            </button>
-        </div>
-    </div>
-
-    <div class="space-y-3">
-        <button onclick="payWith('generic')" class="w-full py-4 bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all">
-            Open Other UPI App
-        </button>
-
-        <div class="relative py-2">
-            <div class="absolute inset-0 flex items-center"><span class="w-full border-t border-slate-200"></span></div>
-            <div class="relative flex justify-center text-[10px] uppercase font-bold"><span class="bg-[#f8fafc] px-2 text-slate-400">Step 2: After Payment</span></div>
-        </div>
-
-        <button onclick="declarePayment()" id="confirmBtn" class="w-full py-4 bg-emerald-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-emerald-200 shadow-lg active:scale-95 transition-all">
-            Confirm Payment Sent
-        </button>
-    </div>
-</div>
-
-        <div id="successState" class="hidden text-center py-10">
-            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"/></svg>
+        <div id="payOptions" class="hidden space-y-6">
+            <div class="grid grid-cols-3 gap-3">
+                <button onclick="payWith('gpay')" class="saas-card p-4 flex flex-col items-center justify-center gap-2 hover:border-emerald-500 active:scale-95 transition-all">
+                    <svg class="h-6 w-6" viewBox="0 0 48 48"><path fill="#4285F4" d="M36.1 24.1c0-.9-.1-1.7-.2-2.5H24v4.8h6.8c-.3 1.5-1.1 2.8-2.4 3.7v3.1h3.9c2.3-2.1 3.8-5.2 3.8-9.1z"/><path fill="#34A853" d="M24 36.4c3.3 0 6.1-1.1 8.1-3l-3.9-3.1c-1.1.7-2.5 1.2-4.2 1.2-3.2 0-5.9-2.2-6.9-5.1h-4v3.1c2 4 6.2 6.9 11 6.9z"/><path fill="#FBBC05" d="M17.1 26.4c-.2-.7-.4-1.5-.4-2.4s.2-1.7.4-2.4v-3.1h-4c-.8 1.6-1.3 3.4-1.3 5.5s.5 3.9 1.3 5.5l4-3.1z"/><path fill="#EA4335" d="M24 16.6c1.8 0 3.4.6 4.7 1.9l3.5-3.5C30.1 13 27.3 12 24 12c-4.8 0-9 2.9-11 6.9l4 3.1c1-2.9 3.7-5.1 6.9-5.1z"/></svg>
+                    <span class="text-[9px] font-bold text-slate-500">G-Pay</span>
+                </button>
+                <button onclick="payWith('phonepe')" class="saas-card p-4 flex flex-col items-center justify-center gap-2 hover:border-emerald-500 active:scale-95 transition-all">
+                    <svg class="h-6 w-6" viewBox="0 0 24 24"><path fill="#6739B7" d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm3.32 13.56l-1.68-.96v-1.92c0-.36-.18-.69-.48-.87L12 11.13c-.3-.18-.66-.18-.96 0l-1.16.68c-.3.18-.48.51-.48.87v1.92l1.68.96c.3.18.66.18.96 0l1.16-.68c.3-.18.48-.51.48-.87v-.65h-1.68v.65l-.48.27-.48-.27v-.55l.48-.27.48.27v.38h.72v-.38l-1.2-0.69-1.2.69v1.38l1.2.69 1.2-.69v-.38z"/></svg>
+                    <span class="text-[9px] font-bold text-slate-500">PhonePe</span>
+                </button>
+                <button onclick="payWith('paytm')" class="saas-card p-4 flex flex-col items-center justify-center gap-2 hover:border-emerald-500 active:scale-95 transition-all">
+                    <svg class="h-6 w-6" viewBox="0 0 24 24"><path fill="#00BAF2" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM9.5 15.5H7.7v-7h1.8v7zm5.8-4.5l-1.2 2.5-1.2-2.5h-1.9l2.1 4.5v2.5h1.8v-2.5l2.1-4.5h-1.7z"/></svg>
+                    <span class="text-[9px] font-bold text-slate-500">Paytm</span>
+                </button>
             </div>
-            <h2 class="text-xl font-black text-slate-900">Syncing Request...</h2>
-            <p class="text-xs text-slate-500 mt-2">Dashboard unlocking in 3 seconds.</p>
+            <button onclick="payWith('generic')" class="w-full py-4 bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all">Open Other UPI App</button>
+            <div class="relative py-2 text-center">
+                <span class="bg-[#f8fafc] px-2 text-[10px] uppercase font-bold text-slate-400">Step 2: Confirm Notification</span>
+            </div>
+            <button onclick="declarePayment()" id="confirmBtn" class="w-full py-4 bg-emerald-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-emerald-200 shadow-lg active:scale-95 transition-all">Confirm Payment Sent</button>
+        </div>
+
+        <div id="verifyingState" class="hidden text-center py-6">
+            <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h2 class="text-xl font-black text-slate-900">Awaiting Approval</h2>
+            <p class="text-xs text-slate-500 mt-2 px-6">We've notified the gym admin. Your dashboard will unlock once they verify the payment.</p>
+            <button onclick="location.reload()" class="mt-8 text-[10px] font-black uppercase text-emerald-600 border-b-2 border-emerald-100 pb-1">Tap to Refresh</button>
+        </div>
+
+        <div id="deniedState" class="hidden text-center py-6">
+            <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+            </div>
+            <h2 class="text-xl font-black text-slate-900">Payment Rejected</h2>
+            <p id="deniedReason" class="text-xs text-rose-500 mt-2 px-6 bg-rose-50 py-2 rounded-lg italic">Reason: No reason provided.</p>
+            <button onclick="resetToUnpaid()" class="mt-8 w-full py-4 bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-widest">Update & Try Again</button>
+        </div>
+
+        <div id="paidState" class="hidden text-center py-6">
+            <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-success">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <h2 class="text-2xl font-black text-slate-900">Payment Success!</h2>
+            <p class="text-xs text-slate-500 mt-2" id="paidMessage"></p>
+            <button onclick="window.location.href='member.html'" class="mt-8 w-full py-4 bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg">Back to Dashboard</button>
         </div>
     </div>
 
@@ -101,98 +119,136 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Global variables to store data once fetched
     const MEMBER_ID = localStorage.getItem('activeMemberId');
-    const GYM_NAME = localStorage.getItem("activeGymName") || "GymFlow Pro";
-    const UPI_ID = "merchant@upi"; // <--- CHANGE TO YOUR ACTUAL VPA (e.g. gymflow@okicici)
-    
-    const monthId = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-    const monthLabel = new Date().toLocaleString('default', { month: 'long' });
+    let dynamicUpiId = ""; 
+    let dynamicGymName = "";
 
-    /**
-     * Fetches user data and populates the UI
-     */
-    async function setupPayment() {
-        if (!MEMBER_ID) {
-            console.error("No Member ID found");
-            document.getElementById('txNote').innerText = "SESSION EXPIRED";
-            return;
-        }
+    async function masterLogic() {
+        if (!MEMBER_ID) return;
 
         try {
-            const snap = await getDoc(doc(db, "members", MEMBER_ID));
-            if (snap.exists()) {
-                const member = snap.data();
-                const amount = member.monthlyFee || 500;
-                const firstName = (member.name || "Member").split(' ')[0].toUpperCase();
-                const note = `${firstName}_${GYM_NAME.replace(/\s/g,'').toUpperCase()}_${MEMBER_ID.slice(-4)}`;
+            const memberSnap = await getDoc(doc(db, "members", MEMBER_ID));
+            if (!memberSnap.exists()) return;
 
-                // Update UI Elements
-                document.getElementById('amountDisplay').innerText = `₹${amount}`;
-                document.getElementById('gymName').innerText = GYM_NAME;
-                document.getElementById('monthLabel').innerText = `${monthLabel} Fee`;
-                document.getElementById('txNote').innerText = note;
+            const member = memberSnap.data();
+            const status = member.paymentStatus || "unpaid";
+            const lastAction = member.lastAction || "";
+            const lastPaymentDate = member.lastPaymentDate;
+
+            const now = new Date();
+            const monthLabel = now.toLocaleString('default', { month: 'long' });
+
+            let isCurrentMonthPaid = false;
+            if (lastPaymentDate) {
+                const pDate = new Date(lastPaymentDate);
+                if (pDate.getMonth() === now.getMonth() && pDate.getFullYear() === now.getFullYear()) {
+                    isCurrentMonthPaid = true;
+                }
             }
+
+            if (status === "paid" && isCurrentMonthPaid) {
+                renderUI("paidState");
+                document.getElementById('paidMessage').innerText = `Your ${monthLabel} membership is active.`;
+                
+                // --- CONFETTI LOGIC ---
+                // Only trigger if we haven't seen the success for this specific member ID recently
+                const confettiKey = `confetti_seen_${MEMBER_ID}`;
+                if (!localStorage.getItem(confettiKey)) {
+                    triggerDopamine();
+                    localStorage.setItem(confettiKey, 'true');
+                }
+            } 
+            else if (status === "verifying") {
+                renderUI("verifyingState");
+            } 
+            else if (lastAction.includes("Denied")) {
+                renderUI("deniedState");
+                document.getElementById('deniedReason').innerText = `Reason: ${lastAction.replace('Denied: ', '')}`;
+                // Reset confetti tracker if payment is denied so it can fire again on next success
+                localStorage.removeItem(`confetti_seen_${MEMBER_ID}`);
+            } 
+            else {
+                renderUI("payOptions");
+                loadGymData(member);
+                // Reset confetti tracker when back to unpaid state
+                localStorage.removeItem(`confetti_seen_${MEMBER_ID}`);
+            }
+
         } catch (e) {
-            console.error("Fetch error:", e);
+            console.error("Master Logic Error:", e);
         }
     }
 
-    /**
-     * Handles UPI Redirection
-     * Accessible via window.payWith
-     */
+    function renderUI(stateId) {
+        ['payOptions', 'verifyingState', 'deniedState', 'paidState'].forEach(id => {
+            document.getElementById(id).classList.add('hidden');
+        });
+
+        document.getElementById(stateId).classList.remove('hidden');
+        
+        const shouldHideDetails = (stateId === 'paidState' || stateId === 'deniedState' || stateId === 'verifyingState');
+        document.getElementById('detailsCard').classList.toggle('hidden', shouldHideDetails);
+        
+        document.getElementById('homeBtnContainer').classList.toggle('hidden', stateId === 'paidState');
+    }
+
+    async function loadGymData(member) {
+        const gSnap = await getDoc(doc(db, "gyms", member.gymId));
+        if (gSnap.exists()) {
+            const gym = gSnap.data();
+            dynamicUpiId = gym.upiId;
+            dynamicGymName = gym.name;
+            document.getElementById('gymName').innerText = gym.name.toUpperCase();
+            document.getElementById('amountDisplay').innerText = `₹${member.monthlyFee}`;
+            document.getElementById('txNote').innerText = `${member.name.split(' ')[0]}_${MEMBER_ID.slice(-4)}`.toUpperCase();
+            document.getElementById('monthLabel').innerText = `${new Date().toLocaleString('default', { month: 'long' })} Fee`;
+        }
+    }
+
     window.payWith = (appType) => {
         const amount = document.getElementById('amountDisplay').innerText.replace('₹', '');
         const note = document.getElementById('txNote').innerText;
-
-        if (amount === "0" || note === "LOADING...") {
-            alert("Please wait for payment details to load.");
-            return;
-        }
-
-        // The Deep Link
-        const upiLink = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(GYM_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
-
-        // Trigger Redirection
-        window.location.href = upiLink;
-        
-        // Android-specific: Attempting to force open specific apps if the generic link fails
-        // Note: This only works if the app is installed.
-        console.log(`Redirecting to ${appType || 'UPI'}: ${upiLink}`);
+        if (!dynamicUpiId) return alert("Still loading...");
+        window.location.href = `upi://pay?pa=${dynamicUpiId}&pn=${encodeURIComponent(dynamicGymName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
     };
 
-    /**
-     * Updates Firestore status when user confirms they paid
-     */
     window.declarePayment = async () => {
         const btn = document.getElementById('confirmBtn');
         btn.innerText = "NOTIFYING ADMIN...";
         btn.disabled = true;
-
         try {
-            await updateDoc(doc(db, "members", MEMBER_ID), {
+            await updateDoc(doc(db, "members", MEMBER_ID), { 
                 paymentStatus: 'verifying',
-                pendingMonth: monthId,
-                lastAction: new Date().toISOString()
+                lastAction: "Submitted for approval" 
             });
-
-            document.getElementById('actionArea').classList.add('hidden');
-            document.getElementById('successState').classList.remove('hidden');
-
-            setTimeout(() => {
-                window.location.href = 'member.html';
-            }, 3000);
-        } catch (e) {
-            console.error("Update error:", e);
-            alert("Failed to sync. Please check your internet connection.");
-            btn.disabled = false;
+            location.reload(); 
+        } catch (e) { 
+            btn.disabled = false; 
             btn.innerText = "Confirm Payment Sent";
+            alert("Sync error."); 
         }
     };
 
-    // Run setup on load
-    setupPayment();
+    window.resetToUnpaid = async () => {
+        try {
+            await updateDoc(doc(db, "members", MEMBER_ID), { 
+                lastAction: "", 
+                paymentStatus: "unpaid" 
+            });
+            location.reload();
+        } catch (e) { alert("Error resetting."); }
+    };
+
+    function triggerDopamine() {
+        confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#10b981', '#34d399', '#059669']
+        });
+    }
+
+    masterLogic();
 </script>
 </body>
 </html>

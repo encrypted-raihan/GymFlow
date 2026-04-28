@@ -33,18 +33,21 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
             const gymDoc = snap.docs[0];
             const gymData = gymDoc.data();
             
-            // 1. CLEAR OLD DATA first to prevent session mixing
+            // 1. CLEAR OLD DATA to ensure a fresh session
             localStorage.clear();
 
             // 2. SET SESSION DATA
+            // activeGymId is used for the dashboard
             localStorage.setItem("activeGymId", gymDoc.id);
             
-            // IMPORTANT: Check if your Firestore field is "name" or "gymName"
-            // Using the logical OR operator ensures it works either way
+            // adminGymId is used for payment-logs.html
+            localStorage.setItem("adminGymId", gymDoc.id); 
+
+            // Only declare displayName ONCE to avoid SyntaxError
             const displayName = gymData.gymName || gymData.name || "My Gym";
             localStorage.setItem("activeGymName", displayName);
             
-            // 3. REDIRECT
+            // 3. REDIRECT to the dashboard
             window.location.href = 'admin/dashboard.html';
         } else {
             alert("Invalid Credentials. Please check your username or password.");
