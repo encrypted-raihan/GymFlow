@@ -240,18 +240,36 @@
 
     // ACTIONS
     window.approvePayment = async (id) => {
-        if(!confirm("Verify and Approve?")) return;
-        const ts = Date.now();
-        try {
-            await updateDoc(doc(db, "members", id), {
-                paymentStatus: 'paid',
-                lastPaymentDate: ts,
-                lastAction: "Payment Approved",
-                lastActionDate: ts,
-                paymentLogs: arrayUnion({ type: 'Approved', message: 'Payment verified', date: ts })
-            });
-        } catch (e) { alert("Error approving payment."); }
-    };
+    if (!confirm("Verify and Approve?")) return;
+
+    const ts = Date.now();
+
+    // 🔥 generate current month code (same logic as dashboard)
+    const now = new Date();
+    const curCode = `${now.getFullYear()}-${(now.getMonth() + 1)
+        .toString()
+        .padStart(2, '0')}`;
+
+    try {
+        await updateDoc(doc(db, "members", id), {
+            paymentStatus: 'paid',
+            lastPaymentDate: ts,
+            lastAction: "Payment Approved",
+            lastActionDate: ts,
+            paymentLogs: arrayUnion({
+                type: 'Approved',
+                message: 'Payment verified',
+                date: ts
+            }),
+
+            // ✅ THIS IS THE KEY FIX
+            payments: arrayUnion(curCode)
+        });
+
+    } catch (e) {
+        alert("Error approving payment.");
+    }
+};
 
     window.denyPayment = async (id) => {
         const reason = prompt("Reason for Denial:");
