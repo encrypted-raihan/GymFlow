@@ -315,7 +315,14 @@ window.toggleSidebar = (s) => {
     s ? sb.classList.remove('side-hidden') : sb.classList.add('side-hidden');
 };
 
-function renderList(f = '') {
+// ---------------- SIDEBAR & LIST ----------------
+window.toggleSidebar = (s) => {
+    const sb = document.getElementById('sidebar');
+    s ? sb.classList.remove('side-hidden') : sb.classList.add('side-hidden');
+};
+
+// Added 'window.' to make the function accessible to the search input's oninput event
+window.renderList = function(f = '') {
     const list = document.getElementById('chatList');
     list.innerHTML = '';
     appendLabel(list, 'Global');
