@@ -152,23 +152,23 @@ window.render = () => {
                 <div class="flex items-center gap-3">
                     ${isDue ? '<div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>' : ''}
                     <div>
-                        <p class="text-sm font-bold ${isDue ? 'text-slate-900' : 'text-slate-500'}">${m.name}</p>
-                        <p class="text-[9px] text-slate-400 font-bold uppercase">${m.plan || 'Normal'}</p>
+                        <p class="text-sm font-bold ${isDue ? 'text-white'  : 'text-slate-300'}">${m.name}</p>
+                        <p class="text-[9px] text-slate-300 font-bold uppercase">${m.plan || 'Normal'}</p>
                     </div>
                 </div>
             </td>
             <td class="p-6 text-center">
-                <span class="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest ${isPaused ? 'bg-slate-100 text-slate-400' : (isPaid ? 'bg-green-50 text-green-600' : 'bg-red-600 text-white shadow-lg')}">
+                <span class="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest ${isPaused ? 'bg-slate-700 text-slate-200' : (isPaid ? 'bg-green-50 text-green-600' : 'bg-red-600 text-white shadow-lg')}">
                     ${isPaused ? 'Paused' : (isPaid ? 'Paid' : 'Unpaid')}
                 </span>
             </td>
             <td class="p-6 text-right">
-                <button onclick="openProfile('${m.id}')" class="text-[10px] font-black text-blue-600 uppercase hover:underline">Manage</button>
+                <button onclick="openProfile('${m.id}')" class="text-[10px] font-black text-blue-400 uppercase hover:text-blue-300 hover:underline">Manage</button>
             </td>
         </tr>`;
     });
 
-    tbody.innerHTML = html || `<tr><td colspan="3" class="p-10 text-center text-slate-400 text-xs italic">No matching members</td></tr>`;
+    tbody.innerHTML = html || `<tr><td colspan="3" class="p-10 text-center text-slate-300 text-xs italic">No matching members</td></tr>`;
 };
 
 // 3. LIVE FEED
@@ -196,7 +196,10 @@ window.renderLive = () => {
         });
     });
 
-    document.getElementById('countTraining').innerText = `${liveNow.length} MEMBERS TRAINING NOW`;
+    document.getElementById('countTraining').innerHTML = `
+<span class="text-emerald-800 font-black text-sm">${liveNow.length}</span>
+<span class="text-emerald-700 text-[10px] font-bold tracking-widest ml-1">MEMBERS TRAINING NOW</span>
+`;
 
     if(filtered.length === 0) {
         grid.innerHTML = `<div class="col-span-full py-12 text-center border-2 border-dashed border-slate-100 rounded-[2rem] text-[10px] text-slate-300 font-bold uppercase tracking-widest">Floor is empty</div>`;
@@ -227,13 +230,13 @@ window.renderLive = () => {
         }
 
         return `
-        <div class="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:scale-[1.02] transition-transform">
+        <div class="min-w-[260px] max-w-[260px] bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:scale-[1.02] transition-transform">
             <div class="flex justify-between items-start mb-4">
                 <div>
                     <h4 class="font-black text-slate-900 text-sm tracking-tight">${m.name}</h4>
                     <p class="text-[8px] font-bold text-blue-600 uppercase tracking-tighter mt-1">${timeDisplay}</p>
                 </div>
-                <div class="bg-green-500 w-2 h-2 rounded-full animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
+                <div class="bg-emerald-600 shadow-[0_0_12px_rgba(16,185,129,0.7)]"></div>
             </div>
             <div class="flex flex-wrap gap-1.5">
                 ${parts.map(p => `<span class="bg-slate-900 text-white text-[7px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest">${p}</span>`).join('')}
@@ -263,7 +266,7 @@ function refreshProfileUI() {
 
     const badge = document.getElementById('profStatusBadge');
     badge.innerText = m.status === 'inactive' ? "Paused" : "Active";
-    badge.className = `inline-block text-[9px] font-black px-3 py-1 rounded-full uppercase mb-4 ${m.status === 'inactive' ? 'bg-slate-100 text-slate-400' : 'bg-green-50 text-green-600'}`;
+    badge.className = `inline-block text-[9px] font-black px-3 py-1 rounded-full uppercase mb-4 ${m.status === 'inactive' ? 'bg-slate-700 text-slate-200' : 'bg-green-50 text-emerald-800'}`;
 
     const toggleBtn = document.getElementById('statusToggleBtn');
     toggleBtn.innerText = m.status === 'inactive' ? "Resume Member" : "Pause Member";
@@ -310,7 +313,7 @@ function refreshProfileUI() {
         hist.innerHTML += `
         <div class="flex justify-between items-center p-3 hover:bg-slate-50 rounded-2xl">
             <span class="text-xs font-bold text-slate-600">${ptr.toLocaleString('default', { month: 'short', year: 'numeric' })}</span>
-            <button onclick="togglePay('${code}')" class="text-[9px] font-black uppercase px-4 py-1.5 rounded-xl border ${paid ? 'border-green-200 text-green-600 bg-green-50' : 'border-slate-200 text-slate-400'}">${paid ? 'Paid' : 'Unpaid'}</button>
+            <button onclick="togglePay('${code}')" class="text-[9px] font-black uppercase px-4 py-1.5 rounded-xl border ${paid ? 'border-green-200 text-emerald-700 bg-green-50' : 'border-slate-200 text-slate-400'}">${paid ? 'Paid' : 'Unpaid'}</button>
         </div>`;
         ptr.setMonth(ptr.getMonth() - 1);
     }
