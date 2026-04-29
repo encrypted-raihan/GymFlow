@@ -10,48 +10,40 @@
     <style>
         body { 
             font-family: 'Inter', sans-serif; 
-            background: #f8fafc; 
-            color: #1e293b; 
+            background: #0d110f; /* Updated to match GymFlow Dark Theme */
+            color: #f1f5f3; 
+            min-height: 100vh;
         }
         
-        /* Consistent 10px Radius */
-        .rounded-gym { border-radius: 10px; }
+        /* Strict Adherence to [2025-10-02]: 10px radius */
+        .rounded-gym { border-radius: 10px !important; }
         
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        .back-home-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 18px;
-            background: white;
-            border: 1px solid #e2e8f0;
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 10px;
-            color: #0f172a;
-            text-decoration: none;
-            font-size: 12px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            backdrop-filter: blur(10px);
         }
 
         .input-standard {
             width: 100%;
-            background: #f1f5f9;
+            background: #1a1f1c;
             padding: 12px;
             border-radius: 10px;
-            border: 2px solid transparent;
-            font-size: 14px;
+            border: 1px solid #2d332f;
+            color: white;
+            font-size: 13px;
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.2s;
         }
-        .input-standard:focus { border-color: #3b82f6; background: white; }
+        .input-standard:focus { border-color: #22c55e; background: #242a26; }
 
         .btn-primary {
-            background: #0f172a;
-            color: white;
+            background: #22c55e;
+            color: #052e16;
             padding: 14px;
             border-radius: 10px;
             font-weight: 800;
@@ -61,20 +53,19 @@
             width: 100%;
             transition: all 0.2s;
         }
-        .btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
+        .btn-primary:hover { background: #16a34a; transform: translateY(-1px); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* Secondary Button for Portal Login */
         .btn-secondary {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
-            background: white;
-            color: #0f172a;
+            background: transparent;
+            color: white;
             padding: 14px;
             border-radius: 10px;
-            border: 2px solid #0f172a;
+            border: 1px solid rgba(255,255,255,0.1);
             font-weight: 800;
             font-size: 11px;
             text-transform: uppercase;
@@ -83,54 +74,76 @@
             transition: all 0.2s;
             text-decoration: none;
         }
-        .btn-secondary:hover { background: #0f172a; color: white; }
+        .btn-secondary:hover { background: rgba(255,255,255,0.05); border-color: #22c55e; }
+
+        .trainer-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: #22c55e;
+            color: #052e16;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-style: italic;
+        }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-10">
 
-    <div class="max-w-6xl mx-auto">
-        <div class="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
-            <div class="flex items-center">
-                <a href="dashboard.html" class="back-home-btn mr-4">
-                    <span>←</span> <span class="hidden sm:inline">Dashboard</span>
-                </a>
-                <div>
-                    <h1 class="text-2xl font-black text-slate-900 tracking-tight italic">Trainer Directory</h1>
-                    <p class="text-blue-600 font-bold text-[10px] uppercase tracking-[0.2em] mt-1">Staff Access Management</p>
+    <div class="max-w-7xl mx-auto">
+        <!-- Responsive Header -->
+        <header class="flex justify-between items-start mb-12 relative">
+            <div class="pr-32 md:pr-0">
+                <h1 class="text-3xl md:text-5xl font-black italic tracking-tighter uppercase leading-none text-white">
+                    Trainer portal<span class="text-green-500"></span>
+                </h1>
+                <p class="text-[10px] font-black text-zinc-500 tracking-[0.3em] uppercase mt-2">Staff Access Management Protocol</p>
+                
+                <div id="trainerCount" class="mt-4 bg-green-500/10 text-green-500 text-[9px] font-black px-3 py-1.5 rounded-gym border border-green-500/20 w-fit">
+                    0 ACTIVE TRAINERS
                 </div>
             </div>
-            <div id="trainerCount" class="bg-blue-600 text-white text-[10px] font-black px-4 py-2 rounded-full w-fit">
-                0 ACTIVE TRAINERS
+
+            <!-- Dashboard Button Pinned Right -->
+            <div class="absolute right-0 top-0 md:relative">
+                <button onclick="window.location.href='dashboard.html'" 
+                        class="bg-[#1c1c1c] text-white px-4 py-2.5 rounded-gym text-[10px] font-black uppercase tracking-widest border border-white/5 shadow-2xl hover:bg-zinc-800 transition-all flex items-center gap-2">
+                    DASHBOARD 
+                    
+                </button>
             </div>
-        </div>
+        </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
+            <!-- Registration Sidebar -->
             <div class="lg:col-span-4">
-                <div class="bg-white p-6 rounded-gym border border-slate-200 shadow-sm sticky top-8">
-                    <h3 class="text-xs font-black uppercase text-slate-400 mb-6 tracking-widest">Onboard New Trainer</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="text-[9px] font-black text-slate-400 uppercase ml-1 mb-1 block">Profile Details</label>
-                            <input id="trainerName" type="text" placeholder="Full Legal Name" class="input-standard mb-2">
+                <div class="glass-card p-6 sticky top-10">
+                    <h3 class="text-[11px] font-black uppercase text-green-500 mb-6 tracking-widest">Onboard New Trainer</h3>
+                    
+                    <div class="space-y-5">
+                        <div class="space-y-3">
+                            <label class="text-[9px] font-black text-zinc-500 uppercase tracking-widest ml-1">Profile Details</label>
+                            <input id="trainerName" type="text" placeholder="Full Legal Name" class="input-standard">
                             <input id="trainerSpecialty" type="text" placeholder="Specialty (Yoga, MMA, etc.)" class="input-standard">
                         </div>
 
-                        <div>
-                            <label class="text-[9px] font-black text-slate-400 uppercase ml-1 mb-1 block">Portal Credentials</label>
-                            <input id="trainerUser" type="text" placeholder="Assign Username" class="input-standard mb-2 font-bold text-blue-600">
-                            <input id="trainerPass" type="password" placeholder="Assign Password" class="input-standard font-bold text-blue-600">
+                        <div class="space-y-3">
+                            <label class="text-[9px] font-black text-zinc-500 uppercase tracking-widest ml-1">Portal Credentials</label>
+                            <input id="trainerUser" type="text" placeholder="Assign Username" class="input-standard font-bold text-green-400">
+                            <input id="trainerPass" type="password" placeholder="Assign Password" class="input-standard font-bold text-green-400">
                         </div>
 
-                        <button id="regBtn" onclick="addTrainer()" class="btn-primary mt-4">
+                        <button id="regBtn" onclick="addTrainer()" class="btn-primary mt-2 shadow-lg shadow-green-500/20">
                             Register & Grant Access
                         </button>
 
-                        <div class="pt-6 border-t border-slate-100 mt-4">
-                            <p class="text-[9px] font-black text-slate-400 uppercase ml-1 mb-3 block">Quick Access</p>
+                        <div class="pt-6 border-t border-white/5">
                             <a href="/trainer/" class="btn-secondary">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                                 </svg>
                                 Trainer Portal Login
                             </a>
@@ -139,24 +152,26 @@
                 </div>
             </div>
 
+            <!-- Records Main -->
             <div class="lg:col-span-8">
-                <div class="bg-white rounded-gym border border-slate-200 shadow-sm overflow-hidden">
-                    <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                        <h3 class="text-xs font-black uppercase text-slate-400 tracking-widest">Staff Records</h3>
-                        <div class="flex gap-2">
-                            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                            <span class="text-[9px] font-black text-slate-400 uppercase">Live Database</span>
+                <div class="glass-card overflow-hidden">
+                    <div class="px-8 py-5 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                        <h3 class="text-[11px] font-black uppercase text-zinc-400 tracking-widest">Staff Records</h3>
+                        <div class="flex items-center gap-2">
+                            <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                            <span class="text-[9px] font-black text-green-500/80 uppercase tracking-widest">Live Database</span>
                         </div>
                     </div>
                     
-                    <div id="trainerList" class="divide-y divide-slate-100 min-h-[400px]">
-                        </div>
+                    <div id="trainerList" class="divide-y divide-white/5 min-h-[500px]">
+                        <!-- Content injected via JS -->
+                    </div>
 
-                    <div id="emptyState" class="hidden flex-col items-center justify-center py-24 text-center">
-                        <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                            <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    <div id="emptyState" class="hidden flex flex-col items-center justify-center py-32 text-center">
+                        <div class="w-20 h-20 bg-white/5 rounded-gym flex items-center justify-center mb-6 border border-white/5">
+                            <svg class="w-10 h-10 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                         </div>
-                        <p class="text-slate-400 text-sm font-medium italic">No staff found in the directory.</p>
+                        <p class="text-zinc-500 text-sm font-medium italic tracking-wide">No staff found in the directory.</p>
                     </div>
                 </div>
             </div>
@@ -191,7 +206,7 @@
 
             if (!name || !user || !pass) return alert("Please complete all required fields");
 
-            btn.innerText = "PROCESSING...";
+            btn.innerText = "VERIFYING ENROLLMENT...";
             btn.disabled = true;
 
             try {
@@ -240,24 +255,24 @@
                 snap.forEach(d => {
                     const t = d.data();
                     list.innerHTML += `
-                        <div class="px-6 py-5 flex justify-between items-center hover:bg-slate-50 transition-colors">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-gym bg-slate-900 flex items-center justify-center text-white font-black italic shadow-sm">
+                        <div class="px-8 py-6 flex justify-between items-center hover:bg-white/[0.02] transition-colors border-b border-white/[0.03]">
+                            <div class="flex items-center gap-5">
+                                <div class="trainer-avatar shadow-lg shadow-green-500/10">
                                     ${t.name.charAt(0)}
                                 </div>
                                 <div>
-                                    <h4 class="font-bold text-slate-900 text-sm leading-tight">${t.name}</h4>
-                                    <div class="flex items-center gap-2 mt-1">
-                                        <span class="text-[9px] text-blue-600 font-black uppercase tracking-widest">${t.specialty}</span>
-                                        <span class="text-slate-300 text-[8px]">•</span>
-                                        <span class="text-[9px] text-slate-400 font-bold">UID: ${t.username}</span>
+                                    <h4 class="font-bold text-white text-base leading-tight">${t.name}</h4>
+                                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
+                                        <span class="text-[9px] text-green-500 font-black uppercase tracking-widest">${t.specialty}</span>
+                                        <span class="hidden md:block text-white/10 text-[8px]">•</span>
+                                        <span class="text-[9px] text-zinc-500 font-bold uppercase tracking-tighter">ID: ${t.username}</span>
                                     </div>
                                 </div>
                             </div>
                             <div class="flex items-center gap-4">
-                                <button onclick="deleteTrainer('${d.id}')" class="text-slate-300 hover:text-red-500 transition-colors p-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                <button onclick="deleteTrainer('${d.id}')" class="w-10 h-10 rounded-gym border border-white/5 flex items-center justify-center text-zinc-600 hover:text-red-500 hover:bg-red-500/10 transition-all">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                     </svg>
                                 </button>
                             </div>

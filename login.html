@@ -4,22 +4,104 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <title>GymFlow | Partner Login</title>
     <style>
-        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
-        .login-card { background: white; border: 1px solid #e2e8f0; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.05); }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: #0d110f; 
+            color: #f1f5f3;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Strict Adherence to [2025-10-02]: 10px radius for all components */
+        .rounded-gym { border-radius: 10px !important; }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .input-standard {
+            width: 100%;
+            background: #1a1f1c;
+            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid #2d332f;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .input-standard:focus { 
+            border-color: #22c55e; 
+            background: #242a26;
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
+        }
+
+        .btn-primary {
+            background: #22c55e;
+            color: #052e16;
+            padding: 16px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 10px 20px -10px rgba(34, 197, 94, 0.3);
+        }
+        .btn-primary:hover { 
+            background: #16a34a; 
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px -10px rgba(34, 197, 94, 0.4);
+        }
+        .btn-primary:active { transform: translateY(0); }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-6">
-    <div class="login-card p-12 rounded-[2rem] w-full max-w-md text-center">
-        <h1 class="text-4xl font-black text-slate-900 italic tracking-tighter mb-10">GymFlow<span class="text-blue-600">.</span></h1>
+<body class="p-6">
+
+    <div class="glass-card p-10 md:p-14 w-full max-w-md">
+        <div class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-black italic tracking-tighter uppercase leading-none text-white">
+                Gym<span class="text-green-500">Flow</span>
+            </h1>
+            <p class="text-[10px] font-black text-zinc-500 tracking-[0.4em] uppercase mt-4">Partner Portal Access</p>
+        </div>
+
         <div class="space-y-4">
-            <input id="u" type="text" placeholder="Username" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-4 focus:ring-blue-500/5 transition-all">
-            <input id="p" type="password" placeholder="Password" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-4 focus:ring-blue-500/5 transition-all">
-            <button id="loginBtn" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl shadow-xl hover:bg-blue-600 transition-all">Login to Dashboard</button>
+            <div>
+                <label class="text-[9px] font-black text-zinc-500 uppercase tracking-widest ml-1 mb-2 block">Identity</label>
+                <input id="u" type="text" placeholder="Username" class="input-standard">
+            </div>
+
+            <div>
+                <label class="text-[9px] font-black text-zinc-500 uppercase tracking-widest ml-1 mb-2 block">Security Key</label>
+                <input id="p" type="password" placeholder="••••••••" class="input-standard">
+            </div>
+
+            <div class="pt-4">
+                <button id="loginBtn" class="btn-primary">
+                    Initialize Session
+                </button>
+            </div>
+        </div>
+
+        <div class="mt-10 text-center">
+            <p class="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">
+                Authorized Personnel Only
+            </p>
         </div>
     </div>
+
     <script type="module" src="auth.js"></script>
 </body>
 </html>
