@@ -90,7 +90,7 @@
             </div>
             <h2 class="text-xl font-black text-slate-900">Payment Rejected</h2>
             <p id="deniedReason" class="text-xs text-rose-500 mt-2 px-6 bg-rose-50 py-2 rounded-lg italic">Reason: No reason provided.</p>
-            <button onclick="resetToUnpaid()" class="mt-8 w-full py-4 bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-widest">Update & Try Again</button>
+            <button onclick="resetToUnpaid()" id="retryBtn" class="mt-8 w-full py-4 bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-widest">Update & Try Again</button>
         </div>
 
         <div id="paidState" class="hidden text-center py-6">
@@ -132,11 +132,14 @@
 
             const member = memberSnap.data();
             const status = member.paymentStatus || "unpaid";
-            const lastAction = member.lastAction || "";
             const lastPaymentDate = member.lastPaymentDate;
+            const logs = member.paymentLogs || [];
 
             const now = new Date();
             const monthLabel = now.toLocaleString('default', { month: 'long' });
+
+            // Find the most recent denial in the logs
+            const lastDenial = logs.slice().reverse().find(l => l.type === 'Denied');
 
             let isCurrentMonthPaid = false;
             if (lastPaymentDate) {
@@ -146,12 +149,11 @@
                 }
             }
 
+            // Logic to show denial ONLY if it hasn't been "dismissed"
+            // We use the lastAction date vs the last Denial log date to verify if it's fresh
             if (status === "paid" && isCurrentMonthPaid) {
                 renderUI("paidState");
                 document.getElementById('paidMessage').innerText = `Your ${monthLabel} membership is active.`;
-                
-                // --- CONFETTI LOGIC ---
-                // Only trigger if we haven't seen the success for this specific member ID recently
                 const confettiKey = `confetti_seen_${MEMBER_ID}`;
                 if (!localStorage.getItem(confettiKey)) {
                     triggerDopamine();
@@ -161,16 +163,15 @@
             else if (status === "verifying") {
                 renderUI("verifyingState");
             } 
-            else if (lastAction.includes("Denied")) {
+            // FIXED: Only show denied state if the lastAction field actually says it's denied
+            else if (status === "unpaid" && member.lastAction && member.lastAction.startsWith("Denied") && lastDenial) {
                 renderUI("deniedState");
-                document.getElementById('deniedReason').innerText = `Reason: ${lastAction.replace('Denied: ', '')}`;
-                // Reset confetti tracker if payment is denied so it can fire again on next success
+                document.getElementById('deniedReason').innerText = `${lastDenial.message.replace('Denied: ', 'Reason: ')}`;
                 localStorage.removeItem(`confetti_seen_${MEMBER_ID}`);
             } 
             else {
                 renderUI("payOptions");
                 loadGymData(member);
-                // Reset confetti tracker when back to unpaid state
                 localStorage.removeItem(`confetti_seen_${MEMBER_ID}`);
             }
 
@@ -185,10 +186,8 @@
         });
 
         document.getElementById(stateId).classList.remove('hidden');
-        
         const shouldHideDetails = (stateId === 'paidState' || stateId === 'deniedState' || stateId === 'verifyingState');
         document.getElementById('detailsCard').classList.toggle('hidden', shouldHideDetails);
-        
         document.getElementById('homeBtnContainer').classList.toggle('hidden', stateId === 'paidState');
     }
 
@@ -219,7 +218,7 @@
         try {
             await updateDoc(doc(db, "members", MEMBER_ID), { 
                 paymentStatus: 'verifying',
-                lastAction: "Submitted for approval" 
+                lastAction: "Submitted for approval"
             });
             location.reload(); 
         } catch (e) { 
@@ -230,13 +229,21 @@
     };
 
     window.resetToUnpaid = async () => {
+        const btn = document.getElementById('retryBtn');
+        btn.innerText = "PREPARING...";
+        btn.disabled = true;
         try {
+            // We clear lastAction so masterLogic stops seeing the "Denied" status
             await updateDoc(doc(db, "members", MEMBER_ID), { 
-                lastAction: "", 
+                lastAction: "Retrying Payment", 
                 paymentStatus: "unpaid" 
             });
             location.reload();
-        } catch (e) { alert("Error resetting."); }
+        } catch (e) { 
+            alert("Error resetting."); 
+            btn.disabled = false;
+            btn.innerText = "Update & Try Again";
+        }
     };
 
     function triggerDopamine() {
