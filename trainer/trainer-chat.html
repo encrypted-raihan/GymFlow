@@ -174,7 +174,14 @@
       </div>
       <div class="messages-area" id="messagesArea"></div>
       <div class="input-area">
-        <textarea class="input-box" id="msgInput" placeholder="Type a message..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <textarea 
+  class="input-box" 
+  id="msgInput" 
+  placeholder="Type a message..." 
+  rows="1"
+  onkeydown="handleKey(event)" 
+  oninput="handleInput(this)">
+</textarea>
         <button class="send-btn" onclick="sendMessage()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
       </div>
     </div>
@@ -196,18 +203,18 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, collection, doc, getDoc, getDocs,
-  addDoc, query, where, orderBy, onSnapshot,
-  serverTimestamp, limit
+    getFirestore, collection, doc, getDoc, getDocs, updateDoc, setDoc,
+    addDoc, query, where, orderBy, onSnapshot,
+    serverTimestamp, limit
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBcsmX7T1NotMi0T1XZ6b03yI3r7qZYQr8",
-  authDomain: "gym-membership-tracker-60626.firebaseapp.com",
-  projectId: "gym-membership-tracker-60626",
-  storageBucket: "gym-membership-tracker-60626.firebasestorage.app",
-  messagingSenderId: "260703319955",
-  appId: "1:260703319955:web:78206334baa1fc79725a66"
+    apiKey: "AIzaSyBcsmX7T1NotMi0T1XZ6b03yI3r7qZYQr8",
+    authDomain: "gym-membership-tracker-60626.firebaseapp.com",
+    projectId: "gym-membership-tracker-60626",
+    storageBucket: "gym-membership-tracker-60626.firebasestorage.app",
+    messagingSenderId: "260703319955",
+    appId: "1:260703319955:web:78206334baa1fc79725a66"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -222,295 +229,263 @@ let TID = localStorage.getItem('trainerId'),
     activeRoomId = null,
     activeChatType = null,
     unsub = null,
-    sending = false;
+    unsubTyping = null, // Track typing listener separately
+    sending = false,
+    typingTimeout;
 
 // ---------------- INIT ----------------
 async function init() {
-  if (!TID) return;
+    if (!TID) return;
 
-  const tSnap = await getDoc(doc(db, 'trainers', TID));
-  if (tSnap.exists()) {
-    const d = tSnap.data();
-    TNAME = d.name;
-    GID = d.gymId;
-    localStorage.setItem('gymId', GID);
-  }
+    const tSnap = await getDoc(doc(db, 'trainers', TID));
+    if (tSnap.exists()) {
+        const d = tSnap.data();
+        TNAME = d.name;
+        GID = d.gymId;
+        localStorage.setItem('gymId', GID);
+        // Set presence to online immediately
+        setPresence(true);
+    }
 
-  const mSnap = await getDocs(
-    query(collection(db, 'members'), where('trainerId', '==', TID))
-  );
+    const mSnap = await getDocs(
+        query(collection(db, 'members'), where('trainerId', '==', TID))
+    );
 
-  members = mSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-  renderList();
+    members = mSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderList();
 }
 
-// ---------------- SIDEBAR ----------------
-window.toggleSidebar = (s) => {
-  const sb = document.getElementById('sidebar');
-  s ? sb.classList.remove('side-hidden') : sb.classList.add('side-hidden');
+// ---------------- PRESENCE ----------------
+const setPresence = (status) => {
+    if (!TID) return;
+    updateDoc(doc(db, 'trainers', TID), { 
+        isOnline: status, 
+        lastSeen: serverTimestamp() 
+    });
 };
 
-// ---------------- CHAT LIST ----------------
+window.onfocus = () => setPresence(true);
+window.onblur = () => setPresence(false);
+window.onbeforeunload = () => {
+    setPresence(false);
+    sendTypingStatus(false);
+};
+
+// ---------------- SIDEBAR & LIST ----------------
+window.toggleSidebar = (s) => {
+    const sb = document.getElementById('sidebar');
+    s ? sb.classList.remove('side-hidden') : sb.classList.add('side-hidden');
+};
+
 function renderList(f = '') {
-  const list = document.getElementById('chatList');
-  list.innerHTML = '';
-
-  appendLabel(list, 'Global');
-
-  const commItem = createItem('Gym Community', 'Public Channel', 'community', activeChatType === 'community');
-  commItem.onclick = openCommunityChat;
-  list.appendChild(commItem);
-
-  appendLabel(list, 'Players');
-
-  members
-    .filter(m => (m.name || '').toLowerCase().includes(f.toLowerCase()))
-    .forEach(m => {
-
-      const item = createItem(m.name, m.plan, 'player', activeRoomId === getRoomId(m.id));
-
-      const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.className = 'checkbox';
-
-      cb.checked = selectedMembers.has(m.id);
-
-      cb.onclick = (e) => {
-        e.stopPropagation();
-        cb.checked ? selectedMembers.set(m.id, m.name) : selectedMembers.delete(m.id);
-        updateBulkBar();
-      };
-
-      item.prepend(cb);
-      item.className += bulkMode ? ' bulk-mode' : '';
-
-      item.onclick = (e) => {
-        if (bulkMode) return;
-        if (e.target !== cb) openPlayerChat(m);
-      };
-
-      list.appendChild(item);
+    const list = document.getElementById('chatList');
+    list.innerHTML = '';
+    appendLabel(list, 'Global');
+    const commItem = createItem('Gym Community', 'Public Channel', 'community', activeChatType === 'community');
+    commItem.onclick = openCommunityChat;
+    list.appendChild(commItem);
+    appendLabel(list, 'Players');
+    members.filter(m => (m.name || '').toLowerCase().includes(f.toLowerCase())).forEach(m => {
+        const item = createItem(m.name, m.plan, 'player', activeRoomId === getRoomId(m.id));
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'checkbox';
+        cb.checked = selectedMembers.has(m.id);
+        cb.onclick = (e) => {
+            e.stopPropagation();
+            cb.checked ? selectedMembers.set(m.id, m.name) : selectedMembers.delete(m.id);
+            updateBulkBar();
+        };
+        item.prepend(cb);
+        if(bulkMode) item.classList.add('bulk-mode');
+        item.onclick = (e) => {
+            if (bulkMode) return;
+            openPlayerChat(m);
+        };
+        list.appendChild(item);
     });
 }
 
 function createItem(n, s, t, a) {
-  const div = document.createElement('div');
-  div.className = `chat-item ${a ? 'active' : ''}`;
-  div.innerHTML = `
-    <div class="avatar ${t}">${t==='community'?'🌐':n[0]}</div>
-    <div class="chat-info">
-      <div class="chat-name">${n}</div>
-      <div class="chat-sub">${s}</div>
-    </div>`;
-  return div;
+    const div = document.createElement('div');
+    div.className = `chat-item ${a ? 'active' : ''}`;
+    div.innerHTML = `
+        <div class="avatar ${t}">${t==='community'?'🌐':n[0]}</div>
+        <div class="chat-info">
+            <div class="chat-name">${n}</div>
+            <div class="chat-sub">${s}</div>
+        </div>`;
+    return div;
 }
 
 function appendLabel(l, t) {
-  const d = document.createElement('div');
-  d.className = 'section-label';
-  d.textContent = t;
-  l.appendChild(d);
+    const d = document.createElement('div');
+    d.className = 'section-label';
+    d.textContent = t;
+    l.appendChild(d);
 }
 
-// ---------------- OPEN CHAT ----------------
+// ---------------- CHAT LOGIC ----------------
 function openPlayerChat(m) {
-  activeChatType = 'player';
-  activeRoomId = getRoomId(m.id);
-
-  setHeader(m.name[0], 'linear-gradient(135deg,#6366f1,#8b5cf6)', m.name, m.plan);
-
-  toggleSidebar(false);
-  listenMessages('chats');
-  renderList();
+    activeChatType = 'player';
+    activeRoomId = getRoomId(m.id);
+    setHeader(m.name[0], 'linear-gradient(135deg,#6366f1,#8b5cf6)', m.name, m.plan);
+    toggleSidebar(false);
+    listenMessages('chats');
+    listenToTyping(activeRoomId); // Start listening for player typing
+    renderList();
 }
 
 function openCommunityChat() {
-  activeChatType = 'community';
-  activeRoomId = GID;
-
-  setHeader('🌐', 'linear-gradient(135deg,#0ea5e9,#6366f1)', 'Gym Community', 'Public Channel');
-
-  toggleSidebar(false);
-  listenMessages('community');
-  renderList();
+    activeChatType = 'community';
+    activeRoomId = GID;
+    setHeader('🌐', 'linear-gradient(135deg,#0ea5e9,#6366f1)', 'Gym Community', 'Public Channel');
+    toggleSidebar(false);
+    listenMessages('community');
+    if(unsubTyping) unsubTyping(); // No typing in community
+    renderList();
 }
 
 function setHeader(t, b, n, s) {
-  document.getElementById('emptyState').style.display = 'none';
-  document.getElementById('activeChat').style.display = 'flex';
-
-  const h = document.getElementById('headerAvatar');
-  h.textContent = t;
-  h.style.background = b;
-
-  document.getElementById('headerName').textContent = n;
-  document.getElementById('headerStatus').textContent = s;
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('activeChat').style.display = 'flex';
+    const h = document.getElementById('headerAvatar');
+    h.textContent = t;
+    h.style.background = b;
+    document.getElementById('headerName').textContent = n;
+    document.getElementById('headerStatus').textContent = s;
 }
 
-// ---------------- LISTENER (FIXED) ----------------
+// ---------------- LISTENERS ----------------
 function listenMessages(coll) {
-  if (typeof unsub === 'function') {
-    unsub();
-    unsub = null;
-  }
-
-  const area = document.getElementById('messagesArea');
-  area.innerHTML = '';
-
-  const q = query(
-    collection(db, coll, activeRoomId, 'messages'),
-    orderBy('timestamp', 'asc'),
-    limit(50)
-  );
-
-  unsub = onSnapshot(q, snap => {
-    area.innerHTML = ''; // 🔥 prevents duplication
-
-    if (snap.empty) {
-      area.innerHTML = `
-        <div style="text-align:center;color:var(--muted);margin-top:20px;">
-          No messages yet 🚀
-        </div>`;
-      return;
-    }
-
-    snap.forEach(doc => appendMsg(doc.data(), coll === 'community'));
-
-    const atBottom = area.scrollHeight - area.scrollTop <= area.clientHeight + 100;
-    if (atBottom) area.scrollTop = area.scrollHeight;
-  });
+    if (unsub) unsub();
+    const area = document.getElementById('messagesArea');
+    const q = query(collection(db, coll, activeRoomId, 'messages'), orderBy('timestamp', 'asc'), limit(50));
+    unsub = onSnapshot(q, snap => {
+        area.innerHTML = snap.empty ? '<div style="text-align:center;color:var(--muted);margin-top:20px;">No messages yet 🚀</div>' : '';
+        snap.forEach(doc => appendMsg(doc.data(), coll === 'community'));
+        area.scrollTop = area.scrollHeight;
+    });
 }
 
-// ---------------- APPEND ----------------
-function appendMsg(d, isCommunity) {
-  const area = document.getElementById('messagesArea');
+function listenToTyping(roomId) {
+    if (unsubTyping) unsubTyping();
+    unsubTyping = onSnapshot(doc(db, 'typing_status', roomId), (snap) => {
+        const statusEl = document.getElementById('headerStatus');
+        if (snap.exists() && snap.data().playerTyping) {
+            statusEl.textContent = 'typing...';
+            statusEl.style.color = 'var(--primary)';
+        } else {
+            statusEl.textContent = ' '; // Or pull real online status here
+            statusEl.style.color = 'var(--muted)';
+        }
+    });
+}
 
-  if (area.querySelector('div[style*="text-align:center"]')) {
-    area.innerHTML = '';
-  }
+// ---------------- TYPING ACTION ----------------
+window.handleInput = (el) => {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+    sendTypingStatus(true);
+};
 
-  const isSelf = d.sid === TID;
-  const ts = d.timestamp?.toDate ? d.timestamp.toDate() : new Date(d.createdAt || Date.now());
-
-  const row = document.createElement('div');
-  row.className = `msg-row ${isSelf ? 'sent' : 'received'}`;
-
-  row.innerHTML = `
-    <div class="msg-content">
-      ${isCommunity && !isSelf ? `<div class="msg-sender-name">${d.sname}</div>` : ''}
-      <div class="msg-bubble">${d.msg}</div>
-      <div class="msg-time">
-        ${ts.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}
-        ${isSelf ? (d.timestamp ? ' ✓✓' : ' ...') : ''}
-      </div>
-    </div>
-  `;
-
-  area.appendChild(row);
+async function sendTypingStatus(isTyping) {
+    if (!activeRoomId || activeChatType === 'community') return;
+    const typingRef = doc(db, 'typing_status', activeRoomId);
+    await setDoc(typingRef, { trainerTyping: isTyping }, { merge: true });
+    
+    if (isTyping) {
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => sendTypingStatus(false), 3000);
+    }
 }
 
 // ---------------- SEND ----------------
 window.sendMessage = async () => {
-  if (sending) return;
+    if (sending) return;
+    const el = document.getElementById('msgInput');
+    const txt = el.value.trim();
+    if (!txt || !activeRoomId) return;
+    sending = true;
+    el.value = '';
+    el.style.height = '44px';
+    sendTypingStatus(false);
 
-  const el = document.getElementById('msgInput');
-  const txt = el.value.trim();
-
-  if (!txt || !activeRoomId) return;
-
-  sending = true;
-  el.value = '';
-  autoResize(el);
-
-  try {
-    await addDoc(collection(db,
-      activeChatType === 'community' ? 'community' : 'chats',
-      activeRoomId,
-      'messages'
-    ), {
-      sid: TID,
-      sname: TNAME,
-      msg: txt,
-      timestamp: serverTimestamp(),
-      createdAt: Date.now()
-    });
-  } finally {
-    sending = false;
-  }
+    try {
+        await addDoc(collection(db, activeChatType === 'community' ? 'community' : 'chats', activeRoomId, 'messages'), {
+            sid: TID,
+            sname: TNAME,
+            msg: txt,
+            timestamp: serverTimestamp(),
+            createdAt: Date.now()
+        });
+    } finally { sending = false; }
 };
 
-// ---------------- BULK (SAFE) ----------------
+function appendMsg(d, isCommunity) {
+    const area = document.getElementById('messagesArea');
+    const isSelf = d.sid === TID;
+    const ts = d.timestamp?.toDate ? d.timestamp.toDate() : new Date(d.createdAt || Date.now());
+    const row = document.createElement('div');
+    row.className = `msg-row ${isSelf ? 'sent' : 'received'}`;
+    row.innerHTML = `
+        <div class="msg-content">
+            ${isCommunity && !isSelf ? `<div class="msg-sender-name">${d.sname}</div>` : ''}
+            <div class="msg-bubble">${d.msg}</div>
+            <div class="msg-time">
+                ${ts.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}
+                ${isSelf ? (d.timestamp ? ' ✓✓' : ' ...') : ''}
+            </div>
+        </div>`;
+    area.appendChild(row);
+}
+
+// ---------------- BULK ----------------
+window.toggleBulkMode = () => {
+    bulkMode = !bulkMode;
+    selectedMembers.clear();
+    updateBulkBar();
+    renderList();
+};
+function updateBulkBar() {
+    const bar = document.getElementById('bulkBar');
+    bar.classList.toggle('visible', bulkMode && selectedMembers.size > 0);
+    document.getElementById('selectedCount').textContent = `${selectedMembers.size} selected`;
+}
+window.openBulkModal = () => {
+    document.getElementById('chipContainer').innerHTML = [...selectedMembers.values()].map(n => `<span style="background:var(--primary-light);color:var(--primary);padding:4px 12px;border-radius:10px;font-size:11px;font-weight:600;">${n}</span>`).join('');
+    document.getElementById('bulkModal').classList.add('open');
+};
+window.closeBulkModal = () => document.getElementById('bulkModal').classList.remove('open');
+
 window.sendBulkMessage = async () => {
-  if (sending) return;
-
-  const txt = document.getElementById('bulkText').value.trim();
-  if (!txt) return;
-
-  sending = true;
-
-  try {
-    for (const mid of selectedMembers.keys()) {
-      await addDoc(collection(db, 'chats', getRoomId(mid), 'messages'), {
-        sid: TID,
-        sname: TNAME,
-        msg: txt,
-        timestamp: serverTimestamp(),
-        createdAt: Date.now()
-      });
-    }
-  } finally {
-    sending = false;
-  }
-
-  closeBulkModal();
-  toggleBulkMode();
-};
-
-// ---------------- INPUT ----------------
-window.handleKey = (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    if (!sending) sendMessage();
-  }
-};
-
-window.autoResize = (el) => {
-  el.style.height = 'auto';
-  el.style.height = el.scrollHeight + 'px';
+    if (sending) return;
+    const txt = document.getElementById('bulkText').value.trim();
+    if (!txt) return;
+    sending = true;
+    try {
+        for (const mid of selectedMembers.keys()) {
+            await addDoc(collection(db, 'chats', getRoomId(mid), 'messages'), {
+                sid: TID, sname: TNAME, msg: txt, timestamp: serverTimestamp(), createdAt: Date.now()
+            });
+        }
+    } finally { sending = false; }
+    closeBulkModal();
+    toggleBulkMode();
 };
 
 // ---------------- UTIL ----------------
+window.handleKey = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+};
+
 function getRoomId(mid) {
-  return [TID, mid].sort().join('_');
+    return [TID, mid].sort().join('_');
 }
 
-// ---------------- BULK UI ----------------
-window.toggleBulkMode = () => {
-  bulkMode = !bulkMode;
-  selectedMembers.clear();
-  updateBulkBar();
-  renderList();
-};
-
-function updateBulkBar() {
-  const bar = document.getElementById('bulkBar');
-  bar.classList.toggle('visible', bulkMode && selectedMembers.size > 0);
-  document.getElementById('selectedCount').textContent = `${selectedMembers.size} selected`;
-}
-
-window.openBulkModal = () => {
-  document.getElementById('chipContainer').innerHTML =
-    [...selectedMembers.values()].map(n =>
-      `<span style="background:var(--primary-light);color:var(--primary);padding:4px 12px;border-radius:10px;font-size:11px;font-weight:600;">${n}</span>`
-    ).join('');
-
-  document.getElementById('bulkModal').classList.add('open');
-};
-
-window.closeBulkModal = () =>
-  document.getElementById('bulkModal').classList.remove('open');
-
-// ---------------- START ----------------
 init();
 </script>
 </body>

@@ -195,8 +195,14 @@
       </div>
       <div class="messages-area" id="messagesArea"></div>
       <div class="input-area">
-        <textarea class="input-box" id="msgInput" placeholder="Type a message..." rows="1"
-          onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <textarea 
+  class="input-box" 
+  id="msgInput" 
+  placeholder="Type a message..." 
+  rows="1"
+  onkeydown="handleKey(event)" 
+  oninput="handleInput(this)">
+</textarea>
         <button class="send-btn" onclick="sendMessage()">
           <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
         </button>
@@ -207,15 +213,18 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, doc, getDoc, addDoc, query, orderBy, onSnapshot, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { 
+    getFirestore, collection, doc, getDoc, addDoc, query, orderBy, 
+    onSnapshot, serverTimestamp, limit, updateDoc, setDoc 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBcsmX7T1NotMi0T1XZ6b03yI3r7qZYQr8",
-  authDomain: "gym-membership-tracker-60626.firebaseapp.com",
-  projectId: "gym-membership-tracker-60626",
-  storageBucket: "gym-membership-tracker-60626.firebasestorage.app",
-  messagingSenderId: "260703319955",
-  appId: "1:260703319955:web:78206334baa1fc79725a66"
+    apiKey: "AIzaSyBcsmX7T1NotMi0T1XZ6b03yI3r7qZYQr8",
+    authDomain: "gym-membership-tracker-60626.firebaseapp.com",
+    projectId: "gym-membership-tracker-60626",
+    storageBucket: "gym-membership-tracker-60626.firebasestorage.app",
+    messagingSenderId: "260703319955",
+    appId: "1:260703319955:web:78206334baa1fc79725a66"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -228,207 +237,225 @@ let PID = localStorage.getItem('memberId'),
     activeRoomId = null,
     activeChatType = null,
     unsub = null,
-    sending = false;
+    unsubTyping = null,
+    sending = false,
+    typingTimeout;
 
 // ---------------- INIT ----------------
 async function init() {
-  if (!PID) return alert('Not logged in');
+    if (!PID) return console.error('Not logged in');
 
-  const pSnap = await getDoc(doc(db, 'members', PID));
-  if (pSnap.exists()) {
-    PNAME = pSnap.data().name || 'Player';
+    const pSnap = await getDoc(doc(db, 'members', PID));
+    if (pSnap.exists()) {
+        const pData = pSnap.data();
+        PNAME = pData.name || 'Player';
+        setPresence(true); // Go online
 
-    if (pSnap.data().trainerId) {
-      const tSnap = await getDoc(doc(db, 'trainers', pSnap.data().trainerId));
-      if (tSnap.exists()) trainer = { id: tSnap.id, ...tSnap.data() };
+        if (pData.trainerId) {
+            const tSnap = await getDoc(doc(db, 'trainers', pData.trainerId));
+            if (tSnap.exists()) {
+                trainer = { id: tSnap.id, ...tSnap.data() };
+            }
+        }
     }
-  }
-
-  renderList();
+    renderList();
 }
 
-// ---------------- SIDEBAR ----------------
-window.toggleSidebar = (show) => {
-  const sb = document.getElementById('sidebar');
-  show ? sb.classList.remove('side-hidden') : sb.classList.add('side-hidden');
+// ---------------- PRESENCE ----------------
+const setPresence = (status) => {
+    if (!PID) return;
+    updateDoc(doc(db, 'members', PID), { 
+        isOnline: status, 
+        lastSeen: serverTimestamp() 
+    }).catch(e => console.error("Presence Error:", e));
 };
 
-// ---------------- CHAT LIST ----------------
+window.onfocus = () => setPresence(true);
+window.onblur = () => setPresence(false);
+window.onbeforeunload = () => {
+    setPresence(false);
+    sendTypingStatus(false);
+};
+
+// ---------------- SIDEBAR & LIST ----------------
+window.toggleSidebar = (show) => {
+    const sb = document.getElementById('sidebar');
+    show ? sb.classList.remove('side-hidden') : sb.classList.add('side-hidden');
+};
+
 function renderList(f = '') {
-  const list = document.getElementById('chatList');
-  list.innerHTML = '';
+    const list = document.getElementById('chatList');
+    list.innerHTML = '';
 
-  appendLabel(list, 'Your Coach');
+    appendLabel(list, 'Your Coach');
+    if (trainer && trainer.name.toLowerCase().includes(f.toLowerCase())) {
+        const item = createItem(trainer.name, 'Personal Trainer', 'trainer', activeRoomId === getRoomId(trainer.id));
+        item.onclick = () => openChat('player', trainer.id, trainer.name, 'Coach');
+        list.appendChild(item);
+    } else if (!trainer) {
+        list.innerHTML += `<div style="padding:10px 18px;color:var(--muted);font-size:12px;">No trainer assigned</div>`;
+    }
 
-  if (trainer && trainer.name.toLowerCase().includes(f.toLowerCase())) {
-    const item = createItem(trainer.name, 'Personal Trainer', 'trainer', activeRoomId === getRoomId(trainer.id));
-    item.onclick = () => openChat('player', trainer.id, trainer.name, 'Coach');
-    list.appendChild(item);
-  } else if (!trainer) {
-    list.innerHTML += `<div style="padding:10px 18px;color:var(--muted);font-size:12px;">No trainer assigned</div>`;
-  }
-
-  appendLabel(list, 'Global');
-
-  const commItem = createItem('Gym Community', 'Public Channel', 'community', activeChatType === 'community');
-  commItem.onclick = () => openChat('community', GID, 'Gym Community', 'Public');
-  list.appendChild(commItem);
+    appendLabel(list, 'Global');
+    const commItem = createItem('Gym Community', 'Public Channel', 'community', activeChatType === 'community');
+    commItem.onclick = () => openChat('community', GID, 'Gym Community', 'Public');
+    list.appendChild(commItem);
 }
 
 function createItem(n, s, t, a) {
-  const div = document.createElement('div');
-  div.className = `chat-item ${a ? 'active' : ''}`;
-  div.innerHTML = `<div class="avatar ${t}">${t==='community'?'🌐':n[0].toUpperCase()}</div>
-                   <div class="chat-info">
-                     <div class="chat-name">${n}</div>
-                     <div class="chat-sub">${s}</div>
-                   </div>`;
-  return div;
+    const div = document.createElement('div');
+    div.className = `chat-item ${a ? 'active' : ''}`;
+    div.innerHTML = `
+        <div class="avatar ${t}">${t==='community'?'🌐':n[0].toUpperCase()}</div>
+        <div class="chat-info">
+            <div class="chat-name">${n}</div>
+            <div class="chat-sub">${s}</div>
+        </div>`;
+    return div;
 }
 
 function appendLabel(l, t) {
-  const d = document.createElement('div');
-  d.className = 'section-label';
-  d.textContent = t;
-  l.appendChild(d);
+    const d = document.createElement('div');
+    d.className = 'section-label';
+    d.textContent = t;
+    l.appendChild(d);
 }
 
-// ---------------- OPEN CHAT ----------------
+// ---------------- CHAT ACTIONS ----------------
 function openChat(type, id, name, role) {
-  if (!id) return alert("Chat unreachable");
+    if (!id) return;
+    activeChatType = type;
+    activeRoomId = type === 'player' ? getRoomId(id) : id;
 
-  activeChatType = type;
-  activeRoomId = type === 'player' ? getRoomId(id) : id;
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('activeChat').style.display = 'flex';
+    document.getElementById('headerAvatar').textContent = type === 'community' ? '🌐' : name[0].toUpperCase();
+    document.getElementById('headerName').textContent = name;
+    
+    const badge = document.getElementById('headerBadge');
+    badge.textContent = role;
+    badge.className = `role-badge ${type==='player'?'trainer':'community'}`;
 
-  document.getElementById('emptyState').style.display = 'none';
-  document.getElementById('activeChat').style.display = 'flex';
-
-  document.getElementById('headerAvatar').textContent =
-    type === 'community' ? '🌐' : name[0].toUpperCase();
-
-  document.getElementById('headerName').textContent = name;
-  document.getElementById('headerStatus').textContent =
-    type === 'player' ? 'Online' : 'Global Group';
-
-  const badge = document.getElementById('headerBadge');
-  badge.textContent = role;
-  badge.className = `role-badge ${type==='player'?'trainer':'community'}`;
-
-  toggleSidebar(false);
-
-  listenMessages(type === 'community' ? 'community' : 'chats');
-  renderList();
-}
-
-// ---------------- LISTENER (FIXED) ----------------
-function listenMessages(coll) {
-  if (typeof unsub === 'function') {
-    unsub();
-    unsub = null;
-  }
-
-  const area = document.getElementById('messagesArea');
-  area.innerHTML = '';
-
-  const q = query(
-    collection(db, coll, activeRoomId, 'messages'),
-    orderBy('timestamp', 'asc'),
-    limit(50)
-  );
-
-  unsub = onSnapshot(q, snap => {
-    area.innerHTML = ''; // 🔥 prevents duplication
-
-    if (snap.empty) {
-      area.innerHTML = `
-        <div style="text-align:center;color:var(--muted);margin-top:20px;">
-          No messages yet 🚀
-        </div>`;
-      return;
+    toggleSidebar(false);
+    listenMessages(type === 'community' ? 'community' : 'chats');
+    
+    // --- REAL-TIME STATUS LOGIC ---
+    if (type === 'player') {
+        // Listen to the Trainer's actual document for online status
+        onSnapshot(doc(db, 'trainers', id), (snap) => {
+            const statusEl = document.getElementById('headerStatus');
+            if (snap.exists()) {
+                const data = snap.data();
+                // Check if they are typing first, then check online status
+                // (This combines with your typing logic)
+                statusEl.textContent = data.isOnline ? 'Online' : 'Offline';
+                statusEl.style.color = data.isOnline ? 'var(--success)' : 'var(--muted)';
+            }
+        });
+        listenToTyping(activeRoomId);
+    } else {
+        if (unsubTyping) unsubTyping();
+        document.getElementById('headerStatus').textContent = 'Global Group';
+        document.getElementById('headerStatus').style.color = 'var(--muted)';
     }
-
-    snap.forEach(doc => appendMsg(doc.data(), coll === 'community'));
-
-    const atBottom = area.scrollHeight - area.scrollTop <= area.clientHeight + 100;
-    if (atBottom) area.scrollTop = area.scrollHeight;
-  });
+    renderList();
 }
 
-// ---------------- MESSAGE RENDER ----------------
-function appendMsg(d, isCommunity) {
-  const area = document.getElementById('messagesArea');
-
-  if (area.querySelector('div[style*="text-align:center"]')) {
-    area.innerHTML = '';
-  }
-
-  const isSelf = d.sid === PID;
-  const ts = d.timestamp?.toDate ? d.timestamp.toDate() : new Date(d.createdAt || Date.now());
-
-  const row = document.createElement('div');
-  row.className = `msg-row ${isSelf ? 'sent' : 'received'}`;
-
-  row.innerHTML = `
-    <div class="msg-content">
-      ${isCommunity && !isSelf ? `<div class="msg-sender-name">${d.sname}</div>` : ''}
-      <div class="msg-bubble">${d.msg}</div>
-      <div class="msg-time">
-        ${ts.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}
-        ${isSelf ? (d.timestamp ? ' ✓✓' : ' ...') : ''}
-      </div>
-    </div>
-  `;
-
-  area.appendChild(row);
-}
-
-// ---------------- SEND (FIXED) ----------------
-window.sendMessage = async () => {
-  if (sending) return;
-
-  const el = document.getElementById('msgInput');
-  const txt = el.value.trim();
-
-  if (!txt || !activeRoomId) return;
-
-  sending = true;
-  el.value = '';
-  autoResize(el);
-
-  try {
-    await addDoc(collection(db,
-      activeChatType === 'community' ? 'community' : 'chats',
-      activeRoomId,
-      'messages'
-    ), {
-      sid: PID,
-      sname: PNAME,
-      msg: txt,
-      timestamp: serverTimestamp(),
-      createdAt: Date.now()
+function listenMessages(coll) {
+    if (unsub) unsub();
+    const area = document.getElementById('messagesArea');
+    const q = query(collection(db, coll, activeRoomId, 'messages'), orderBy('timestamp', 'asc'), limit(50));
+    
+    unsub = onSnapshot(q, snap => {
+        area.innerHTML = snap.empty ? '<div style="text-align:center;color:var(--muted);margin-top:20px;">No messages yet 🚀</div>' : '';
+        snap.forEach(doc => appendMsg(doc.data(), coll === 'community'));
+        area.scrollTop = area.scrollHeight;
     });
-  } finally {
-    sending = false;
-  }
+}
+
+function listenToTyping(roomId) {
+    if (unsubTyping) unsubTyping();
+    unsubTyping = onSnapshot(doc(db, 'typing_status', roomId), (snap) => {
+        const statusEl = document.getElementById('headerStatus');
+        if (snap.exists() && snap.data().trainerTyping) {
+            statusEl.textContent = 'typing...';
+            statusEl.style.color = 'var(--primary)';
+        } else {
+            statusEl.textContent = 'Online';
+            statusEl.style.color = 'var(--muted)';
+        }
+    });
+}
+
+// ---------------- INPUT & SEND ----------------
+window.handleInput = (el) => {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+    sendTypingStatus(true);
 };
 
-// ---------------- INPUT ----------------
+async function sendTypingStatus(isTyping) {
+    if (!activeRoomId || activeChatType === 'community') return;
+    const typingRef = doc(db, 'typing_status', activeRoomId);
+    setDoc(typingRef, { playerTyping: isTyping }, { merge: true });
+
+    if (isTyping) {
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => sendTypingStatus(false), 3000);
+    }
+}
+
+window.sendMessage = async () => {
+    if (sending) return;
+    const el = document.getElementById('msgInput');
+    const txt = el.value.trim();
+    if (!txt || !activeRoomId) return;
+
+    sending = true;
+    el.value = '';
+    el.style.height = '44px';
+    sendTypingStatus(false);
+
+    try {
+        await addDoc(collection(db, activeChatType === 'community' ? 'community' : 'chats', activeRoomId, 'messages'), {
+            sid: PID,
+            sname: PNAME,
+            msg: txt,
+            timestamp: serverTimestamp(),
+            createdAt: Date.now()
+        });
+    } finally { sending = false; }
+};
+
+function appendMsg(d, isCommunity) {
+    const area = document.getElementById('messagesArea');
+    const isSelf = d.sid === PID;
+    const ts = d.timestamp?.toDate ? d.timestamp.toDate() : new Date(d.createdAt || Date.now());
+    const row = document.createElement('div');
+    row.className = `msg-row ${isSelf ? 'sent' : 'received'}`;
+    row.innerHTML = `
+        <div class="msg-content">
+            ${isCommunity && !isSelf ? `<div class="msg-sender-name">${d.sname}</div>` : ''}
+            <div class="msg-bubble">${d.msg}</div>
+            <div class="msg-time">
+                ${ts.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}
+                ${isSelf ? (d.timestamp ? ' ✓✓' : ' ...') : ''}
+            </div>
+        </div>`;
+    area.appendChild(row);
+}
+
 window.handleKey = (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    if (!sending) sendMessage();
-  }
-};
-
-window.autoResize = (el) => {
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
 };
 
 window.filterList = (v) => renderList(v);
 
 function getRoomId(tid) {
-  return [PID, tid].sort().join('_');
+    return [PID, tid].sort().join('_');
 }
 
 init();
