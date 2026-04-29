@@ -148,8 +148,8 @@ window.render = () => {
 
         html += `
         <tr class="group ${isDue ? 'due-row' : 'settled-row'} transition-all">
-            <td class="p-6">
-                <div class="flex items-center gap-3">
+            <td class="p-2 sm:p-6">
+                <div class="flex items-center gap-2 sm:gap-3">
                     ${isDue ? '<div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>' : ''}
                     <div>
                         <p class="text-sm font-bold ${isDue ? 'text-white'  : 'text-slate-300'}">${m.name}</p>
@@ -157,12 +157,12 @@ window.render = () => {
                     </div>
                 </div>
             </td>
-            <td class="p-6 text-center">
-                <span class="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest ${isPaused ? 'bg-slate-700 text-slate-200' : (isPaid ? 'bg-green-50 text-green-600' : 'bg-red-600 text-white shadow-lg')}">
+            <td class="p-2 sm:p-6 text-center">
+                <span class="px-2.5 py-1 rounded-lg text-[8px] sm:px-4 sm:py-2 sm:rounded-xl sm:text-[9px] font-black uppercase tracking-widest ${isPaused ? 'bg-slate-700 text-slate-200' : (isPaid ? 'bg-green-50 text-green-600' : 'bg-red-600 text-white shadow-lg')}">
                     ${isPaused ? 'Paused' : (isPaid ? 'Paid' : 'Unpaid')}
                 </span>
             </td>
-            <td class="p-6 text-right">
+            <td class="p-2 sm:p-6 text-right">
                 <button onclick="openProfile('${m.id}')" class="text-[10px] font-black text-blue-400 uppercase hover:text-blue-300 hover:underline">Manage</button>
             </td>
         </tr>`;
@@ -196,10 +196,7 @@ window.renderLive = () => {
         });
     });
 
-    document.getElementById('countTraining').innerHTML = `
-<span class="text-emerald-800 font-black text-sm">${liveNow.length}</span>
-<span class="text-emerald-700 text-[10px] font-bold tracking-widest ml-1">MEMBERS TRAINING NOW</span>
-`;
+    document.getElementById('countTraining').innerText = `${liveNow.length} MEMBERS TRAINING NOW`;
 
     if(filtered.length === 0) {
         grid.innerHTML = `<div class="col-span-full py-12 text-center border-2 border-dashed border-slate-100 rounded-[2rem] text-[10px] text-slate-300 font-bold uppercase tracking-widest">Floor is empty</div>`;
