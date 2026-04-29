@@ -15,11 +15,17 @@
         .tab-active { background: #0f172a !important; color: white !important; }
     </style>
     <script>
-        // SECURITY GATE: Redirects if user tries to type the URL directly
-        if (!document.referrer.includes('super-admin.html')) {
-            window.location.replace('super-admin.html');
-        }
-    </script>
+    // SECURITY GATE: Redirects if user tries to type the URL directly
+    // Updated to work with Vercel's clean URLs (handles both .html and non-.html)
+    const ref = document.referrer.toLowerCase();
+    const currentHost = window.location.hostname;
+
+    // Logic: Allow if the referrer contains 'super-admin' OR if it's coming from your own site
+    if (ref === '' || !ref.includes('super-admin')) {
+        // If the user didn't come from the dashboard, send them back
+        window.location.replace('super-admin.html');
+    }
+</script>
 </head>
 <body class="p-4 md:p-8">
     <div class="max-w-5xl mx-auto">
