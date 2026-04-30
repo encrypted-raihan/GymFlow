@@ -152,7 +152,7 @@
                 tr.innerHTML = `
                     <td class="p-4">
                         <p class="font-bold text-slate-800">${data.name || 'Unnamed Gym'}</p>
-                        <p class="text-[9px] text-slate-400 font-mono">ID: ${gymDoc.id}</p>
+                        <p class="text-[9px] text-slate-400 font-mono">ID: ${gymDoc.id.slice(0,8)}</p>
                     </td>
                     <td class="p-4">
                         <p class="font-mono text-[10px] text-slate-600">${data.upiId || 'No UPI'}</p>
@@ -182,11 +182,15 @@
                 snap.forEach(mDoc => {
                     const m = mDoc.data();
                     const logs = m.paymentLogs || [];
-                    const verifyId = `${m.name.split(' ')[0].toUpperCase()}_${mDoc.id.slice(-4)}`;
+                    const verifyId = `TXN_${mDoc.id.slice(-6)}_${Date.now().toString().slice(-4)}`;
 
                     logs.forEach(log => {
                         rawLogs.push({
-                            name: m.name, verifyId, amount: m.monthlyFee, date: new Date(log.date),
+                            gymName,
+                            name: m.name,
+                            verifyId,
+                            amount: m.monthlyFee,
+                            date: new Date(log.date),
                             dateStr: new Date(log.date).toLocaleDateString([], {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'}),
                             type: log.type, message: log.message || '', isDenied: log.type === 'Denied'
                         });
@@ -240,9 +244,13 @@
                                   (activeTab === 'verified' && !log.isDenied) || 
                                   (activeTab === 'rejected' && log.isDenied);
                 
-                const matchesSearch = log.name.toLowerCase().includes(searchTerm) || 
-                                     log.verifyId.toLowerCase().includes(searchTerm) || 
-                                     log.dateStr.toLowerCase().includes(searchTerm);
+                const matchesSearch =
+                    log.name.toLowerCase().includes(searchTerm) ||
+                    log.verifyId.toLowerCase().includes(searchTerm) ||
+                    log.dateStr.toLowerCase().includes(searchTerm) ||
+                    log.gymName?.toLowerCase().includes(searchTerm) ||
+                    log.message?.toLowerCase().includes(searchTerm) ||
+                    log.amount?.toString().includes(searchTerm);
                 
                 return matchesTab && matchesSearch;
             });
@@ -256,6 +264,7 @@
                 <tr class="text-xs hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
                     <td class="p-3">
                         <p class="font-bold text-slate-700">${entry.name}</p>
+                        <p class="text-[9px] text-slate-400 font-bold">${entry.gymName}</p>
                         ${entry.isDenied ? `<p class="text-[9px] text-rose-500 font-medium">Reason: ${entry.message.replace('Denied: ', '')}</p>` : ''}
                     </td>
                     <td class="p-3 font-mono text-[9px] text-slate-400">${entry.verifyId}</td>
