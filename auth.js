@@ -49,7 +49,7 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
             localStorage.setItem("activeGymName", displayName);
             
             // 3. REDIRECT
-            window.location.href = 'admin/dashboard.html';
+            window.location.href = '/admin/dashboard.html';
 
         } else {
             alert("Invalid Credentials. Please check your username or password.");
