@@ -203,7 +203,7 @@
 
         async function loadFinancials() {
             try {
-                document.getElementById('viewTitle').innerText = viewingMonth;
+                document.getElementById('viewTitle').innerText = "EXPENSE";
                 const q = query(collection(db, "expenses"), where("gymId", "==", gymId));
                 const snap = await getDocs(q);
                 const activeList = document.getElementById('expenseList');

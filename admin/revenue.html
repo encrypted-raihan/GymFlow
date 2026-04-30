@@ -58,14 +58,15 @@
 
     <main class="max-w-7xl mx-auto">
         <!-- Header Section -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-4">
+        <div class="relative flex flex-col md:flex-row md:items-center justify-between mb-12 gap-4">
             <div>
-                <h1 class="text-4xl font-black tracking-tighter italic text-white">Revenue <span class="text-green-500">Center</span></h1>
+                <h1 class="text-4xl font-black tracking-tighter italic text-white">Revenue <span class="text-green-500"></span></h1>
                 <p class="text-green-500/60 text-[10px] font-bold uppercase tracking-widest mt-1">Financial Oversight & Profitability</p>
             </div>
             <div class="flex gap-4">
-                <button onclick="window.location.href='dashboard.html'" class="bg-white/5 hover:bg-white/10 text-white px-6 py-3 rounded-gym text-[10px] font-black uppercase tracking-widest transition-all">
-                    Dashboard
+                <button onclick="window.location.href='dashboard.html'" 
+                class="absolute top-0 right-0 md:static bg-white/5 hover:bg-white/10 text-white px-4 py-2 md:px-6 md:py-3 rounded-gym text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all">
+                Dashboard
                 </button>
                 <button onclick="window.downloadFullReport()" class="action-btn">
                     Export Full Report
