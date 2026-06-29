@@ -71,13 +71,13 @@
 
             <div class="space-y-5">
                 <div>
-                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4 mb-2 block">Full Name</label>
-                    <input type="text" id="memberName" placeholder="Enter Your Name" class="input-field">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4 mb-2 block">Phone Number</label>
+                    <input type="tel" id="memberPhone" placeholder="Mobile Number" class="input-field">
                 </div>
 
                 <div>
-                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4 mb-2 block">Phone Number</label>
-                    <input type="tel" id="memberPhone" placeholder="Mobile Number" class="input-field">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4 mb-2 block">Password</label>
+                    <input type="password" id="memberPassword" placeholder="••••••••" class="input-field">
                 </div>
 
                 <button onclick="handleLogin()" id="loginBtn" class="btn-login shadow-xl shadow-slate-200">
@@ -95,7 +95,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Your Exact Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyBcsmX7T1NotMi0T1XZ6b03yI3r7qZYQr8",
             authDomain: "gym-membership-tracker-60626.firebaseapp.com",
@@ -109,12 +108,12 @@
         const db = getFirestore(app);
 
         window.handleLogin = async () => {
-            const nameInput = document.getElementById('memberName').value.trim();
             const phoneInput = document.getElementById('memberPhone').value.trim();
+            const passwordInput = document.getElementById('memberPassword').value.trim();
             const btn = document.getElementById('loginBtn');
 
-            if (!nameInput || !phoneInput) {
-                alert("Please enter both Name and Phone number.");
+            if (!phoneInput || !passwordInput) {
+                alert("Please enter both Phone number and Password.");
                 return;
             }
 
@@ -122,28 +121,25 @@
             btn.disabled = true;
 
             try {
-                // 1. Search Firestore "members" collection for matching name AND phone
+                // Search Firestore "members" collection for matching phone AND password schema matching script.js keys
                 const membersRef = collection(db, "members");
                 const q = query(membersRef, 
-                    where("name", "==", nameInput), 
-                    where("phone", "==", phoneInput)
+                    where("phone", "==", phoneInput), 
+                    where("password", "==", passwordInput)
                 );
 
                 const querySnapshot = await getDocs(q);
 
                 if (!querySnapshot.empty) {
-                    // Success! Grab the first match (should be unique)
                     const memberDoc = querySnapshot.docs[0];
                     const memberData = memberDoc.data();
 
-                    // 2. Save EVERYTHING needed for member.html
                     localStorage.setItem("memberId", memberDoc.id);
                     localStorage.setItem("gymId", memberData.gymId || "default");
                     
-                    // 3. Redirect to your gamified dashboard
                     window.location.href = "member.html";
                 } else {
-                    alert("Account not found! Double check your spelling or contact your Gym Admin.");
+                    alert("Invalid phone number or password! Please check credentials or contact your Gym Admin.");
                     btn.innerText = "Enter Gym";
                     btn.disabled = false;
                 }

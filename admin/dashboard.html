@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <title>GymFlow | Dashboard</title>
     <style>
@@ -98,13 +98,13 @@
             
             table, thead, tbody, th, td, tr { display: block !important; }
             thead { display: none !important; }
-tbody tr {
-    margin-bottom: 0.5rem !important;
-    padding: 8px !important;
-    border: 1px solid #1a1a1a !important;
-    border-radius: 12px !important;
-    background: var(--card-surface) !important;
-}
+            tbody tr {
+                margin-bottom: 0.5rem !important;
+                padding: 8px !important;
+                border: 1px solid #1a1a1a !important;
+                border-radius: 12px !important;
+                background: var(--card-surface) !important;
+            }
         }
     </style>
 </head>
@@ -163,10 +163,9 @@ tbody tr {
         </aside>
 
         <main class="flex-1 p-6 lg:p-14">
-            <!-- Stats Bento Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-14">
                 <div class="premium-card p-8">
-                    <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Total Roster</p>
+                    <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Total Members</p>
                     <h3 id="statTotal" class="text-5xl font-black tracking-tighter">0</h3>
                 </div>
                 <div class="premium-card p-8 bg-green-500 text-black border-none">
@@ -185,59 +184,35 @@ tbody tr {
                         <div id="statBar" class="bg-green-500 h-full transition-all duration-1000" style="width: 0%"></div>
                     </div>
                 </div>
-                <div class="premium-card p-8 bg-zinc-900 border-2 border-green-500/20 cursor-pointer hover:bg-zinc-800 transition active:scale-[0.97]" onclick="document.getElementById('regSection').classList.toggle('hidden')">
+                <div class="premium-card p-8 bg-zinc-900 border-2 border-green-500/20 cursor-pointer hover:bg-zinc-800 transition active:scale-[0.97]" onclick="document.getElementById('regSection').classList.remove('hidden')">
                     <p class="text-[10px] font-bold text-green-500 uppercase tracking-widest mb-4">Quick Action</p>
                     <h3 class="text-2xl font-black leading-tight text-white">Add Athlete <span class="inline-block translate-x-2">→</span></h3>
                 </div>
             </div>
 
-            <!-- Live Session Section -->
             <section class="mb-14 p-6 rounded-3xl bg-emerald-50/50 border border-green-100">
-    <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-6">
-        <div>
-            <h2 class="text-2xl font-black tracking-tight flex items-center gap-3 text-emerald-900">
-                Live Session 
-                <span class="relative flex h-3 w-3">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                </span>
-            </h2>
-            <p id="countTraining" class="text-[10px] font-black text-emerald-600/70 uppercase tracking-widest mt-1">Status: Active Monitor</p>
-        </div>
-        
-        <!-- Updated Filter Container to Dark Green/Emerald -->
-        <div id="liveFilterContainer" class="flex gap-1.5 bg-emerald-950 p-1.5 rounded-2xl overflow-x-auto no-scrollbar border border-emerald-800/50 shadow-lg">
-            <button onclick="setLiveFilter('all')" class="live-f-btn px-5 py-2.5 rounded-xl text-[9px] font-black uppercase bg-emerald-500 text-white shadow-md shadow-emerald-900/20">All</button>
-            <button onclick="setLiveFilter('Chest')" class="live-f-btn px-5 py-2.5 rounded-xl text-[9px] font-black uppercase text-emerald-400/60 hover:text-white transition-colors">Chest</button>
-            <button onclick="setLiveFilter('Back')" class="live-f-btn px-5 py-2.5 rounded-xl text-[9px] font-black uppercase text-emerald-400/60 hover:text-white transition-colors">Back</button>
-            <button onclick="setLiveFilter('Legs')" class="live-f-btn px-5 py-2.5 rounded-xl text-[9px] font-black uppercase text-emerald-400/60 hover:text-white transition-colors">Legs</button>
-            <button onclick="setLiveFilter('Cardio')" class="live-f-btn px-5 py-2.5 rounded-xl text-[9px] font-black uppercase text-emerald-400/60 hover:text-white transition-colors">Cardio</button>
-        </div>
-    </div>
-    
-    <!-- Grid remains flexible for injected content -->
-    <div id="liveMembersGrid"
-class="flex gap-4 overflow-x-auto overflow-y-hidden no-scrollbar scroll-smooth sm:grid sm:grid-cols-2 lg:grid-cols-4">
-</div>
-</section>
-
-            <!-- Registration Section (Preserving all IDs) -->
-            <section id="regSection" class="hidden premium-card p-10 mb-14 border-green-500/20">
-                <h3 class="text-lg font-black mb-10 border-b border-white/5 pb-5 text-green-500">Member Onboarding</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <input id="regName" placeholder="Athlete Full Name" class="p-5 text-sm transition-all">
-                    <input id="regPhone" placeholder="Mobile Number" class="p-5 text-sm transition-all">
-                    <select id="regTrainer" class="p-5 text-sm font-bold appearance-none">
-                        <option value="None">Direct Management</option>
-                    </select>
-                    <input id="regPlan" list="planOptions" placeholder="Training Plan" class="p-5 text-sm transition-all">
-                    <datalist id="planOptions"><option value="Normal"><option value="Cardio"><option value="Personal Training"></datalist>
-                    <input id="regMonthlyFee" type="number" placeholder="Fee (₹)" class="p-5 text-sm transition-all">
-                    <input id="regJoiningFee" type="number" placeholder="Join Fee (₹)" class="p-5 text-sm transition-all">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-6">
+                    <div>
+                        <h2 class="text-2xl font-black tracking-tight flex items-center gap-3 text-emerald-900">
+                            Live Session 
+                            <span class="relative flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                            </span>
+                        </h2>
+                        <p id="countTraining" class="text-[10px] font-black text-emerald-600/70 uppercase tracking-widest mt-1">Status: Active Monitor</p>
+                    </div>
+                    
+                    <div id="liveFilterContainer" class="flex gap-1.5 bg-emerald-950 p-1.5 rounded-2xl overflow-x-auto no-scrollbar border border-emerald-800/50 shadow-lg">
+                        <button onclick="setLiveFilter('all')" class="live-f-btn px-5 py-2.5 rounded-xl text-[9px] font-black uppercase bg-emerald-500 text-white shadow-md shadow-emerald-900/20">All</button>
+                        <button onclick="setLiveFilter('Chest')" class="live-f-btn px-5 py-2.5 rounded-xl text-[9px] font-black uppercase text-emerald-400/60 hover:text-white transition-colors">Chest</button>
+                        <button onclick="setLiveFilter('Back')" class="live-f-btn px-5 py-2.5 rounded-xl text-[9px] font-black uppercase text-emerald-400/60 hover:text-white transition-colors">Back</button>
+                        <button onclick="setLiveFilter('Legs')" class="live-f-btn px-5 py-2.5 rounded-xl text-[9px] font-black uppercase text-emerald-400/60 hover:text-white transition-colors">Legs</button>
+                        <button onclick="setLiveFilter('Cardio')" class="live-f-btn px-5 py-2.5 rounded-xl text-[9px] font-black uppercase text-emerald-400/60 hover:text-white transition-colors">Cardio</button>
+                    </div>
                 </div>
-                <div class="mt-10 flex justify-end">
-                    <button onclick="addNewMember()" class="bg-green-600 text-black font-black px-14 py-5 rounded-2xl uppercase text-[10px] tracking-[0.2em] hover:bg-white transition shadow-xl">Register Athlete</button>
-                </div>
+                
+                <div id="liveMembersGrid" class="flex gap-4 overflow-x-auto overflow-y-hidden no-scrollbar scroll-smooth sm:grid sm:grid-cols-2 lg:grid-cols-4"></div>
             </section>
 
             <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
@@ -271,7 +246,30 @@ class="flex gap-4 overflow-x-auto overflow-y-hidden no-scrollbar scroll-smooth s
         </main>
     </div>
 
-    <!-- Profile Modal (Strictly Hidden by Default) -->
+    <div id="regSection" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
+        <div class="bg-zinc-950 rounded-[32px] w-full max-w-2xl p-10 border border-white/10 relative shadow-2xl">
+            <button onclick="document.getElementById('regSection').classList.add('hidden')" class="absolute top-10 right-10 text-gray-500 hover:text-white text-2xl font-bold">✕</button>
+            
+            <h3 class="text-lg font-black mb-10 border-b border-white/5 pb-5 text-green-500">Member Onboarding</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <input id="regName" placeholder="Athlete Full Name" class="p-5 text-sm transition-all">
+                <input id="regPhone" placeholder="Mobile Number" class="p-5 text-sm transition-all">
+                <input id="regPassword" type="password" placeholder="Member Portal Password" class="p-5 text-sm transition-all">
+                <select id="regTrainer" class="p-5 text-sm font-bold appearance-none">
+                    <option value="None">Direct Management</option>
+                </select>
+                <input id="regPlan" list="planOptions" placeholder="Training Plan" class="p-5 text-sm transition-all">
+                <datalist id="planOptions"><option value="Normal"><option value="Cardio"><option value="Personal Training"></datalist>
+                <input id="regMonthlyFee" type="number" placeholder="Fee (₹)" class="p-5 text-sm transition-all">
+                <input id="regJoiningFee" type="number" placeholder="Join Fee (₹)" class="p-5 text-sm transition-all">
+            </div>
+            <div class="mt-10 flex justify-end gap-4">
+                <button onclick="document.getElementById('regSection').classList.add('hidden')" class="border border-white/10 text-white font-black px-8 py-5 rounded-2xl uppercase text-[10px] tracking-[0.2em] hover:bg-white/5 transition">Cancel</button>
+                <button onclick="addNewMember()" class="bg-green-600 text-black font-black px-12 py-5 rounded-2xl uppercase text-[10px] tracking-[0.2em] hover:bg-white transition shadow-xl">Register Athlete</button>
+            </div>
+        </div>
+    </div>
+
     <div id="profileModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
         <div class="bg-zinc-950 rounded-[32px] w-full max-w-lg p-12 shadow-2xl relative border border-white/10">
             <button onclick="closeProfile()" class="absolute top-10 right-10 text-gray-500 hover:text-white text-2xl font-bold">✕</button>

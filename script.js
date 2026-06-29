@@ -178,7 +178,8 @@ window.setLiveFilter = (part) => {
         const btnText = btn.innerText.toLowerCase();
         const partText = part.toLowerCase();
         const match = btnText === partText;
-        btn.className = match ? "live-f-btn px-4 py-2 rounded-xl text-[8px] font-black uppercase bg-slate-900 text-white shadow-sm whitespace-nowrap" : "live-f-btn px-4 py-2 rounded-xl text-[8px] font-black uppercase bg-white border border-slate-100 text-slate-400 whitespace-nowrap";
+        // Retaining your premium dark-mode dashboard buttons structure
+        btn.className = match ? "live-f-btn px-5 py-2.5 rounded-xl text-[9px] font-black uppercase bg-green-500 text-black shadow-md" : "live-f-btn px-5 py-2.5 rounded-xl text-[9px] font-black uppercase text-gray-400 hover:text-white transition-colors";
     });
     renderLive();
 };
@@ -199,7 +200,7 @@ window.renderLive = () => {
     document.getElementById('countTraining').innerText = `${liveNow.length} MEMBERS TRAINING NOW`;
 
     if(filtered.length === 0) {
-        grid.innerHTML = `<div class="col-span-full py-12 text-center border-2 border-dashed border-slate-100 rounded-[2rem] text-[10px] text-slate-300 font-bold uppercase tracking-widest">Floor is empty</div>`;
+        grid.innerHTML = `<div class="col-span-full py-12 text-center border-2 border-dashed border-white/5 rounded-[2rem] text-[10px] text-gray-500 font-bold uppercase tracking-widest">Floor is empty</div>`;
         return;
     }
 
@@ -227,16 +228,16 @@ window.renderLive = () => {
         }
 
         return `
-        <div class="min-w-[260px] max-w-[260px] bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:scale-[1.02] transition-transform">
+        <div class="min-w-[260px] max-w-[260px] bg-[#121212] p-6 rounded-2xl border border-white/5 shadow-xl flex flex-col justify-between hover:scale-[1.02] transition-all">
             <div class="flex justify-between items-start mb-4">
                 <div>
-                    <h4 class="font-black text-slate-900 text-sm tracking-tight">${m.name}</h4>
-                    <p class="text-[8px] font-bold text-blue-600 uppercase tracking-tighter mt-1">${timeDisplay}</p>
+                    <h4 class="font-black text-white text-sm tracking-tight">${m.name}</h4>
+                    <p class="text-[8px] font-black text-green-500 uppercase tracking-widest mt-1">${timeDisplay}</p>
                 </div>
-                <div class="bg-emerald-600 shadow-[0_0_12px_rgba(16,185,129,0.7)]"></div>
+                <div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.7)] animate-pulse"></div>
             </div>
             <div class="flex flex-wrap gap-1.5">
-                ${parts.map(p => `<span class="bg-slate-900 text-white text-[7px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest">${p}</span>`).join('')}
+                ${parts.map(p => `<span class="bg-black border border-white/5 text-gray-300 text-[8px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider">${p}</span>`).join('')}
             </div>
         </div>`;
     }).join('');
@@ -342,32 +343,37 @@ window.togglePay = async (code) => {
 window.addNewMember = async () => {
     const name = document.getElementById('regName').value;
     const phone = document.getElementById('regPhone').value;
+    const password = document.getElementById('regPassword').value; // Extra field added here
     const plan = document.getElementById('regPlan').value;
     const trainerId = document.getElementById('regTrainer').value;
-    const monthlyFee = parseFloat(document.getElementById('regMonthlyFee').value);
-    const joiningFee = parseFloat(document.getElementById('regJoiningFee').value);
+    const monthlyFee = parseFloat(document.getElementById('regMonthlyFee').value) || 0;
+    const joiningFee = parseFloat(document.getElementById('regJoiningFee').value) || 0;
     const activeGymId = localStorage.getItem("activeGymId") || localStorage.getItem("gymId");
     
     if (!name || !phone) return alert("Name and Phone are required");
+    if (!password) return alert("A member portal password is required");
 
     try {
         await addDoc(collection(db, "members"), {
             gymId: activeGymId,
             name,
             phone,
+            password, // Stored explicitly in Firestore payload
             plan,
             trainerId,
             monthlyFee,
             joiningFee,
             status: 'active',
             joinDate: new Date().toISOString().slice(0, 10), 
-            lastPaymentDate: Date.now()
+            lastPaymentDate: Date.now(),
+            isInside: false,
+            payments: []
         });
 
-        alert("Member registered !");
+        alert("Member registered successfully!");
         location.reload();
     } catch (e) {
-        console.error(e);
+        console.error("Error creating member document:", e);
     }
 };
 
