@@ -124,6 +124,12 @@
     let dynamicUpiId = ""; 
     let dynamicGymName = "";
 
+    // --- SYNCHRONIZED ARCHITECTURE: GET CURRENT MONTH CODE (YYYY-MM) ---
+    function getCurrentMonthCode() {
+        const now = new Date();
+        return `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+    }
+
     async function masterLogic() {
         if (!MEMBER_ID) return;
 
@@ -133,47 +139,49 @@
 
             const member = memberSnap.data();
             const status = member.paymentStatus || "unpaid";
-            const lastPaymentDate = member.lastPaymentDate;
             const logs = member.paymentLogs || [];
+            
+            // Check current month code against the unified array
+            const curCode = getCurrentMonthCode();
+            const isCurrentMonthPaid = member.payments?.includes(curCode);
+            const isPaused = member.status === 'inactive';
 
             const now = new Date();
             const monthLabel = now.toLocaleString('default', { month: 'long' });
 
-            // Find the most recent denial in the logs
+            // Find the most recent denial in logs
             const lastDenial = logs.slice().reverse().find(l => l.type === 'Denied');
 
-            let isCurrentMonthPaid = false;
-            if (lastPaymentDate) {
-                const pDate = new Date(lastPaymentDate);
-                if (pDate.getMonth() === now.getMonth() && pDate.getFullYear() === now.getFullYear()) {
-                    isCurrentMonthPaid = true;
-                }
-            }
-
-            // Logic to show denial ONLY if it hasn't been "dismissed"
-            // We use the lastAction date vs the last Denial log date to verify if it's fresh
-            if (status === "paid" && isCurrentMonthPaid) {
+            // 1. SAFETY LOCKOUT: No dues pending / Already Settled
+            if (isCurrentMonthPaid) {
                 renderUI("paidState");
-                document.getElementById('paidMessage').innerText = `Your ${monthLabel} membership is active.`;
-                const confettiKey = `confetti_seen_${MEMBER_ID}`;
+                document.getElementById('paidMessage').innerText = `Your ${monthLabel} membership fees are fully settled. No pending dues!`;
+                const confettiKey = `confetti_seen_${MEMBER_ID}_${curCode}`;
                 if (!localStorage.getItem(confettiKey)) {
                     triggerDopamine();
                     localStorage.setItem(confettiKey, 'true');
                 }
             } 
+            // 2. Account Paused State
+            else if (isPaused) {
+                renderUI("paidState");
+                document.getElementById('paidMessage').innerText = "Your membership account is currently paused.";
+            }
+            // 3. Admin Reviewing State
             else if (status === "verifying") {
                 renderUI("verifyingState");
             } 
-            // FIXED: Only show denied state if the lastAction field actually says it's denied
+            // 4. Payment Denied / Correction State
             else if (status === "unpaid" && member.lastAction && member.lastAction.startsWith("Denied") && lastDenial) {
                 renderUI("deniedState");
                 document.getElementById('deniedReason').innerText = `${lastDenial.message.replace('Denied: ', 'Reason: ')}`;
-                localStorage.removeItem(`confetti_seen_${MEMBER_ID}`);
+                localStorage.removeItem(`confetti_seen_${MEMBER_ID}_${curCode}`);
             } 
+            // 5. Open checkout panel
             else {
                 renderUI("payOptions");
                 loadGymData(member);
-                localStorage.removeItem(`confetti_seen_${MEMBER_ID}`);
+                localStorage.removeItem(`confetti_seen_${MEMBER_ID}_${curCode}`);
             }
 
         } catch (e) {
@@ -208,8 +216,21 @@
     window.payWith = (appType) => {
         const amount = document.getElementById('amountDisplay').innerText.replace('₹', '');
         const note = document.getElementById('txNote').innerText;
-        if (!dynamicUpiId) return alert("Still loading...");
-        window.location.href = `upi://pay?pa=${dynamicUpiId}&pn=${encodeURIComponent(dynamicGymName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
+        if (!dynamicUpiId) return alert("Still loading infrastructure details...");
+
+        // Standard Intent Payload syntax
+        const upiUrl = `upi://pay?pa=${dynamicUpiId}&pn=${encodeURIComponent(dynamicGymName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
+        
+        // Deep link redirection schemas based on client choice mapping
+        if (appType === 'gpay') {
+            window.location.href = `intent://pay?pa=${dynamicUpiId}&pn=${encodeURIComponent(dynamicGymName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
+        } else if (appType === 'phonepe') {
+            window.location.href = `intent://pay?pa=${dynamicUpiId}&pn=${encodeURIComponent(dynamicGymName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}#Intent;scheme=upi;package=com.phonepe.app;end`;
+        } else if (appType === 'paytm') {
+            window.location.href = `intent://pay?pa=${dynamicUpiId}&pn=${encodeURIComponent(dynamicGymName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}#Intent;scheme=upi;package=net.one97.paytm;end`;
+        } else {
+            window.location.href = upiUrl;
+        }
     };
 
     window.declarePayment = async () => {
@@ -234,7 +255,6 @@
         btn.innerText = "PREPARING...";
         btn.disabled = true;
         try {
-            // We clear lastAction so masterLogic stops seeing the "Denied" status
             await updateDoc(doc(db, "members", MEMBER_ID), { 
                 lastAction: "Retrying Payment", 
                 paymentStatus: "unpaid" 

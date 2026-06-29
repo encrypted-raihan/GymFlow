@@ -121,25 +121,22 @@
         }
 
         #levelUpToast {
-    position: fixed;
-    /* Move it further up so the shadow doesn't peek through */
-    top: -150px; 
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-    max-width: 350px;
-    z-index: 5000;
-    /* Added a smoother "spring" transition */
-    transition: all 0.6s cubic-bezier(0.68, -0.6, 0.32, 1.6);
-    background: rgba(15, 23, 42, 0.95);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-}
+            position: fixed;
+            top: -150px; 
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 350px;
+            z-index: 5000;
+            transition: all 0.6s cubic-bezier(0.68, -0.6, 0.32, 1.6);
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
 
-#levelUpToast.show { 
-    /* Adjust this to 20px or 30px from the top when active */
-    top: 30px; 
-}
+        #levelUpToast.show { 
+            top: 30px; 
+        }
 
         .page { transition: all 0.3s ease; }
         .page-hidden { display: none; opacity: 0; }
@@ -198,6 +195,8 @@
                     </div>
                 </button>
             </div>
+
+            <div id="paymentStatusContainer"></div>
 
             <button onclick="redirectToSupport()" class="premium-card p-5 w-full flex items-center justify-between active:scale-95 transition-all">
                 <div class="flex items-center gap-4">
@@ -356,7 +355,6 @@
 
         window.logout = () => { localStorage.removeItem('memberId'); window.location.href = "member-login.html"; };
 
-        // REDIRECT LOGIC
         window.redirectToSupport = () => {
             const id = localStorage.getItem('memberId');
             window.location.href = `player-chat.html?id=${id}`;
@@ -380,40 +378,31 @@
         }
 
         function showLevelUpNotification(lvl) {
-    const series = Math.floor((lvl - 1) / 5) + 1;
-    const sub = ((lvl - 1) % 5) + 1;
-    const toast = document.getElementById('levelUpToast');
-    
-    document.getElementById('newRankName').innerText = `Grade ${series}.${sub}`;
-    
-    // Glides down from -150px to 30px
-    toast.classList.add('show'); 
-    
-    confetti({ 
-        particleCount: 200, 
-        spread: 80, 
-        origin: { y: 0.6 }, 
-        colors: ['#0f172a', '#ffffff', '#3b82f6'] 
-    });
+            const series = Math.floor((lvl - 1) / 5) + 1;
+            const sub = ((lvl - 1) % 5) + 1;
+            const toast = document.getElementById('levelUpToast');
+            
+            document.getElementById('newRankName').innerText = `Grade ${series}.${sub}`;
+            toast.classList.add('show'); 
+            
+            confetti({ 
+                particleCount: 200, 
+                spread: 80, 
+                origin: { y: 0.6 }, 
+                colors: ['#0f172a', '#ffffff', '#3b82f6'] 
+            });
 
-    // Stays for 4 seconds then glides back up
-    setTimeout(() => { 
-        toast.classList.remove('show'); 
-    }, 4000);
-}
+            setTimeout(() => { 
+                toast.classList.remove('show'); 
+            }, 4000);
+        }
 
-
-window.goToPayment = () => {
-    // Pass the member ID to the payment page via localStorage 
-    // (Ensure 'memberId' matches what you use in login)
-    const id = localStorage.getItem('memberId');
-    localStorage.setItem('activeMemberId', id); 
-    
-    // Optional: Pass gym name for the receipt UI
-    localStorage.setItem('activeGymName', 'GymFlow Pro'); 
-
-    window.location.href = 'payment.html'; 
-};
+        window.goToPayment = () => {
+            const id = localStorage.getItem('memberId');
+            localStorage.setItem('activeMemberId', id); 
+            localStorage.setItem('activeGymName', 'GymFlow Pro'); 
+            window.location.href = 'payment.html'; 
+        };
 
         function updateUI() {
             const stats = calcLevel(currentMember.totalXP || 0);
@@ -434,6 +423,64 @@ window.goToPayment = () => {
                 document.getElementById('attContainer').innerHTML = `<div class="premium-card p-6 w-full flex items-center justify-between border-l-8 border-l-slate-900 bg-slate-50/50"><div class="flex items-center gap-5"><div class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white text-xl">✓</div><div><h4 class="font-black text-slate-800 text-base">Check-In Confirmed</h4><p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Attendance Recorded</p></div></div></div>`;
             }
             
+            // --- Live Payment Indicator Logic ---
+            // --- Live Payment Indicator Logic ---
+            const payContainer = document.getElementById('paymentStatusContainer');
+            if (payContainer) {
+                // Generate current month code matching admin dashboard format (YYYY-MM)
+                const now = new Date();
+                const curCode = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+                
+                // Member is paid if the current month code is in their payments array
+                const isPaid = currentMember.payments?.includes(curCode);
+                const isPaused = currentMember.status === 'inactive';
+                
+                // Unpaid if they are active but the month code hasn't been added yet
+                const isUnpaid = !isPaid && !isPaused;
+
+                if (isUnpaid) {
+                    payContainer.innerHTML = `
+                        <div class="premium-card p-5 w-full flex items-center justify-between border-l-4 border-red-500 bg-red-50/40 animate-pulse">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center text-sm font-black">⚠️</div>
+                                <div class="text-left">
+                                    <h4 class="font-black text-red-900 text-sm">Payment Pending</h4>
+                                    <p class="text-[10px] text-red-600 font-bold uppercase tracking-wide font-sans">Please settle outstanding dues</p>
+                                </div>
+                            </div>
+                            <button onclick="goToPayment()" class="bg-slate-900 text-white font-black text-[9px] px-4 py-2 rounded-xl uppercase tracking-widest active:scale-95 transition-transform shadow-md">
+                                Pay Now
+                            </button>
+                        </div>
+                    `;
+                } else if (isPaused) {
+                    payContainer.innerHTML = `
+                        <div class="premium-card p-4 w-full flex items-center justify-between border-l-4 border-slate-500 bg-slate-50/50">
+                            <div class="flex items-center gap-4">
+                                <div class="w-8 h-8 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center text-xs font-bold">⏸</div>
+                                <div class="text-left">
+                                    <h4 class="font-bold text-slate-700 text-xs">Membership Paused</h4>
+                                    <p class="text-[9px] text-slate-400 font-medium uppercase">Status: Inactive</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    payContainer.innerHTML = `
+                        <div class="premium-card p-4 w-full flex items-center justify-between border-l-4 border-emerald-500 bg-emerald-50/10 opacity-60">
+                            <div class="flex items-center gap-4">
+                                <div class="w-8 h-8 bg-emerald-500/20 text-emerald-700 rounded-full flex items-center justify-center text-xs font-bold">✓</div>
+                                <div class="text-left">
+                                    <h4 class="font-bold text-slate-600 text-xs">Fees Settled</h4>
+                                    <p class="text-[9px] text-slate-400 font-medium uppercase">Current Month Paid</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            // -------------------------------------
+
             const wBtn = document.getElementById('workoutBtn');
             if(currentMember.isInside) {
                 wBtn.innerText = "FINISH SESSION";
@@ -481,56 +528,47 @@ window.goToPayment = () => {
         }
 
         window.markAttendance = async () => {
-    const now = new Date();
-    
-    // Normalize "today" to start of day (00:00:00)
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayStr = today.toLocaleDateString();
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const todayStr = today.toLocaleDateString();
 
-    if (currentMember.lastAttendance === todayStr) {
-        alert("Attendance already captured for today!");
-        return;
-    }
+            if (currentMember.lastAttendance === todayStr) {
+                alert("Attendance already captured for today!");
+                return;
+            }
 
-    let newStreak = 1;
+            let newStreak = 1;
 
-    if (currentMember.lastAttendance) {
-        // Normalize "last attendance" to start of that day
-        const lastDateParts = new Date(currentMember.lastAttendance);
-        const lastDate = new Date(lastDateParts.getFullYear(), lastDateParts.getMonth(), lastDateParts.getDate());
-        
-        // Calculate the difference in milliseconds
-        const diffTime = today.getTime() - lastDate.getTime();
-        // Convert to days
-        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            if (currentMember.lastAttendance) {
+                const lastDateParts = new Date(currentMember.lastAttendance);
+                const lastDate = new Date(lastDateParts.getFullYear(), lastDateParts.getMonth(), lastDateParts.getDate());
+                const diffTime = today.getTime() - lastDate.getTime();
+                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
-        if (diffDays === 1) {
-            // It was yesterday, so the streak continues!
-            newStreak = (currentMember.streak || 0) + 1;
-        } else if (diffDays > 1) {
-            // They missed a full day or more, reset to 1
-            newStreak = 1;
-        } else {
-            // This handles cases where they try to check in twice in one day
-            newStreak = currentMember.streak || 1;
-        }
-    }
+                if (diffDays === 1) {
+                    newStreak = (currentMember.streak || 0) + 1;
+                } else if (diffDays > 1) {
+                    newStreak = 1;
+                } else {
+                    newStreak = currentMember.streak || 1;
+                }
+            }
 
-    await updateDoc(doc(db, "members", currentMember.id), { 
-        totalXP: (currentMember.totalXP || 0) + 50, 
-        streak: newStreak, 
-        lastAttendance: todayStr 
-    });
+            await updateDoc(doc(db, "members", currentMember.id), { 
+                totalXP: (currentMember.totalXP || 0) + 50, 
+                streak: newStreak, 
+                lastAttendance: todayStr 
+            });
 
-    confetti({ 
-        particleCount: 150, 
-        spread: 70, 
-        origin: { y: 0.7 },
-        colors: ['#0f172a', '#3b82f6']
-    });
-    
-    sync();
-};
+            confetti({ 
+                particleCount: 150, 
+                spread: 70, 
+                origin: { y: 0.7 },
+                colors: ['#0f172a', '#3b82f6']
+            });
+            
+            sync();
+        };
 
         function renderStreak() {
             const s = currentMember.streak || 0;
@@ -627,46 +665,42 @@ window.goToPayment = () => {
         };
 
         async function endSession() {
-    const d = new Date() - new Date(currentMember.lastIn);
-    const m = Math.floor(d / 60000); // exact minutes
+            const d = new Date() - new Date(currentMember.lastIn);
+            const m = Math.floor(d / 60000);
 
-    // ❌ Minimum requirement
-    if (m < 10) {
-        alert("Session must be at least 10 minutes to earn XP");
-        await updateDoc(doc(db, "members", currentMember.id), {
-            isInside: false,
-            activeWorkoutParts: []
-        });
-        sync();
-        return;
-    }
+            if (m < 10) {
+                alert("Session must be at least 10 minutes to earn XP");
+                await updateDoc(doc(db, "members", currentMember.id), {
+                    isInside: false,
+                    activeWorkoutParts: []
+                });
+                sync();
+                return;
+            }
 
-    // ✅ Base XP (100 XP/hour)
-    let baseXP = (m / 60) * 100;
+            let baseXP = (m / 60) * 100;
+            let multiplier = 1;
 
-    // ✅ Progressive scaling
-    let multiplier = 1;
+            if (m >= 60) multiplier = 2.0;
+            else if (m >= 40) multiplier = 1.5;
+            else if (m >= 20) multiplier = 1.2;
 
-    if (m >= 60) multiplier = 2.0;
-    else if (m >= 40) multiplier = 1.5;
-    else if (m >= 20) multiplier = 1.2;
+            const x = Math.round(baseXP * multiplier);
 
-    const x = Math.round(baseXP * multiplier);
+            await updateDoc(doc(db, "members", currentMember.id), {
+                isInside: false,
+                totalXP: (currentMember.totalXP || 0) + x,
+                activeWorkoutParts: [],
+                workoutHistory: arrayUnion({
+                    date: new Date().toLocaleDateString(),
+                    duration: m,
+                    xp: x,
+                    muscles: currentMember.activeWorkoutParts || ["General"]
+                })
+            });
 
-    await updateDoc(doc(db, "members", currentMember.id), {
-        isInside: false,
-        totalXP: (currentMember.totalXP || 0) + x,
-        activeWorkoutParts: [],
-        workoutHistory: arrayUnion({
-            date: new Date().toLocaleDateString(),
-            duration: m,
-            xp: x,
-            muscles: currentMember.activeWorkoutParts || ["General"]
-        })
-    });
-
-    sync();
-}
+            sync();
+        }
 
         function startTimer() {
             if(timerInterval) clearInterval(timerInterval);
