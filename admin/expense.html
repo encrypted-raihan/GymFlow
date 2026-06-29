@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <title>GymFlow | Expense Tracker</title>
+    <title>Elevated | Expense Tracker</title>
     <style>
         body { 
             font-family: 'Inter', sans-serif; 
@@ -66,7 +66,6 @@
 </head>
 <body class="p-6 md:p-10">
 
-    <!-- Top Navigation -->
     <nav class="max-w-7xl mx-auto flex justify-between items-center mb-10">
         <div class="flex items-center gap-8">
             <div>
@@ -86,7 +85,6 @@
     </nav>
 
     <main class="max-w-7xl mx-auto">
-        <!-- Stats Overview -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="glass-card p-8">
                 <p class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Total Monthly Burn</p>
@@ -103,7 +101,6 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <!-- Forms Column -->
             <div class="lg:col-span-4 space-y-6">
                 <div class="glass-card p-6">
                     <h3 class="text-[11px] font-black uppercase text-green-500 mb-6 tracking-widest">Log Expense</h3>
@@ -113,8 +110,9 @@
                             <option value="Electricity">⚡ Electricity</option>
                             <option value="Maintenance">🛠️ Maintenance</option>
                             <option value="Equipment">🏋️ Equipment</option>
+                            <option value="Others">📦 Miscellaneous / Others</option>
                         </select>
-                        <input id="expTitle" type="text" placeholder="Description" class="input-standard">
+                        <input id="expTitle" type="text" placeholder="Description (Optional)" class="input-standard">
                         <input id="expAmount" type="number" placeholder="Amount (₹)" class="input-standard font-black text-green-400">
                         <button onclick="addExpense()" class="btn-primary w-full mt-2">Add Entry</button>
                     </div>
@@ -130,7 +128,6 @@
                 </div>
             </div>
 
-            <!-- Ledger Column -->
             <div class="lg:col-span-8">
                 <div class="glass-card overflow-hidden">
                     <div class="px-8 py-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
@@ -138,17 +135,14 @@
                         <span id="ledgerStatus" class="text-[10px] font-bold text-green-500 uppercase">Live Data</span>
                     </div>
                     <div id="expenseList" class="divide-y divide-white/5 max-h-[600px] overflow-y-auto no-scrollbar">
-                        <!-- Entries go here -->
-                    </div>
+                        </div>
                 </div>
             </div>
 
-            <!-- History Section -->
             <div class="lg:col-span-12 mt-4">
                 <h3 class="text-[11px] font-black uppercase text-zinc-500 mb-6 tracking-widest">Historical Data</h3>
                 <div id="archiveList" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    <!-- History pills go here -->
-                </div>
+                    </div>
             </div>
         </div>
     </main>
@@ -185,9 +179,15 @@
 
         window.addExpense = async () => {
             const category = document.getElementById('expCategory').value;
-            const title = document.getElementById('expTitle').value;
+            let title = document.getElementById('expTitle').value.trim();
             const amount = parseFloat(document.getElementById('expAmount').value);
-            if (!title || isNaN(amount)) return;
+            
+            if (isNaN(amount)) return;
+            
+            // If description input is left empty, default to utilizing the category choice
+            if (!title) {
+                title = `${category} Expense`;
+            }
 
             try {
                 await addDoc(collection(db, "expenses"), {
@@ -222,11 +222,13 @@
                         if (['Rent', 'Electricity'].includes(data.category)) fixedTotal += data.amount;
                         if (data.category === 'Salary') salaryTotal += data.amount;
 
+                        let shortLabel = (data.category || 'EX').substring(0,2);
+
                         activeList.innerHTML += `
                         <div class="px-8 py-5 flex justify-between items-center hover:bg-white/[0.02] transition-all">
                             <div class="flex items-center gap-4">
                                 <div class="w-10 h-10 rounded-gym bg-green-500/10 flex items-center justify-center text-[10px] font-black text-green-500 uppercase">
-                                    ${data.category.substring(0,2)}
+                                    ${shortLabel}
                                 </div>
                                 <div>
                                     <p class="font-bold text-white text-sm">${data.title}</p>

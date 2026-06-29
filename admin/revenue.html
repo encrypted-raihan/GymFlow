@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GymFlow | Revenue Analytics</title>
+    <title>Elevated | Revenue Analytics</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -67,9 +67,6 @@
                 <button onclick="window.location.href='dashboard.html'" 
                 class="absolute top-0 right-0 md:static bg-white/5 hover:bg-white/10 text-white px-4 py-2 md:px-6 md:py-3 rounded-gym text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all">
                 Dashboard
-                </button>
-                <button onclick="window.downloadFullReport()" class="action-btn">
-                    Export Full Report
                 </button>
             </div>
         </div>
@@ -309,7 +306,7 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             const data = globalMonthlyData[monthCode];
-            doc.setFontSize(18); doc.text(`GymFlow: ${formatMonth(monthCode)} Report`, 14, 20);
+            doc.setFontSize(18); doc.text(`Elevated: ${formatMonth(monthCode)} Report`, 14, 20);
             doc.autoTable({
                 startY: 30,
                 head: [['Label', 'Amount']],
@@ -323,7 +320,7 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             doc.setFontSize(18);
-            doc.text("GymFlow | Full Revenue Analytics", 14, 20);
+            doc.text("Elevated | Full Revenue Analytics", 14, 20);
             const rows = Object.keys(globalMonthlyData).sort().reverse().map(code => [
                 formatMonth(code),
                 globalMonthlyData[code].income.toLocaleString(),
@@ -336,7 +333,7 @@
                 body: rows,
                 headStyles: { fillColor: [13, 17, 15] }
             });
-            doc.save("GymFlow_Full_Report.pdf");
+            doc.save("Elevated_Full_Report.pdf");
         };
 
         init();

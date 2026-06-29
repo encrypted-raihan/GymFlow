@@ -32,8 +32,8 @@
         </div>
 
         <div class="text-center mb-8">
-            <h1 class="text-2xl font-black text-slate-900 tracking-tight">Express <span class="text-emerald-600">Checkout</span></h1>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">GymFlow Secure Payment</p>
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight">Membership <span class="text-emerald-600">Renewal</span></h1>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Elevated Secure Portal</p>
         </div>
 
         <div id="detailsCard" class="saas-card p-6 mb-6 shadow-sm">
@@ -52,7 +52,7 @@
                     <span id="txNote" class="text-[10px] font-mono font-bold text-slate-600 uppercase">...</span>
                 </div>
                 <div class="flex justify-between items-center pt-2 border-t border-slate-200/60">
-                    <span class="text-[9px] font-black text-slate-400 uppercase">Owner UPI ID</span>
+                    <span class="text-[9px] font-black text-slate-400 uppercase">Gym UPI ID</span>
                     <div class="flex items-center gap-1.5">
                         <span id="upiDisplay" class="text-[10px] font-mono font-bold text-slate-600">...</span>
                         <button onclick="copyUpiId()" class="text-[9px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded uppercase tracking-wider">Copy</button>
@@ -61,42 +61,33 @@
             </div>
         </div>
 
-        <div id="payOptions" class="hidden space-y-6">
-            <div class="grid grid-cols-3 gap-3">
-                <button onclick="payWith('gpay')" class="saas-card p-4 flex flex-col items-center justify-center gap-2 hover:border-emerald-500 active:scale-95 transition-all">
-                    <svg class="h-6 w-6" viewBox="0 0 48 48"><path fill="#4285F4" d="M36.1 24.1c0-.9-.1-1.7-.2-2.5H24v4.8h6.8c-.3 1.5-1.1 2.8-2.4 3.7v3.1h3.9c2.3-2.1 3.8-5.2 3.8-9.1z"/><path fill="#34A853" d="M24 36.4c3.3 0 6.1-1.1 8.1-3l-3.9-3.1c-1.1.7-2.5 1.2-4.2 1.2-3.2 0-5.9-2.2-6.9-5.1h-4v3.1c2 4 6.2 6.9 11 6.9z"/><path fill="#FBBC05" d="M17.1 26.4c-.2-.7-.4-1.5-.4-2.4s.2-1.7.4-2.4v-3.1h-4c-.8 1.6-1.3 3.4-1.3 5.5s.5 3.9 1.3 5.5l4-3.1z"/><path fill="#EA4335" d="M24 16.6c1.8 0 3.4.6 4.7 1.9l3.5-3.5C30.1 13 27.3 12 24 12c-4.8 0-9 2.9-11 6.9l4 3.1c1-2.9 3.7-5.1 6.9-5.1z"/></svg>
-                    <span class="text-[9px] font-bold text-slate-500">G-Pay</span>
-                </button>
-                <button onclick="payWith('phonepe')" class="saas-card p-4 flex flex-col items-center justify-center gap-2 hover:border-emerald-500 active:scale-95 transition-all">
-                    <svg class="h-6 w-6" viewBox="0 0 24 24"><path fill="#6739B7" d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm3.32 13.56l-1.68-.96v-1.92c0-.36-.18-.69-.48-.87L12 11.13c-.3-.18-.66-.18-.96 0l-1.16.68c-.3.18-.48.51-.48.87v1.92l1.68.96c.3.18.66.18.96 0l1.16-.68c.3-.18.48-.51.48-.87v-.65h-1.68v.65l-.48.27-.48-.27v-.55l.48-.27.48.27v.38h.72v-.38l-1.2-0.69-1.2.69v1.38l1.2.69 1.2-.69v-.38z"/></svg>
-                    <span class="text-[9px] font-bold text-slate-500">PhonePe</span>
-                </button>
-                <button onclick="payWith('paytm')" class="saas-card p-4 flex flex-col items-center justify-center gap-2 hover:border-emerald-500 active:scale-95 transition-all">
-                    <svg class="h-6 w-6" viewBox="0 0 24 24"><path fill="#00BAF2" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM9.5 15.5H7.7v-7h1.8v7zm5.8-4.5l-1.2 2.5-1.2-2.5h-1.9l2.1 4.5v2.5h1.8v-2.5l2.1-4.5h-1.7z"/></svg>
-                    <span class="text-[9px] font-bold text-slate-500">Paytm</span>
-                </button>
-            </div>
+        <div id="payOptions" class="hidden space-y-4">
             
-            <button onclick="payWith('generic')" class="w-full py-4 bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-[11px] font-black uppercase tracking-widest active:scale-95 transition-all">Open Generic App Selector</button>
-            
-            <div class="bg-amber-50 border border-amber-200/70 p-3 rounded-xl text-center">
-                <p class="text-[10px] text-amber-800 font-bold leading-normal">
-                    💡 App not opening? Click <span class="font-extrabold text-emerald-700">"Copy"</span> above, open your favorite UPI app manually, pay the exact amount, and return here.
-                </p>
+            <button onclick="declarePayment('Counter/Cash Payment')" id="counterBtn" class="w-full py-4 bg-emerald-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-emerald-200 shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                Pay at Gym Counter
+            </button>
+
+            <div class="relative py-1 text-center">
+                <span class="bg-[#f8fafc] px-2 text-[9px] uppercase font-bold text-slate-400">— OR PAY VIA UPI MANUALLY —</span>
             </div>
 
-            <div class="relative py-2 text-center">
-                <span class="bg-[#f8fafc] px-2 text-[10px] uppercase font-bold text-slate-400">Step 2: Confirm Notification</span>
+            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
+                <p class="text-[10px] text-slate-600 font-medium leading-relaxed">
+                    Click <span class="font-bold text-emerald-600">"Copy"</span> above, open your preferred UPI app (GPay, PhonePe, Paytm), make the transfer, and notify us below.
+                </p>
+                <button onclick="declarePayment('Online UPI Transfer')" id="upiConfirmBtn" class="w-full py-2.5 bg-slate-900 text-white rounded-lg text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all">
+                    I Have Sent Money via UPI
+                </button>
             </div>
-            <button onclick="declarePayment()" id="confirmBtn" class="w-full py-4 bg-emerald-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-emerald-200 shadow-lg active:scale-95 transition-all">Confirm Payment Sent</button>
         </div>
 
         <div id="verifyingState" class="hidden text-center py-6">
             <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <h2 class="text-xl font-black text-slate-900">Awaiting Approval</h2>
-            <p class="text-xs text-slate-500 mt-2 px-6">We've notified the gym admin. Your dashboard will unlock once they verify the payment.</p>
+            <h2 class="text-xl font-black text-slate-900">Awaiting Verification</h2>
+            <p class="text-xs text-slate-500 mt-2 px-6">We've logged your request. The gym administration will confirm your payment and unlock your access shortly.</p>
             <button onclick="location.reload()" class="mt-8 text-[10px] font-black uppercase text-emerald-600 border-b-2 border-emerald-100 pb-1">Tap to Refresh</button>
         </div>
 
@@ -163,7 +154,6 @@
 
             const lastDenial = logs.slice().reverse().find(l => l.type === 'Denied');
 
-            // 1. Double Payment Prevention Gate
             if (isCurrentMonthPaid) {
                 renderUI("paidState");
                 document.getElementById('paidMessage').innerText = `Your ${monthLabel} subscription fees are already settled. Accidental double payments are prevented!`;
@@ -208,7 +198,7 @@
         if (gSnap.exists()) {
             const gym = gSnap.data();
             dynamicUpiId = gym.upiId || "";
-            dynamicGymName = gym.name || "GymFlow";
+            dynamicGymName = gym.name || "Elevated";
             
             document.getElementById('gymName').innerText = dynamicGymName.toUpperCase();
             document.getElementById('upiDisplay').innerText = dynamicUpiId || "Not Setup";
@@ -221,44 +211,26 @@
     window.copyUpiId = () => {
         if(!dynamicUpiId) return;
         navigator.clipboard.writeText(dynamicUpiId);
-        alert("UPI ID Copied! You can now paste it directly inside your preferred transaction app.");
+        alert("UPI ID Copied! Open your preferred transaction app to complete payment.");
     };
 
-    window.payWith = (appType) => {
-        const amount = document.getElementById('amountDisplay').innerText.replace('₹', '');
-        const note = document.getElementById('txNote').innerText;
-        if (!dynamicUpiId) return alert("Infrastructure details missing. Please contact manager.");
-
-        // Standard, clean base payload URI
-        const standardUri = `upi://pay?pa=${dynamicUpiId}&pn=${encodeURIComponent(dynamicGymName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
+    window.declarePayment = async (methodType) => {
+        const counterBtn = document.getElementById('counterBtn');
+        const upiBtn = document.getElementById('upiConfirmBtn');
         
-        // Multi-Platform Deep Linking Intents
-        if (appType === 'gpay') {
-            window.location.href = `intent://pay?pa=${dynamicUpiId}&pn=${encodeURIComponent(dynamicGymName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
-        } else if (appType === 'phonepe') {
-            window.location.href = `intent://pay?pa=${dynamicUpiId}&pn=${encodeURIComponent(dynamicGymName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}#Intent;scheme=upi;package=com.phonepe.app;end`;
-        } else if (appType === 'paytm') {
-            window.location.href = `intent://pay?pa=${dynamicUpiId}&pn=${encodeURIComponent(dynamicGymName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}#Intent;scheme=upi;package=net.one97.paytm;end`;
-        } else {
-            // Native prompt routing fallback
-            window.location.href = standardUri;
-        }
-    };
-
-    window.declarePayment = async () => {
-        const btn = document.getElementById('confirmBtn');
-        btn.innerText = "NOTIFYING ADMIN...";
-        btn.disabled = true;
+        counterBtn.disabled = true;
+        upiBtn.disabled = true;
+        
         try {
             await updateDoc(doc(db, "members", MEMBER_ID), { 
                 paymentStatus: 'verifying',
-                lastAction: "Submitted for approval"
+                lastAction: `Submitted for approval (${methodType})`
             });
             location.reload(); 
         } catch (e) { 
-            btn.disabled = false; 
-            btn.innerText = "Confirm Payment Sent";
-            alert("Sync error."); 
+            counterBtn.disabled = false; 
+            upiBtn.disabled = false;
+            alert("Sync error. Please try again."); 
         }
     };
 

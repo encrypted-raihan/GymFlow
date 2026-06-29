@@ -12,7 +12,7 @@ const firebaseConfig = {
 
 // --- SYNC GYM NAME ---
 document.addEventListener('DOMContentLoaded', () => {
-    const gymName = localStorage.getItem("activeGymName") || "GymFlow Pro";
+    const gymName = localStorage.getItem("activeGymName") || "Elevated Pro";
     const displayElement = document.getElementById('displayGymName');
     if (displayElement) {
         displayElement.innerText = gymName;
@@ -320,7 +320,7 @@ function refreshProfileUI() {
 // 5. ACTIONS
 window.sendWhatsAppReminder = (phone, name) => {
     const monthName = new Date().toLocaleString('default', { month: 'long' });
-    const msg = `ഹലോ ${name}, GymFlow-ൽ നിങ്ങളുടെ ഈ മാസത്തെ (${monthName}) ഫീസ്‌ അടക്കാൻ സമയമായി. ദയവായി ശ്രദ്ധിക്കുമല്ലോ.`;
+    const msg = `ഹലോ ${name}, Elevated-ൽ നിങ്ങളുടെ ഈ മാസത്തെ (${monthName}) ഫീസ്‌ അടക്കാൻ സമയമായി. ദയവായി ശ്രദ്ധിക്കുമല്ലോ.`;
     window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
 };
 

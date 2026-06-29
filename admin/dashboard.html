@@ -6,7 +6,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <title>GymFlow | Dashboard</title>
+    <title>Elevated | Dashboard</title>
     <style>
         :root { 
             --bg-deep: #0a0a0a; 
@@ -113,7 +113,7 @@
     <div class="lg:hidden mobile-header flex items-center justify-between p-4 z-50">
         <div class="flex items-center gap-2">
             <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <h1 class="text-lg font-black tracking-tighter italic">GymFlow<span class="text-green-500">.</span></h1>
+            <h1 class="text-lg font-black tracking-tighter italic">Elevated<span class="text-green-500">.</span></h1>
         </div>
         <button onclick="logout()" class="px-3 py-1.5 bg-red-500/10 text-red-500 rounded-lg font-black text-[9px] uppercase tracking-widest">Sign Out</button>
     </div>
@@ -121,7 +121,7 @@
     <div class="flex flex-col lg:flex-row">
         <aside id="mainSidebar" class="fixed left-0 top-0 h-screen w-72 bg-black border-r border-white/5 z-[70] p-8 flex flex-col transform -translate-x-full lg:translate-x-0 lg:sticky lg:h-screen lg:top-0">
             <div class="mb-12">
-                <h1 class="text-3xl font-black tracking-tighter italic brand-gradient-text">GymFlow.</h1>
+                <h1 class="text-3xl font-black tracking-tighter italic brand-gradient-text">Elevated.</h1>
                 <p id="displayGymName" class="text-[9px] font-black text-green-500 uppercase tracking-[0.25em] mt-2 opacity-80"></p>
             </div>
 
@@ -156,6 +156,9 @@
                 </a>
                 <a href="trainer.html" class="w-full flex items-center px-5 py-4 rounded-2xl text-sm font-bold text-gray-400 hover:text-green-500 transition">
                     <span class="nav-icon lg:hidden">🏋️</span><span class="nav-label">Trainers</span>
+                </a>
+                <a href="broadcast.html" class="w-full flex items-center px-5 py-4 rounded-2xl text-sm font-bold text-gray-400 hover:text-green-500 transition">
+                    <span class="nav-icon lg:hidden">💬</span><span class="nav-label">Messages</span>
                 </a>
             </nav>
 

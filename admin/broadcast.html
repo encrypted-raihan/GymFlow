@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Elevated | Broadcast Core Engine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --bg-deep: #0d110f;
+            --card-glass: rgba(255, 255, 255, 0.03);
+            --border-glass: rgba(255, 255, 255, 0.05);
+            --brand-green: #22c55e;
+            --text-main: #f1f5f3;
+            --text-dim: #71717a;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg-deep); 
+            color: var(--text-main); 
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .rounded-gym { border-radius: 10px; }
+        
+        .glass-card {
+            background: var(--card-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 32px;
+            backdrop-filter: blur(12px);
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .action-btn {
+            background: var(--brand-green);
+            color: #052e16;
+            font-weight: 800;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .action-btn:hover { 
+            background: #16a34a; 
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px -10px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-segment { 
+            transition: all 0.3s ease; 
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+        
+        .btn-segment.active { 
+            background: rgba(34, 197, 94, 0.1); 
+            color: var(--brand-green);
+        }
+
+        textarea {
+            border-radius: 10px !important;
+            outline: none;
+            background: rgba(255, 255, 255, 0.02) !important;
+            border: 1px solid var(--border-glass) !important;
+            color: var(--text-main) !important;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus { border-color: var(--brand-green) !important; }
+
+        #memberTable tr { 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04); 
+            transition: background 0.2s;
+        }
+        #memberTable tr:last-child { border-bottom: none; }
+        #memberTable tr:hover { background: rgba(255, 255, 255, 0.02); }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-entry { animation: fadeIn 0.5s ease forwards; }
+    </style>
+</head>
+<body class="p-6 md:p-10 lg:p-16">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6 animate-entry">
+            <div>
+                <h1 class="text-5xl font-black tracking-tighter italic text-white leading-none">
+                    Group <span class="text-green-500">Broadcaster</span>
+                </h1>
+                <p class="text-zinc-500 text-xs font-bold uppercase tracking-widest mt-4 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    Target Active Segment Workspace
+                </p>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="window.location.href='dashboard.html'" class="bg-white/5 hover:bg-white/10 text-white px-8 py-4 rounded-gym text-[11px] font-black uppercase tracking-widest transition-all border border-white/5">
+                    Back to Dashboard
+                </button>
+            </div>
+        </header>
+
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-entry">
+            
+            <div class="lg:col-span-7 glass-card overflow-hidden">
+                <div class="px-10 py-8 border-b border-white/5 flex flex-col sm:flex-row justify-between items-center gap-6">
+                    <div>
+                        <h4 class="font-black uppercase text-[12px] text-white tracking-widest italic">Recipient Targets</h4>
+                        <p class="text-[10px] text-zinc-500 font-bold uppercase mt-1">Live Segment Filter</p>
+                    </div>
+                    <div class="flex bg-white/5 p-1.5 rounded-gym border border-white/5">
+                        <button onclick="applyFilter('due')" id="f-due" class="btn-segment active">Pending</button>
+                        <button onclick="applyFilter('paid')" id="f-paid" class="btn-segment">Settled</button>
+                        <button onclick="applyFilter('inactive')" id="f-inactive" class="btn-segment">Inactive</button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto no-scrollbar">
+                    <table class="w-full text-left">
+                        <thead class="text-[10px] font-black text-zinc-600 uppercase tracking-widest bg-white/[0.01]">
+                            <tr>
+                                <th class="px-10 py-6">Member Profile</th>
+                                <th class="px-10 py-6">Plan Info</th>
+                                <th class="px-10 py-6 text-right">Gateway</th>
+                            </tr>
+                        </thead>
+                        <tbody id="memberTable" class="text-zinc-300">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="lg:col-span-5 bg-white/5 rounded-[40px] p-12 border border-white/10 shadow-2xl relative overflow-hidden">
+                <div class="mb-12">
+                    <span class="text-[10px] font-black text-green-500 uppercase tracking-[0.4em] mb-4 block">Engine Standalone v4.1</span>
+                    <h5 class="text-3xl font-black tracking-tight text-white italic">Payload Dispatch</h5>
+                    <p class="text-zinc-500 text-xs font-semibold mt-3">
+                        Targeting <span id="blastCount" class="text-green-500 font-black px-1">0</span> records in current segment.
+                    </p>
+                </div>
+
+                <div class="space-y-8">
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center px-1">
+                            <label class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Message Payload</label>
+                            <span class="text-[9px] text-zinc-600 font-bold uppercase">Liquid Fields: {{name}}</span>
+                        </div>
+                        <textarea id="msgBox" class="w-full p-6 text-sm h-48 resize-none font-medium leading-relaxed shadow-inner" placeholder="Compose message context here..."></textarea>
+                    </div>
+                    
+                    <button onclick="initiateBlast()" class="w-full action-btn italic !text-[14px] py-5 shadow-xl">
+                        Start Batch Processing
+                    </button>
+
+                    <div id="blastProgress" class="hidden mt-8 p-8 bg-zinc-900/50 border border-white/10 rounded-[20px] backdrop-blur-md animate-entry">
+                        <div class="flex justify-between items-start mb-8">
+                            <div>
+                                <p class="text-[10px] font-black text-green-500 uppercase tracking-widest">Processing Queue</p>
+                                <h6 class="text-xs font-bold text-white mt-1 uppercase" id="queueStatus">Handshaking...</h6>
+                            </div>
+                            <div class="bg-white/5 px-4 py-2 rounded-gym border border-white/10">
+                                <span id="currentQueueIndex" class="text-xl font-black text-white">0</span>
+                                <span class="text-zinc-600 font-bold mx-1">/</span>
+                                <span id="totalQueueIndex" class="text-zinc-500 font-bold text-sm">0</span>
+                            </div>
+                        </div>
+
+                        <div class="w-full bg-white/5 h-1.5 rounded-full mb-8 overflow-hidden">
+                            <div id="queueProgressBar" class="h-full bg-green-500 transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        
+                        <button id="nextInQueue" class="w-full py-5 bg-green-500 text-green-950 text-[12px] font-black rounded-gym uppercase tracking-widest hover:bg-green-400 transition-all flex items-center justify-center gap-4 shadow-lg">
+                            <span>Initialize Gateway</span>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-4 p-5 bg-white/[0.02] rounded-gym border border-white/5">
+                        <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                        <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-wide italic">Secure Protocol: Client Session Channel Forwarding</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBcsmX7T1NotMi0T1XZ6b03yI3r7qZYQr8",
+            authDomain: "gym-membership-tracker-60626.firebaseapp.com",
+            projectId: "gym-membership-tracker-60626",
+            storageBucket: "gym-membership-tracker-60626.firebasestorage.app",
+            messagingSenderId: "260703319955",
+            appId: "1:260703319955:web:78206334baa1fc79725a66"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const gymId = localStorage.getItem('activeGymId');
+
+        let members = [];
+        let filteredMembers = [];
+        let queue = [];
+        let currentIndex = 0;
+
+        const now = new Date();
+        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+        const cleanPhone = (phone) => {
+            if (!phone) return "";
+            let num = phone.replace(/\D/g, '');
+            if (num.length === 10) return `91${num}`;
+            return num;
+        };
+
+        async function initializeTerminal() {
+            if (!gymId) return;
+            try {
+                const q = query(collection(db, "members"), where("gymId", "==", gymId));
+                onSnapshot(q, (snapshot) => {
+                    members = snapshot.docs.map(doc => {
+                        const data = doc.data();
+                        const isPaid = (data.payments || []).includes(currentMonth);
+                        const isPaused = data.status === 'inactive';
+                        
+                        let category = "due";
+                        if (isPaused) category = "inactive";
+                        else if (isPaid) category = "paid";
+
+                        return { ...data, id: doc.id, category: category };
+                    });
+                    applyFilter('due'); 
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        window.applyFilter = (type) => {
+            document.querySelectorAll('.btn-segment').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById(`f-${type}`);
+            if(activeBtn) activeBtn.classList.add('active');
+            
+            filteredMembers = members.filter(m => m.category === type);
+            document.getElementById('blastCount').innerText = filteredMembers.length;
+            
+            const gymName = localStorage.getItem("activeGymName") || "Our Gym";
+            const monthName = now.toLocaleString('default', { month: 'long' });
+            const msgArea = document.getElementById('msgBox');
+
+            const templates = {
+                due: `Hello {{name}},\n\nThis is a friendly reminder from ${gymName}. Your membership fee for ${monthName} is currently pending. Please settle it at your earliest convenience to continue your training without interruption. 💪`,
+                paid: `Hey {{name}},\n\nThank you for your payment for ${monthName}! We love having you at ${gymName}. Keep crushing those goals! 🌟`,
+                inactive: `Hi {{name}},\n\nWe haven't seen you at ${gymName} lately! Your plan is currently paused. Ready to jump back in? We'd love to help you hit your next milestone.`
+            };
+
+            msgArea.value = templates[type] || "";
+            renderMemberTable();
+        };
+
+        function renderMemberTable() {
+            const tbody = document.getElementById('memberTable');
+            if (filteredMembers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="py-20 text-center"><p class="text-[10px] font-black text-zinc-700 uppercase tracking-widest italic">No Data in Segment</p></td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filteredMembers.map(m => `
+                <tr class="group">
+                    <td class="px-10 py-6">
+                        <div class="flex flex-col">
+                            <span class="text-sm font-black italic tracking-tight text-white">${m.name}</span>
+                            <span class="text-[10px] font-bold text-zinc-600">${m.phone}</span>
+                        </div>
+                    </td>
+                    <td class="px-10 py-6">
+                        <div class="flex flex-col">
+                            <span class="text-[9px] font-black uppercase text-zinc-500 tracking-tighter">Plan Type</span>
+                            <span class="text-[11px] font-bold text-white">${m.plan || 'Standard'}</span>
+                        </div>
+                    </td>
+                    <td class="px-10 py-6 text-right">
+                        <button onclick="window.open('https://api.whatsapp.com/send?phone=${cleanPhone(m.phone)}&text=${encodeURIComponent(document.getElementById('msgBox').value.replace('{{name}}', m.name))}', '_blank')" 
+                                class="bg-white/5 hover:bg-green-500 hover:text-green-950 px-5 py-2 rounded-gym text-[9px] font-black uppercase tracking-[0.1em] transition-all">
+                            Dispatch
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        window.initiateBlast = () => {
+            queue = [...filteredMembers];
+            currentIndex = 0;
+            if (queue.length === 0) {
+                alert("Segment empty. Select a category with records.");
+                return;
+            }
+            const progressPanel = document.getElementById('blastProgress');
+            progressPanel.classList.remove('hidden');
+            progressPanel.scrollIntoView({ behavior: 'smooth' });
+            updateQueueDisplay();
+        };
+
+        function updateQueueDisplay() {
+            const total = queue.length;
+            const progress = ((currentIndex) / total) * 100;
+            const currentMember = queue[currentIndex];
+            const rawTemplate = document.getElementById('msgBox').value;
+
+            document.getElementById('currentQueueIndex').innerText = currentIndex + 1;
+            document.getElementById('totalQueueIndex').innerText = total;
+            document.getElementById('queueProgressBar').style.width = `${progress}%`;
+            document.getElementById('queueStatus').innerText = `Preparing: ${currentMember.name}`;
+
+            const nextBtn = document.getElementById('nextInQueue');
+            nextBtn.innerHTML = `<span>Release to ${currentMember.name}</span>`;
+            
+            nextBtn.onclick = () => {
+                const personalizedMsg = rawTemplate.replace(/{{name}}/g, currentMember.name);
+                const wpUrl = `https://api.whatsapp.com/send?phone=${cleanPhone(currentMember.phone)}&text=${encodeURIComponent(personalizedMsg)}`;
+                window.open(wpUrl, '_blank');
+                
+                currentIndex++;
+                if (currentIndex < total) {
+                    updateQueueDisplay();
+                } else {
+                    completeQueue();
+                }
+            };
+        }
+
+        function completeQueue() {
+            document.getElementById('queueProgressBar').style.width = `100%`;
+            document.getElementById('queueStatus').innerText = `Batch Finalized`;
+            const btn = document.getElementById('nextInQueue');
+            btn.innerHTML = `<span>Segment Cleared</span>`;
+            btn.classList.replace('bg-green-500', 'bg-zinc-800');
+            btn.classList.replace('text-green-950', 'text-green-500');
+            btn.onclick = () => {
+                document.getElementById('blastProgress').classList.add('hidden');
+                btn.classList.replace('bg-zinc-800', 'bg-green-500');
+                btn.classList.replace('text-green-500', 'text-green-950');
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeTerminal);
+    </script>
+</body>
+</html>
